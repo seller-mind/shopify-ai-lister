@@ -7,7 +7,7 @@ import {
 } from '@remix-run/react';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import styles from '~/styles/global.css';
+import globalStyles from '~/styles/global.css?url';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   return json({
@@ -16,7 +16,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export function links() {
-  return [{ rel: 'stylesheet', href: styles }];
+  return [{ rel: 'stylesheet', href: globalStyles }];
 }
 
 export default function App() {
