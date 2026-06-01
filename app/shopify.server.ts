@@ -51,7 +51,10 @@ export async function exchangeCodeForToken(shop: string, code: string): Promise<
     }),
   });
   
-  if (!response.ok) return null;
+  if (!response.ok) {
+    console.error('Token exchange failed:', response.status, await response.text());
+    return null;
+  }
   return response.json();
 }
 
@@ -86,21 +89,39 @@ export async function shopifyREST(shop: string, accessToken: string, path: strin
 }
 
 /**
- * Authenticate admin request - get session from cookie/header
+ * Authenticate admin request
+ * For embedded Shopify apps, the shop domain is passed via ?shop= query param
+ * We look up the session from our database using the shop domain
  */
 export async function authenticateAdmin(request: Request) {
-  // Get shop from query params or header
+  // Get shop from query params
   const url = new URL(request.url);
-  const shop = url.searchParams.get('shop') || request.headers.get('X-Shopify-Shop') ;
+  let shop = url.searchParams.get('shop');
+  
+  // Also check Referer header (Shopify passes shop in the iframe URL)
+  if (!shop) {
+    const referer = request.headers.get('referer');
+    if (referer) {
+      try {
+        const refererUrl = new URL(referer);
+        shop = refererUrl.searchParams.get('shop');
+      } catch {
+        // Invalid referer, ignore
+      }
+    }
+  }
   
   if (!shop) {
     throw new Response('Missing shop parameter', { status: 400 });
   }
   
+  // Clean up shop domain
+  const shopDomain = shop.replace(/https?:\/\//, '').split('/')[0];
+  
   // Get session from database
-  const session = await loadSessionFromDBByShop(shop);
+  const session = await loadSessionFromDBByShop(shopDomain);
   if (!session) {
-    throw new Response('Unauthorized', { status: 401 });
+    throw new Response('Unauthorized - App not installed for this shop', { status: 401 });
   }
   
   return {
@@ -111,7 +132,7 @@ export async function authenticateAdmin(request: Request) {
     admin: {
       graphql: (query: string, variables?: Record<string, unknown>) => 
         shopifyGraphQL(session.shop, session.accessToken, query, variables),
-      rest: (path: string, options?: RequestInit) => 
+      rest: (path: string, options?: RequestInit) =>
         shopifyREST(session.shop, session.accessToken, path, options),
     },
   };

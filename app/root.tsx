@@ -21,7 +21,7 @@ export function links() {
 
 export default function App() {
   return (
-    <html lang="zh-CN">
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -31,11 +31,13 @@ export default function App() {
       <body>
         <div className="app-layout">
           <nav className="sidebar">
-            <div className="logo">Haimo AI Lister</div>
-            <a href="/app" className="nav-item">Dashboard</a>
-            <a href="/app/generate" className="nav-item">AI Generate</a>
-            <a href="/app/billing" className="nav-item">Plans</a>
-            <a href="/app/settings" className="nav-item">Settings</a>
+            <div className="logo">
+              <span className="logo-icon">✨</span> Haimo AI Lister
+            </div>
+            <a href="/app" className="nav-item">📊 Dashboard</a>
+            <a href="/app/generate" className="nav-item">🤖 AI Generate</a>
+            <a href="/app/billing" className="nav-item">💳 Plans</a>
+            <a href="/app/settings" className="nav-item">⚙️ Settings</a>
           </nav>
           <main className="content">
             <Outlet />
@@ -50,7 +52,7 @@ export default function App() {
 
 export function ErrorBoundary() {
   return (
-    <html lang="zh-CN">
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

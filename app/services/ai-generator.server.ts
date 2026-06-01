@@ -1,19 +1,16 @@
 /**
- * AI Generator Service - Claude API调用
+ * AI Generator Service - DeepSeek API (OpenAI-compatible)
  * 
- * 使用Claude生成高质量的Amazon/Shopify产品描述
+ * 使用DeepSeek生成高质量的Amazon/Shopify产品描述
+ * DeepSeek API兼容OpenAI格式，无需额外SDK
  */
-import Anthropic from '@anthropic-ai/sdk';
 import type { GenerationInput, GenerationOutput } from '~/types';
 import { getListingPrompt } from '~/prompts/listing-generator';
 
-// 初始化Claude客户端
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
-
-// Claude模型配置
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+// DeepSeek API配置
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY!;
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const DEEPSEEK_MODEL = 'deepseek-chat';
 const MAX_TOKENS = 2048;
 
 /**
@@ -36,28 +33,47 @@ export async function generateDescription(
     // 构建prompt
     const prompt = getListingPrompt(input);
     
-    // 调用Claude API
-    const message = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: MAX_TOKENS,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
+    // 调用DeepSeek API
+    const response = await fetch(DEEPSEEK_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        max_tokens: MAX_TOKENS,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert e-commerce copywriter specializing in creating high-converting product listings for Amazon and Shopify. You translate Chinese product information into professional English listings optimized for search and conversion.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+      }),
     });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('DeepSeek API error:', response.status, errorData);
+      return {
+        success: false,
+        error: `AI API error: ${response.status}`,
+      };
+    }
     
-    // 解析响应
-    const responseText = message.content[0].type === 'text' 
-      ? message.content[0].text 
-      : '';
+    const data = await response.json();
+    const responseText = data.choices?.[0]?.message?.content || '';
     
     // 解析生成的描述
     const output = parseGeneratedContent(responseText);
     
     // 计算token使用量
-    const tokensUsed = message.usage.input_tokens + message.usage.output_tokens;
+    const tokensUsed = (data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0);
     
     // 记录生成历史
     await recordGeneration(shopDomain, input, output, 'completed', tokensUsed);
@@ -82,10 +98,9 @@ export async function generateDescription(
 }
 
 /**
- * 解析Claude生成的文本内容
+ * 解析AI生成的文本内容
  */
 function parseGeneratedContent(text: string): GenerationOutput {
-  // 尝试提取各部分内容
   let shortTitle = '';
   let bulletPoints: string[] = [];
   let productDescription = '';
@@ -99,37 +114,40 @@ function parseGeneratedContent(text: string): GenerationOutput {
     const trimmedLine = line.trim();
     
     // 检测section headers
-    if (trimmedLine.toLowerCase().includes('short title') || 
-        trimmedLine.toLowerCase().includes('title:')) {
+    if (trimmedLine.match(/^#{1,3}\s*(short title|title)/i) || 
+        trimmedLine.match(/^\*{0,2}(short title|title)\*{0,2}:?$/i)) {
       currentSection = 'title';
       continue;
     }
-    if (trimmedLine.toLowerCase().includes('bullet') || 
-        trimmedLine.toLowerCase().includes('feature')) {
+    if (trimmedLine.match(/^#{1,3}\s*(bullet|feature|key point)/i) || 
+        trimmedLine.match(/^\*{0,2}(bullet|feature|key point)/i)) {
       currentSection = 'bullet';
       continue;
     }
-    if (trimmedLine.toLowerCase().includes('description') || 
-        trimmedLine.toLowerCase().includes('product detail')) {
+    if (trimmedLine.match(/^#{1,3}\s*(description|product detail)/i) || 
+        trimmedLine.match(/^\*{0,2}(description|product detail)/i)) {
       currentSection = 'description';
       continue;
     }
-    if (trimmedLine.toLowerCase().includes('seo') || 
-        trimmedLine.toLowerCase().includes('keyword')) {
+    if (trimmedLine.match(/^#{1,3}\s*(seo|keyword)/i) || 
+        trimmedLine.match(/^\*{0,2}(seo|keyword)/i)) {
       currentSection = 'seo';
       continue;
     }
-    if (trimmedLine.toLowerCase().includes('backend') || 
-        trimmedLine.toLowerCase().includes('search term')) {
+    if (trimmedLine.match(/^#{1,3}\s*(backend|search term)/i) || 
+        trimmedLine.match(/^\*{0,2}(backend|search term)/i)) {
       currentSection = 'backend';
       continue;
     }
     
+    // 跳过空行和分隔线
+    if (!trimmedLine || trimmedLine.match(/^[-=*]{3,}$/)) continue;
+    
     // 解析内容
     if (currentSection === 'title' && trimmedLine) {
-      shortTitle = trimmedLine.replace(/^[-•*]\s*/, '');
+      shortTitle = trimmedLine.replace(/^[-•*]\s*/, '').replace(/^\*\*/, '').replace(/\*\*$/, '');
     } else if (currentSection === 'bullet' && trimmedLine) {
-      const bullet = trimmedLine.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '');
+      const bullet = trimmedLine.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '').replace(/^\*\*/, '').replace(/\*\*$/, '');
       if (bullet) bulletPoints.push(bullet);
     } else if (currentSection === 'description' && trimmedLine) {
       productDescription += trimmedLine + ' ';
@@ -142,8 +160,7 @@ function parseGeneratedContent(text: string): GenerationOutput {
   }
   
   // 如果解析失败，使用默认格式
-  if (!shortTitle && !productDescription) {
-    // 假设整个文本是描述
+  if (!shortTitle && !productDescription && bulletPoints.length === 0) {
     productDescription = text;
   }
   
@@ -160,7 +177,7 @@ function parseGeneratedContent(text: string): GenerationOutput {
   
   return {
     shortTitle: shortTitle || 'Premium Product - Best Choice',
-    bulletPoints: bulletPoints.slice(0, 5), // 限制5个
+    bulletPoints: bulletPoints.slice(0, 5),
     productDescription: productDescription.trim(),
     seoKeywords: seoKeywords.slice(0, 10),
     backendSearchTerms: backendSearchTerms.trim() || seoKeywords.slice(0, 5).join(' '),
@@ -190,7 +207,7 @@ async function recordGeneration(
         input: input as unknown as Record<string, unknown>,
         output: output as unknown as Record<string, unknown>,
         status,
-        model: CLAUDE_MODEL,
+        model: DEEPSEEK_MODEL,
         tokensUsed,
         errorMessage,
       });
@@ -229,7 +246,6 @@ export async function batchGenerateDescriptions(
       totalTokens += result.tokensUsed;
     }
     
-    // 回调进度
     if (onProgress) {
       onProgress(i + 1, inputs.length);
     }
