@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { vitePlugin as remix } from '@remix-run/dev';
-import tsconfigPaths from 'vite-tsconfig-paths';
+import path from 'path';
 
 export default defineConfig({
   plugins: [
@@ -12,7 +12,11 @@ export default defineConfig({
         v3_throwAbortReason: true,
       },
     }),
-    tsconfigPaths(),
   ],
+  resolve: {
+    alias: {
+      '~': path.resolve(__dirname, 'app'),
+    },
+  },
   server: { port: 3000 },
 });
