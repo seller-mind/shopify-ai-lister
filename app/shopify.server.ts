@@ -1,119 +1,152 @@
-import '@shopify/shopify-api/adapters/node';
-import { shopifyApi, ApiVersion, BillingInterval, Session } from '@shopify/shopify-api';
-import { restResources } from '@shopify/shopify-api/rest/admin/2026-04';
+/**
+ * Shopify App 配置 - 轻量版，使用 fetch 直接调用 Shopify API
+ * 不依赖 @shopify/shopify-api SDK，减少部署体积和依赖冲突
+ */
 import { storeSessionInDB, loadSessionFromDB, deleteSessionFromDB } from '~/services/supabase.server';
 
-/**
- * Shopify App 配置 - 使用 @shopify/shopify-api 直接
- */
+// Config from env
+const API_KEY = process.env.SHOPIFY_API_KEY!;
+const API_SECRET = process.env.SHOPIFY_API_SECRET!;
+const APP_URL = process.env.SHOPIFY_APP_URL!;
+const SCOPES = process.env.SCOPES || 'read_products,write_products';
 
-// Custom session storage using Supabase
-const supabaseSessionStorage = {
-  storeSession: async (session: Session): Promise<boolean> => {
-    return storeSessionInDB({
-      id: session.id,
+/**
+ * Generate HMAC for Shopify webhook verification
+ */
+async function verifyHmac(body: string, hmacHeader: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(API_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
+  const digest = Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  return digest === hmacHeader;
+}
+
+/**
+ * OAuth: Build authorization URL
+ */
+export function getAuthUrl(shop: string, state: string): string {
+  const redirectUri = `${APP_URL}/auth/callback`;
+  return `https://${shop}/admin/oauth/authorize?client_id=${API_KEY}&scope=${SCOPES}&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+}
+
+/**
+ * OAuth: Exchange code for access token
+ */
+export async function exchangeCodeForToken(shop: string, code: string): Promise<{ accessToken: string; scope: string } | null> {
+  const response = await fetch(`https://${shop}/admin/oauth/access_token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id: API_KEY,
+      client_secret: API_SECRET,
+      code,
+    }),
+  });
+  
+  if (!response.ok) return null;
+  return response.json();
+}
+
+/**
+ * Shopify Admin GraphQL API client
+ */
+export async function shopifyGraphQL(shop: string, accessToken: string, query: string, variables?: Record<string, unknown>) {
+  const response = await fetch(`https://${shop}/admin/api/2026-04/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'X-Shopify-Access-Token': accessToken,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  return response.json();
+}
+
+/**
+ * Shopify Admin REST API client
+ */
+export async function shopifyREST(shop: string, accessToken: string, path: string, options?: RequestInit) {
+  const response = await fetch(`https://${shop}/admin/api/2026-04${path}`, {
+    ...options,
+    headers: {
+      'X-Shopify-Access-Token': accessToken,
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+  });
+  return response.json();
+}
+
+/**
+ * Authenticate admin request - get session from cookie/header
+ */
+export async function authenticateAdmin(request: Request) {
+  // Get shop from query params or header
+  const url = new URL(request.url);
+  const shop = url.searchParams.get('shop') || request.headers.get('X-Shopify-Shop') ;
+  
+  if (!shop) {
+    throw new Response('Missing shop parameter', { status: 400 });
+  }
+  
+  // Get session from database
+  const session = await loadSessionFromDBByShop(shop);
+  if (!session) {
+    throw new Response('Unauthorized', { status: 401 });
+  }
+  
+  return {
+    session: {
       shop: session.shop,
-      state: session.state,
-      isOnline: session.isOnline,
       accessToken: session.accessToken,
-      scope: session.scope,
-    });
-  },
-  loadSession: async (sessionId: string): Promise<Session | undefined> => {
-    const data = await loadSessionFromDB(sessionId);
-    if (!data) return undefined;
-    const session = new Session({
-      id: data.id,
-      shop: data.shop,
-      state: data.state,
-      isOnline: data.isOnline,
-      accessToken: data.accessToken,
-      scope: data.scope,
-    });
-    return session;
-  },
-  deleteSession: async (sessionId: string): Promise<boolean> => {
-    return deleteSessionFromDB(sessionId);
-  },
-};
-
-const shopify = shopifyApi({
-  apiKey: process.env.SHOPIFY_API_KEY!,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET!,
-  apiVersion: ApiVersion.January25,
-  hostName: process.env.SHOPIFY_APP_URL!.replace(/^https?:\/\//, ''),
-  scopes: process.env.SCOPES?.split(',') ?? ['read_products', 'write_products'],
-  isEmbeddedApp: true,
-  restResources,
-  sessionStorage: supabaseSessionStorage,
-  billing: {
-    'STARTER_PLAN': {
-      amount: 19,
-      currencyCode: 'USD',
-      interval: BillingInterval.Every30Days,
-      trialDays: 7,
     },
-    'PRO_PLAN': {
-      amount: 39,
-      currencyCode: 'USD',
-      interval: BillingInterval.Every30Days,
-      trialDays: 7,
+    admin: {
+      graphql: (query: string, variables?: Record<string, unknown>) => 
+        shopifyGraphQL(session.shop, session.accessToken, query, variables),
+      rest: (path: string, options?: RequestInit) => 
+        shopifyREST(session.shop, session.accessToken, path, options),
     },
-  },
-});
-
-export default shopify;
+  };
+}
 
 /**
- * 认证辅助函数
+ * Load session by shop domain
  */
-export const authenticate = {
-  admin: async (request: Request) => {
-    const { sessionId } = shopify.session.getCurrentId({
-      isOnline: true,
-      request,
-    });
+async function loadSessionFromDBByShop(shop: string): Promise<{ shop: string; accessToken: string } | null> {
+  try {
+    const { getSupabaseAdmin } = await import('~/services/supabase.server');
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('shopify_sessions')
+      .select('shop, access_token')
+      .eq('shop', shop)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
     
-    if (!sessionId) {
-      throw new Response('Unauthorized', { status: 401 });
-    }
-    
-    const session = await loadSessionFromDB(sessionId);
-    if (!session) {
-      throw new Response('Unauthorized', { status: 401 });
-    }
-    
-    const client = new shopify.clients.Rest({
-      session: {
-        id: session.id,
-        shop: session.shop,
-        state: session.state,
-        isOnline: session.isOnline,
-        accessToken: session.accessToken,
-        scope: session.scope,
-      } as Session,
-    });
-    
-    return {
-      session: {
-        shop: session.shop,
-        accessToken: session.accessToken,
-      },
-      admin: {
-        graphql: async (query: string, variables?: any) => {
-          const graphqlClient = new shopify.clients.Graphql({
-            session: {
-              id: session.id,
-              shop: session.shop,
-              state: session.state,
-              isOnline: session.isOnline,
-              accessToken: session.accessToken,
-              scope: session.scope,
-            } as Session,
-          });
-          return graphqlClient.query({ data: { query, variables } });
-        },
-      },
-    };
-  },
+    if (error || !data) return null;
+    return { shop: data.shop, accessToken: data.access_token };
+  } catch {
+    return null;
+  }
+}
+
+export const shopify = {
+  getAuthUrl,
+  exchangeCodeForToken,
+  authenticateAdmin,
+  verifyHmac,
+  shopifyGraphQL,
+  shopifyREST,
 };
+
+export { storeSessionInDB, loadSessionFromDB, deleteSessionFromDB };
+export { API_KEY, API_SECRET, APP_URL, SCOPES };
