@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { vitePlugin as remix } from '@remix-run/dev';
-import path from 'path';
+import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
   plugins: [
@@ -15,7 +15,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '~': path.resolve(__dirname, 'app'),
+      '~': fileURLToPath(new URL('./app', import.meta.url)),
     },
   },
   server: { port: 3000 },
