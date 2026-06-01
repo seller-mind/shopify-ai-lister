@@ -5,7 +5,7 @@ name = "Haimo AI Lister"
 client_id = "c89a54bc8d3f9038baa77056f8a55b6b"
 
 # 应用主URL（部署后需要修改为实际URL）
-application_url = "https://your-app-url.com"
+application_url = "https://shopify-ai-lister-nlnt5b1t5-sellermind-s-projects.vercel.app"
 
 # 是否为嵌入式应用（必须为true才能嵌入Shopify Admin）
 embedded = true
@@ -17,7 +17,7 @@ scopes = "read_products,write_products"
 # OAuth回调URL
 [auth]
 redirect_urls = [
-  "https://your-app-url.com/auth/callback",
+  "https://shopify-ai-lister-nlnt5b1t5-sellermind-s-projects.vercel.app/auth/callback",
 ]
 
 # Webhook配置（必须包含GDPR合规Webhook）
