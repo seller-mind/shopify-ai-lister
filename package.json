@@ -1,7 +1,7 @@
 {
   "name": "haimo-ai-lister",
   "version": "1.0.0",
-  "description": "AI产品描述生成器 - 专为跨境卖家设计（中文输入→英文Amazon/Shopify listing）",
+  "description": "AI\u4ea7\u54c1\u63cf\u8ff0\u751f\u6210\u5668 - \u4e13\u4e3a\u8de8\u5883\u5356\u5bb6\u8bbe\u8ba1\uff08\u4e2d\u6587\u8f93\u5165\u2192\u82f1\u6587Amazon/Shopify listing\uff09",
   "private": true,
   "scripts": {
     "dev": "remix vite:dev",
@@ -12,10 +12,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
-    "@shopify/polaris": "^13.10.0",
-    "@shopify/polaris-icons": "^9.10.0",
-    "@shopify/shopify-api": "^11.8.0",
-    "@shopify/shopify-app-remix": "^2.10.0",
+    "@shopify/polaris": "13.10.0",
+    "@shopify/polaris-icons": "9.10.0",
+    "@shopify/shopify-api": "11.8.0",
     "@supabase/supabase-js": "^2.47.0",
     "@remix-run/node": "^2.15.0",
     "@remix-run/react": "^2.15.0",

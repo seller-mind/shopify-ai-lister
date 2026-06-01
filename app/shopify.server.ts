@@ -1,37 +1,57 @@
 import '@shopify/shopify-api/adapters/node';
-import { shopifyApp, BillingInterval } from '@shopify/shopify-app-remix/server';
+import { shopifyApi, ApiVersion, BillingInterval, Session } from '@shopify/shopify-api';
+import { restResources } from '@shopify/shopify-api/rest/admin/2026-04';
+import { storeSessionInDB, loadSessionFromDB, deleteSessionFromDB } from '~/services/supabase.server';
 
 /**
- * Shopify App 配置
- * 
- * 使用官方Remix适配器，配置OAuth、计费和GDPR Webhook
+ * Shopify App 配置 - 使用 @shopify/shopify-api 直接
  */
-const shopify = shopifyApp({
-  // API凭证 - 从环境变量读取
+
+// Custom session storage using Supabase
+const supabaseSessionStorage = {
+  storeSession: async (session: Session): Promise<boolean> => {
+    return storeSessionInDB({
+      id: session.id,
+      shop: session.shop,
+      state: session.state,
+      isOnline: session.isOnline,
+      accessToken: session.accessToken,
+      scope: session.scope,
+    });
+  },
+  loadSession: async (sessionId: string): Promise<Session | undefined> => {
+    const data = await loadSessionFromDB(sessionId);
+    if (!data) return undefined;
+    const session = new Session({
+      id: data.id,
+      shop: data.shop,
+      state: data.state,
+      isOnline: data.isOnline,
+      accessToken: data.accessToken,
+      scope: data.scope,
+    });
+    return session;
+  },
+  deleteSession: async (sessionId: string): Promise<boolean> => {
+    return deleteSessionFromDB(sessionId);
+  },
+};
+
+const shopify = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY!,
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
-  
-  // 应用URL（用于OAuth回调）
-  appUrl: process.env.SHOPIFY_APP_URL!,
-  
-  // 访问权限范围
+  apiVersion: ApiVersion.January25,
+  hostName: process.env.SHOPIFY_APP_URL!.replace(/^https?:\/\//, ''),
   scopes: process.env.SCOPES?.split(',') ?? ['read_products', 'write_products'],
-  
-  // 是否为嵌入式应用（true才能嵌入Shopify Admin）
   isEmbeddedApp: true,
-  
-  // 启用新的嵌入式认证策略（消除OAuth重定向）
-  future: {
-    unstable_newEmbeddedAuthStrategy: true,
-  },
-  
-  // 计费计划配置
+  restResources,
+  sessionStorage: supabaseSessionStorage,
   billing: {
     'STARTER_PLAN': {
       amount: 19,
       currencyCode: 'USD',
       interval: BillingInterval.Every30Days,
-      trialDays: 7, // 7天免费试用
+      trialDays: 7,
     },
     'PRO_PLAN': {
       amount: 39,
@@ -40,65 +60,60 @@ const shopify = shopifyApp({
       trialDays: 7,
     },
   },
-  
-  // Webhook配置
-  webhooks: {
-    APP_UNINSTALLED: {
-      deliveryMethod: 'http',
-      callbackUrl: '/webhooks/app_uninstalled',
-    },
-    CUSTOMERS_DATA_REQUEST: {
-      deliveryMethod: 'http',
-      callbackUrl: '/webhooks/customers_data_request',
-    },
-    CUSTOMERS_REDACT: {
-      deliveryMethod: 'http',
-      callbackUrl: '/webhooks/customers_redact',
-    },
-    SHOP_REDACT: {
-      deliveryMethod: 'http',
-      callbackUrl: '/webhooks/shop_redact',
-    },
-    APP_PURCHASES_UPDATE: {
-      deliveryMethod: 'http',
-      callbackUrl: '/webhooks/app_purchases_update',
-    },
-  },
-  
-  // 存储配置 - 使用内存存储（生产环境建议使用Prisma+PostgreSQL）
-  sessionStorage: {
-    storeSession: async (session) => {
-      // 存储session到数据库
-      const { storeSessionInDB } = await import('~/services/supabase.server');
-      return storeSessionInDB(session);
-    },
-    loadSession: async (sessionId) => {
-      const { loadSessionFromDB } = await import('~/services/supabase.server');
-      return loadSessionFromDB(sessionId);
-    },
-    deleteSession: async (sessionId) => {
-      const { deleteSessionFromDB } = await import('~/services/supabase.server');
-      return deleteSessionFromDB(sessionId);
-    },
-  },
 });
 
 export default shopify;
 
 /**
- * 认证辅助函数 - 用于保护路由
+ * 认证辅助函数
  */
 export const authenticate = {
-  admin: shopify.authenticate.admin,
-  public: shopify.authenticate.public,
+  admin: async (request: Request) => {
+    const { sessionId } = shopify.session.getCurrentId({
+      isOnline: true,
+      request,
+    });
+    
+    if (!sessionId) {
+      throw new Response('Unauthorized', { status: 401 });
+    }
+    
+    const session = await loadSessionFromDB(sessionId);
+    if (!session) {
+      throw new Response('Unauthorized', { status: 401 });
+    }
+    
+    const client = new shopify.clients.Rest({
+      session: {
+        id: session.id,
+        shop: session.shop,
+        state: session.state,
+        isOnline: session.isOnline,
+        accessToken: session.accessToken,
+        scope: session.scope,
+      } as Session,
+    });
+    
+    return {
+      session: {
+        shop: session.shop,
+        accessToken: session.accessToken,
+      },
+      admin: {
+        graphql: async (query: string, variables?: any) => {
+          const graphqlClient = new shopify.clients.Graphql({
+            session: {
+              id: session.id,
+              shop: session.shop,
+              state: session.state,
+              isOnline: session.isOnline,
+              accessToken: session.accessToken,
+              scope: session.scope,
+            } as Session,
+          });
+          return graphqlClient.query({ data: { query, variables } });
+        },
+      },
+    };
+  },
 };
-
-/**
- * 登录助手 - 用于发起OAuth流程
- */
-export const login = shopify.login;
-
-/**
- * 卸载助手 - 处理App卸载
- */
-export const uninstall = shopify.uninstall;
