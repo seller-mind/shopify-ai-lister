@@ -1,0 +1,11 @@
+node_modules
+.build
+.vercel
+.shopify
+.env
+.env.*
+!.env.example
+/cache
+public/build
+build
+*.tsbuildinfo

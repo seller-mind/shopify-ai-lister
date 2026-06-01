@@ -1,0 +1,11 @@
+{
+  "framework": "remix",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": "build",
+  "rewrites": [
+    { "source": "/auth/(.*)", "destination": "/server.ts" },
+    { "source": "/webhooks/(.*)", "destination": "/server.ts" },
+    { "source": "/app/(.*)", "destination": "/server.ts" }
+  ]
+}

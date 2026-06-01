@@ -1,0 +1,89 @@
+/**
+ * Prisma Schema - 数据库模型定义
+ * 
+ * 使用Prisma ORM管理Shopify店铺数据
+ * 配合Supabase PostgreSQL使用
+ */
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+// Shopify店铺会话存储
+model ShopifySession {
+  id          String   @id @default(cuid())
+  shop        String   // mystore.myshopify.com
+  state       String
+  isOnline    Boolean  @default(false)
+  accessToken String   // 加密存储
+  scope       String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@unique([id])
+  @@index([shop])
+}
+
+// 店铺信息
+model Store {
+  id          String   @id @default(cuid())
+  shop        String   @unique // mystore.myshopify.com
+  shopName    String?
+  accessToken String
+  isOnline    Boolean  @default(false)
+  plan        String   @default("FREE") // FREE, STARTER, PRO
+  settings    Json?    // AppSettings
+  installedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  generations Generation[]
+  
+  @@index([shop])
+}
+
+// AI生成记录
+model Generation {
+  id            String   @id @default(cuid())
+  storeId       String
+  store         Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  shopDomain    String
+  productId     String?  // Shopify产品ID
+  productTitle  String?
+  input         Json     // GenerationInput
+  output        Json?    // GenerationOutput
+  status        String   @default("pending") // pending, generating, completed, failed
+  model         String   @default("claude-sonnet-4-20250514")
+  tokensUsed    Int      @default(0)
+  errorMessage   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([storeId])
+  @@index([shopDomain])
+  @@index([createdAt])
+}
+
+// 客户数据（用于GDPR合规）
+model Customer {
+  id                  String   @id @default(cuid())
+  storeId             String
+  shopifyCustomerId   String?
+  email               String?
+  phone               String?
+  firstName           String?
+  lastName            String?
+  ordersCount         Int      @default(0)
+  totalSpent          Decimal  @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@index([storeId])
+  @@index([shopifyCustomerId])
+  @@index([email])
+}

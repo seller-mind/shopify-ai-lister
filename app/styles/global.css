@@ -1,0 +1,68 @@
+/**
+ * 全局样式文件
+ */
+
+/* CSS Variables for Polaris Theming */
+:root {
+  --p-color-bg: #f6f6f7;
+  --p-color-bg-fill-success: #ddf4e4;
+  --p-color-bg-fill-info: #e5f0ff;
+  --p-color-bg-fill-warning: #fff4d5;
+  --p-color-bg-fill-critical: #fed3d3;
+  --p-color-text: #1a1a1a;
+  --p-color-text-secondary: #6d7175;
+  --p-color-border: #e3e3e3;
+}
+
+/* 页面布局 */
+.app-layout {
+  min-height: 100vh;
+  background: var(--p-color-bg);
+}
+
+/* 卡片悬停效果 */
+.card-hover:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s ease;
+}
+
+/* 进度条颜色 */
+.progress-success {
+  background: #008060;
+}
+
+.progress-warning {
+  background: #ff991c;
+}
+
+.progress-critical {
+  background: #de3618;
+}
+
+/* 加载动画 */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* 渐变背景 */
+.gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
