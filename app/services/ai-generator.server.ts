@@ -1,8 +1,8 @@
 /**
  * AI Generator Service - DeepSeek API (OpenAI-compatible)
  * 
- * 使用DeepSeek生成高质量的Amazon/Shopify产品描述
- * DeepSeek API兼容OpenAI格式，无需额外SDK
+ * Generate high-quality Amazon/Shopify product descriptions using DeepSeek
+ * DeepSeek API is OpenAI-compatible, no extra SDK needed
  */
 import type { GenerationInput, GenerationOutput } from '~/types';
 import { getListingPrompt } from '~/prompts/listing-generator';
@@ -16,9 +16,9 @@ const MAX_TOKENS = 2048;
 /**
  * 生成产品描述
  * 
- * @param input - 中文输入信息
+ * @param input - Product information in any language
  * @param shopDomain - 店铺域名（用于记录）
- * @returns 生成的英文描述
+ * @returns Generated native English description
  */
 export async function generateDescription(
   input: GenerationInput,
@@ -46,7 +46,7 @@ export async function generateDescription(
         messages: [
           {
             role: 'system',
-            content: 'You are an expert e-commerce copywriter specializing in creating high-converting product listings for Amazon and Shopify. You translate Chinese product information into professional English listings optimized for search and conversion.',
+            content: 'You are an expert e-commerce copywriter specializing in creating high-converting product listings for Amazon and Shopify. You take product information in ANY language (Chinese, Japanese, Spanish, German, English, etc.) and produce polished, native English listings that sell. Never output translated-sounding text — always write as if English is your first language. Understand cultural nuances and include expressions that resonate with English-speaking buyers.',
           },
           {
             role: 'user',

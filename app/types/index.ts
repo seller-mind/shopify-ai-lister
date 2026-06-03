@@ -36,15 +36,15 @@ export interface ShopifyProduct {
   updatedAt: string;
 }
 
-/** AI生成输入（中文） */
+/** AI generation input (any language) */
 export interface GenerationInput {
-  // 产品名称
+  // Product name (any language)
   productName: string;
-  // 产品类别
+  // Product category
   category?: string;
-  // 主要特点（多个用换行分隔）
+  // Key features (one per line, any language)
   features?: string;
-  // 目标市场关键词
+  // Target market keywords
   keywords?: string;
   // 竞品参考（可选）
   competitorReferences?: string;

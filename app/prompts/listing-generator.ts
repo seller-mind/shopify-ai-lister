@@ -1,8 +1,8 @@
 /**
  * AI产品描述生成 Prompt 模板
  * 
- * 为跨境电商卖家生成优化的Amazon/Shopify listing
- * 中文输入 → 英文输出
+ * Generate optimized Amazon/Shopify listings
+ * Any language input → Native English output
  */
 import type { GenerationInput, TargetPlatform } from '~/types';
 
@@ -13,10 +13,10 @@ export function getListingPrompt(input: GenerationInput): string {
   const platformInstruction = getPlatformInstruction(input.targetPlatform);
   
   return `
-# AI产品描述生成任务
+# AI Product Description Generation Task
 
-## 产品信息（中文）
-- **产品名称**: ${input.productName}
+## Product Information (any language — we will convert to native English)
+- **Product Name**: ${input.productName}
 ${input.category ? `- **产品类别**: ${input.category}` : ''}
 ${input.features ? `- **产品特点**:\n${formatFeatures(input.features)}` : ''}
 ${input.keywords ? `- **目标关键词**: ${input.keywords}` : ''}
@@ -28,48 +28,50 @@ ${input.competitorReferences ? `- **竞品参考**: ${input.competitorReferences
 ## 平台优化要求
 ${platformInstruction}
 
-## 输出要求
+## Output Requirements
 
-请生成以下内容，全部使用英文：
+Generate ALL output in native, polished English:
 
-### 1. Short Title（简短标题）
+### 1. Short Title
 - 最多150字符
 - 包含核心关键词
 - 突出产品卖点
 - 适合搜索排名
 
-### 2. Bullet Points（5点产品要点）
-每个要点：
-- 开头使用大写字母
-- 包含关键特征或用户利益
-- 最多200字符
-- 使用数字或符号强调重点
+### 2. Bullet Points (5 key points)
+Each bullet point:
+- Start with a capital letter
+- Include key feature or user benefit
+- Max 200 characters
+- Use numbers or symbols for emphasis
 
-### 3. Product Description（产品描述）
-- 200-500词
-- 段落式，易于阅读
-- 包含使用场景、目标用户、独特卖点
-- SEO友好的自然语言
-- 包含行动号召（CTA）
+### 3. Product Description
+- 200-500 words
+- Paragraph format, easy to read
+- Include use cases, target users, unique selling points
+- SEO-friendly natural language
+- Include a call to action (CTA)
 
-### 4. SEO Keywords（SEO关键词）
-- 列出10-15个关键词
-- 涵盖不同搜索意图
-- 包含长尾关键词
+### 4. SEO Keywords
+- List 10-15 keywords
+- Cover different search intents
+- Include long-tail keywords
 
-### 5. Backend Search Terms（后端搜索词）
-- 250字节限制（Amazon）
-- 用逗号分隔
-- 包含变体和同义词
-- 不要重复前端关键词
+### 5. Backend Search Terms
+- 250 bytes limit (Amazon)
+- Comma-separated
+- Include variants and synonyms
+- Do not repeat front-end keywords
 
-## 风格要求
-- 专业但易于理解
-- 面向北美/欧洲消费者
-- 避免夸大宣传
-- 使用自然语言
+## Style Requirements
+- Professional yet accessible
+- Targeted at North American/European consumers
+- Avoid exaggeration or unsubstantiated claims
+- Use natural, native English — never translated-sounding text
+- If the input is in a non-English language (Chinese, Japanese, Spanish, etc.), translate the meaning naturally, not literally
+- Include culturally appropriate expressions and idioms that resonate with English-speaking buyers
 
-请按以上格式输出。
+Please output in the format above.
 `;
 }
 
@@ -78,42 +80,42 @@ ${platformInstruction}
  */
 function getPlatformInstruction(platform: TargetPlatform): string {
   const baseInstruction = `
-- 符合跨境电商行业标准
-- 关键词策略针对英文搜索引擎优化
-- 考虑目标市场的文化习惯和表达方式
+- Meet cross-border e-commerce standards
+- Keyword strategy optimized for English search engines
+- Consider target market cultural habits and expressions
 `;
 
   switch (platform) {
     case 'amazon':
       return `
-## Amazon平台优化
+## Amazon Platform Optimization
 ${baseInstruction}
-- 遵循Amazon listing最佳实践
-- 符合Amazon SEO算法偏好
-- 标题格式：品牌 + 核心词 + 特点 + 规格
-- 要点突出功能性和实用性
-- 后端搜索词不超250字节
+- Follow Amazon listing best practices
+- Align with Amazon SEO algorithm preferences
+- Title format: Brand + Core Keyword + Features + Specs
+- Emphasize functionality and practicality in bullet points
+- Backend search terms within 250 bytes
 `;
 
     case 'shopify':
       return `
-## Shopify平台优化
+## Shopify Platform Optimization
 ${baseInstruction}
-- 适合Shopify SEO
-- 标题简洁有力
-- 描述适合产品页面展示
-- 包含故事性和情感连接
-- 支持富文本格式
+- Optimized for Shopify SEO
+- Concise and impactful titles
+- Descriptions suited for product page display
+- Include storytelling and emotional connection
+- Support rich text formatting
 `;
 
     case 'both':
       return `
-## Amazon + Shopify双平台优化
+## Amazon + Shopify Dual Platform Optimization
 ${baseInstruction}
-- 生成通用高质量内容
-- 针对两个平台都进行了优化
-- 提供两套后端搜索词（如有差异）
-- 描述可以同时用于两个平台
+- Generate versatile high-quality content
+- Optimized for both platforms
+- Provide two sets of backend search terms (if different)
+- Descriptions usable on both platforms
 `;
 
     default:
@@ -142,16 +144,16 @@ export function getBatchPrompt(
     .map((p, i) => `
 ### 产品 ${i + 1}
 - **名称**: ${p.productName}
-${p.category ? `- **类别**: ${p.category}` : ''}
+${p.category ? `- **Category**: ${p.category}` : ''}
 ${p.features ? `- **特点**: ${p.features}` : ''}
 ${p.keywords ? `- **关键词**: ${p.keywords}` : ''}
 `)
     .join('\n');
 
   return `
-# 批量AI产品描述生成任务
+# Batch AI Product Description Generation
 
-请为以下${products.length}个产品生成描述。每个产品请按以下格式输出：
+Generate descriptions for the following${products.length} products. Output each product in the following format:
 
 ---
 
@@ -177,12 +179,12 @@ ${p.keywords ? `- **关键词**: ${p.keywords}` : ''}
 
 ---
 
-## 待生成产品
+## Products to Generate
 ${productsList}
 
 ## 平台: ${platform.toUpperCase()}
 
-请按顺序为每个产品生成内容。
+Please generate content for each product in order.
 `;
 }
 
@@ -194,21 +196,21 @@ export function getEditPrompt(
   instructions: string
 ): string {
   return `
-# AI产品描述编辑任务
+# AI Product Description Edit Task
 
-## 原文描述
+## Original Description
 ${originalDescription}
 
-## 编辑要求
+## Edit Instructions
 ${instructions}
 
-## 要求
-- 保持原有核心信息
-- 改进表达和结构
-- 优化SEO
-- 输出完整的新描述
+## Requirements
+- Preserve core information
+- Improve expression and structure
+- Optimize SEO
+- Output complete new description
 
-请输出修改后的完整描述。
+Please output the complete revised description.
 `;
 }
 
@@ -221,34 +223,34 @@ export function getKeywordResearchPrompt(
   targetMarket?: string
 ): string {
   return `
-# 跨境电商关键词研究
+# Cross-border E-commerce Keyword Research
 
-## 产品信息
-- **产品名称**: ${productName}
-${category ? `- **类别**: ${category}` : ''}
-${targetMarket ? `- **目标市场**: ${targetMarket}` : ''}
+## Product Information
+- **Product Name**: ${productName}
+${category ? `- **Category**: ${category}` : ''}
+${targetMarket ? `- **Target Market**: ${targetMarket}` : ''}
 
-## 任务
-请提供以下类型的关键词研究：
+## Task
+Provide the following keyword research:
 
-### 1. 高流量核心关键词（5个）
-这些是搜索量最高的词
+### 1. High-Volume Core Keywords (5)
+Keywords with the highest search volume
 
-### 2. 长尾关键词（10个）
-这些是更具体、转化率更高的词
+### 2. Long-Tail Keywords (10)
+More specific, higher-conversion keywords
 
-### 3. 竞品品牌词（3-5个）
-消费者可能搜索的相关品牌
+### 3. Competitor Brand Keywords (3-5)
+Related brands consumers might search for
 
-### 4. 场景/用途词（5个）
-描述使用场景的关键词
+### 4. Use Case Keywords (5)
+Keywords describing usage scenarios
 
-### 5. 属性/特征词（5个）
-产品具体特征相关词
+### 5. Attribute/Feature Keywords (5)
+Keywords related to specific product features
 
-## 输出格式
-请按类别列出每个关键词，并简要说明搜索意图。
+## Output Format
+List each keyword by category with a brief explanation of search intent.
 
-针对北美英语市场。
+Target: North American English market.
 `;
 }

@@ -80,7 +80,7 @@ export default function Generate() {
   return (
     <div className="page">
       <h1>AI Product Description Generator</h1>
-      <p className="subtitle">Chinese input → English Amazon/Shopify listing</p>
+      <p className="subtitle">Write in your language, get English product descriptions that sell</p>
 
       {usage && (
         <div className="usage-bar">
@@ -90,27 +90,27 @@ export default function Generate() {
 
       <Form method="post" className="form">
         <div className="form-group">
-          <label>产品名称（中文）*</label>
-          <input type="text" name="productName" required placeholder="e.g. 无线蓝牙耳机" />
+          <label>Product Name *</label>
+          <input type="text" name="productName" required placeholder="e.g. Wireless Bluetooth Earbuds / 无线蓝牙耳机 / ワイヤレスイヤホン" />
         </div>
 
         <div className="form-group">
-          <label>产品类别（可选）</label>
-          <input type="text" name="category" placeholder="e.g. 电子产品、家居用品" />
+          <label>Category (optional)</label>
+          <input type="text" name="category" placeholder="e.g. Electronics, Home & Kitchen / 电子产品、家居用品" />
         </div>
 
         <div className="form-group">
-          <label>产品特点（中文）</label>
-          <textarea name="features" rows={4} placeholder={"e.g. 降噪功能、续航30小时、IPX7防水\n每行一个特点"} />
+          <label>Key Features</label>
+          <textarea name="features" rows={4} placeholder={"e.g. Noise canceling, 30-hour battery, IPX7 waterproof\nOne feature per line, any language"} />
         </div>
 
         <div className="form-group">
-          <label>目标关键词（可选）</label>
+          <label>Target Keywords (optional)</label>
           <input type="text" name="keywords" placeholder="e.g. wireless earbuds, noise canceling" />
         </div>
 
         <div className="form-group">
-          <label>目标平台</label>
+          <label>Target Platform</label>
           <select name="targetPlatform">
             <option value="shopify">Shopify</option>
             <option value="amazon">Amazon</option>
