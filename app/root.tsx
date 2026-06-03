@@ -10,6 +10,15 @@ import { json } from '@remix-run/node';
 import globalStyles from '~/styles/global.css?url';
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  // ─── Geo-block: China mainland (compliance) ───
+  const country = request.headers.get('x-vercel-ip-country') || '';
+  if (country === 'CN') {
+    throw new Response('This service is not available in your region.', {
+      status: 451,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+  }
+
   return json({
     apiKey: process.env.SHOPIFY_API_KEY!,
   });
