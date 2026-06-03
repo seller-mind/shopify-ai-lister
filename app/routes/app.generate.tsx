@@ -81,6 +81,7 @@ export default function Generate() {
     <div className="page">
       <h1>AI Product Description Generator</h1>
       <p className="subtitle">Write in your language, get English product descriptions that sell</p>
+      <p className="supported-languages">Supports Chinese, Japanese, Korean, Spanish, French, German, Arabic, Hindi, Portuguese, Russian & 20+ more languages</p>
 
       {usage && (
         <div className="usage-bar">
