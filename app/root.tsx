@@ -52,6 +52,9 @@ export default function App() {
             <Outlet />
           </main>
         </div>
+        <footer style={{ padding: '8px 16px', textAlign: 'center', fontSize: '11px', color: '#888', borderTop: '1px solid #e5e5e5' }}>
+          🌐 Available for international users only. Not available in mainland China.
+        </footer>
         <ScrollRestoration />
         <Scripts />
       </body>
