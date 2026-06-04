@@ -5,8 +5,9 @@ import { storeSessionInDB, upsertStore } from '~/services/supabase.server';
 
 /**
  * /auth/callback - OAuth callback handler
- * Shopify redirects here after the merchant authorizes the app
- * We exchange the code for an access token and store the session
+ * 
+ * Shopify redirects here after the merchant authorizes the app.
+ * We exchange the code for an access token and store the session.
  */
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -19,11 +20,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
     hasCode: !!code, 
     shop, 
     hasState: !!state,
-    hasHmac: !!hmac 
+    hasHmac: !!hmac,
+    fullURL: request.url
   });
 
   // If no code, this might be a re-auth request - redirect to auth
   if (!code && shop) {
+    console.log('[auth/callback] No code, redirecting to /auth');
     return redirect(`/auth?shop=${encodeURIComponent(shop)}`);
   }
 
@@ -42,18 +45,28 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   // Exchange code for access token
   console.log('[auth/callback] Exchanging code for token, shop:', shopDomain);
-  const result = await shopify.exchangeCodeForToken(shopDomain, code);
-
-  if (!result) {
-    console.error('[auth/callback] Token exchange failed for shop:', shopDomain);
-    return new Response('OAuth token exchange failed', { status: 400 });
+  
+  let result;
+  try {
+    result = await shopify.exchangeCodeForToken(shopDomain, code);
+  } catch (error) {
+    console.error('[auth/callback] Token exchange exception:', error);
+    return new Response('OAuth token exchange failed (exception)', { status: 500 });
   }
 
-  console.log('[auth/callback] Token exchange successful, storing session for:', shopDomain);
+  if (!result) {
+    console.error('[auth/callback] Token exchange returned null for shop:', shopDomain);
+    return new Response('OAuth token exchange failed (null result)', { status: 400 });
+  }
+
+  console.log('[auth/callback] Token exchange successful! Scope:', result.scope);
 
   // Store session in database
+  const sessionId = `${shopDomain}_${Date.now()}`;
+  console.log('[auth/callback] Storing session:', sessionId);
+  
   const sessionStored = await storeSessionInDB({
-    id: `${shopDomain}_${Date.now()}`,
+    id: sessionId,
     shop: shopDomain,
     state: state || '',
     isOnline: true,
@@ -64,10 +77,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!sessionStored) {
     console.error('[auth/callback] Failed to store session for:', shopDomain);
     // Continue anyway - the session might still be usable
+  } else {
+    console.log('[auth/callback] Session stored successfully');
   }
 
   // Store/update store info
-  await upsertStore(shopDomain, result.accessToken, true);
+  const storeId = await upsertStore(shopDomain, result.accessToken, true);
+  console.log('[auth/callback] Store upserted:', storeId || 'failed');
 
   // Register webhooks after installation
   try {
@@ -76,10 +92,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.error('[auth/callback] Failed to register webhooks:', error);
   }
 
-  console.log('[auth/callback] OAuth complete, redirecting to Shopify admin for:', shopDomain);
+  console.log('[auth/callback] OAuth complete! Redirecting to Shopify admin for:', shopDomain);
 
   // Redirect back to Shopify admin with the app
-  return redirect(`https://${shopDomain}/admin/apps/${API_KEY}`);
+  // Use the admin.shopify.com URL format (newer Shopify admin)
+  const shopName = shopDomain.replace('.myshopify.com', '');
+  return redirect(`https://admin.shopify.com/store/${shopName}/apps/${API_KEY}`);
 }
 
 /**
@@ -115,6 +133,8 @@ async function registerWebhooks(shop: string, accessToken: string) {
       const result = await resp.json();
       if (!resp.ok) {
         console.error(`[webhook] Failed to register ${webhook.topic}:`, result);
+      } else {
+        console.log(`[webhook] Registered ${webhook.topic}`);
       }
     } catch (error) {
       console.error(`[webhook] Error registering ${webhook.topic}:`, error);

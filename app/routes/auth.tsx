@@ -4,8 +4,12 @@ import { shopify } from '~/shopify.server';
 
 /**
  * /auth - OAuth entry point
- * Shopify redirects here when installing or opening the app
- * We redirect to Shopify's OAuth authorization page
+ * 
+ * This route should ONLY be reached via a top-level navigation,
+ * never from within an iframe. It redirects to Shopify's OAuth page.
+ * 
+ * For iframe contexts, the app._index.tsx handles OAuth via
+ * client-side redirect (App Bridge or window.top).
  */
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -24,6 +28,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Generate state for CSRF protection
   const state = crypto.randomUUID();
   const authUrl = shopify.getAuthUrl(shopDomain, state);
+
+  console.log('[auth] Redirecting to OAuth for shop:', shopDomain);
 
   // Redirect to Shopify OAuth
   return redirect(authUrl);

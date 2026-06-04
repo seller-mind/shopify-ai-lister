@@ -1,8 +1,19 @@
-import { json, redirect } from '@remix-run/node';
+import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { authenticateAdmin, getAuthUrl, API_KEY } from '~/shopify.server';
 
+/**
+ * /app - Main app route (loaded in Shopify admin iframe)
+ * 
+ * This route is loaded in the Shopify admin iframe after installation.
+ * It handles two cases:
+ * 1. Has valid session → render the dashboard
+ * 2. No session (need OAuth) → redirect top-level window to OAuth
+ * 
+ * The OAuth redirect MUST happen at the top level (not in the iframe),
+ * because Shopify's OAuth page blocks iframe embedding.
+ */
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const shop = url.searchParams.get('shop');
@@ -12,9 +23,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json({ shop: session.shop, status: 'ok' });
   } catch {
     if (shop) {
-      // If we're in an iframe (Shopify admin) and need OAuth,
-      // we MUST redirect via Shopify App Bridge.
-      // Build the OAuth URL and return it to the client.
+      // Need OAuth - build the OAuth URL and return it to the client
+      // The client-side code will redirect the TOP-LEVEL window
       const shopDomain = shop.replace(/https?:\/\//, '').split('/')[0];
       const state = crypto.randomUUID();
       const oauthUrl = getAuthUrl(shopDomain, state);
@@ -29,15 +39,26 @@ export default function Dashboard() {
 
   if (data.status === 'auth_required' && data.oauthUrl) {
     return (
-      <div className="page">
-        <h1>Authenticating...</h1>
+      <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'system-ui' }}>
+        <h2>Authenticating...</h2>
         <p>Redirecting to Shopify for authorization...</p>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                // Shopify App Bridge: the official way to redirect from within an iframe.
-                // Load the CDN script, initialize, and use Redirect action.
+                var oauthUrl = ${JSON.stringify(data.oauthUrl)};
+                
+                // Detect if we're in an iframe
+                var inIframe = (window.self !== window.top);
+                
+                if (!inIframe) {
+                  // Top-level window: direct redirect (installation flow)
+                  window.location.href = oauthUrl;
+                  return;
+                }
+                
+                // In iframe: MUST redirect the top-level window
+                // Try Shopify App Bridge first (official way)
                 var script = document.createElement('script');
                 script.src = 'https://unpkg.com/@shopify/app-bridge@4/umd/index.js';
                 script.onload = function() {
@@ -51,22 +72,18 @@ export default function Dashboard() {
                         shopOrigin: shop
                       });
                       var redirect = shopify.actions.Redirect;
-                      redirect.create(app).dispatch(redirect.Action.REMOTE, ${JSON.stringify(data.oauthUrl)});
+                      redirect.create(app).dispatch(redirect.Action.REMOTE, oauthUrl);
                       return;
                     }
                   } catch(e) {
                     console.error('App Bridge error:', e);
                   }
-                  // Fallback: navigate top window directly
-                  if (window.top) {
-                    window.top.location.href = ${JSON.stringify(data.oauthUrl)};
-                  }
+                  // Fallback: navigate top window
+                  try { window.top.location.href = oauthUrl; } catch(e) {}
                 };
                 script.onerror = function() {
-                  // CDN failed - fallback
-                  if (window.top) {
-                    window.top.location.href = ${JSON.stringify(data.oauthUrl)};
-                  }
+                  // CDN failed - direct fallback
+                  try { window.top.location.href = oauthUrl; } catch(e) {}
                 };
                 document.head.appendChild(script);
               })();
