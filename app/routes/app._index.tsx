@@ -1,5 +1,6 @@
 import { json, redirect } from '@remix-run/node';
-import { useLoaderData, useRef, useEffect } from '@remix-run/react';
+import { useLoaderData } from '@remix-run/react';
+import { useRef, useEffect } from 'react';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { authenticateAdmin, getAuthUrl } from '~/shopify.server';
 
