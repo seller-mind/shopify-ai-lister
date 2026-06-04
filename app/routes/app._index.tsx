@@ -106,7 +106,7 @@ export default function Dashboard() {
           <div className="quick-start">
             <h2>Quick Start</h2>
             <ol>
-              <li>Enter Chinese product info</li>
+              <li>Enter product info in any language</li>
               <li>AI generates optimized English listing</li>
               <li>Apply directly to your Shopify store</li>
             </ol>
