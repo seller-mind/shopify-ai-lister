@@ -55,7 +55,7 @@ export async function storeSessionInDB(session: { id: string; shop: string; stat
     });
     
     if (error) {
-      console.error('Error storing session:', error);
+      console.error('Error storing session:', JSON.stringify(error));
       return false;
     }
     

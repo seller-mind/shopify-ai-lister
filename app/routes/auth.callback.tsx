@@ -75,15 +75,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 
   if (!sessionStored) {
-    console.error('[auth/callback] Failed to store session for:', shopDomain);
-    // Continue anyway - the session might still be usable
+    console.error('[auth/callback] ❌ Failed to store session for:', shopDomain);
   } else {
-    console.log('[auth/callback] Session stored successfully');
+    console.log('[auth/callback] ✅ Session stored successfully');
   }
 
   // Store/update store info
   const storeId = await upsertStore(shopDomain, result.accessToken, true);
-  console.log('[auth/callback] Store upserted:', storeId || 'failed');
+  if (!storeId) {
+    console.error('[auth/callback] ❌ Failed to upsert store for:', shopDomain);
+  } else {
+    console.log('[auth/callback] ✅ Store upserted:', storeId);
+  }
 
   // Register webhooks after installation
   try {
