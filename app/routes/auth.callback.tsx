@@ -94,10 +94,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   console.log('[auth/callback] OAuth complete! Redirecting to Shopify admin for:', shopDomain);
 
-  // Non-embedded: redirect to our app dashboard directly
-  // No need to go back through Shopify admin iframe
-  const appUrl = process.env.SHOPIFY_APP_URL;
-  return redirect(`${appUrl}/app?shop=${encodeURIComponent(shopDomain)}`);
+  // OAuth complete - redirect back to Shopify admin app page
+  // This will load the app in the Shopify admin iframe with a valid session
+  const shopName = shopDomain.replace('.myshopify.com', '');
+  return redirect(`https://admin.shopify.com/store/${shopName}/apps/${API_KEY}`);
 }
 
 /**
