@@ -15,6 +15,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const state = url.searchParams.get('state');
   const hmac = url.searchParams.get('hmac');
 
+  console.log('[auth/callback] Received callback:', { 
+    hasCode: !!code, 
+    shop, 
+    hasState: !!state,
+    hasHmac: !!hmac 
+  });
+
   // If no code, this might be a re-auth request - redirect to auth
   if (!code && shop) {
     return redirect(`/auth?shop=${encodeURIComponent(shop)}`);
@@ -22,24 +29,30 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   // Must have code and shop
   if (!code || !shop) {
+    console.error('[auth/callback] Missing required OAuth parameters');
     return new Response('Missing required OAuth parameters', { status: 400 });
   }
 
   // Validate shop domain
   const shopDomain = shop.replace(/https?:\/\//, '').split('/')[0];
   if (!shopDomain.includes('.myshopify.com')) {
+    console.error('[auth/callback] Invalid shop domain:', shopDomain);
     return new Response('Invalid shop domain', { status: 400 });
   }
 
   // Exchange code for access token
+  console.log('[auth/callback] Exchanging code for token, shop:', shopDomain);
   const result = await shopify.exchangeCodeForToken(shopDomain, code);
 
   if (!result) {
+    console.error('[auth/callback] Token exchange failed for shop:', shopDomain);
     return new Response('OAuth token exchange failed', { status: 400 });
   }
 
+  console.log('[auth/callback] Token exchange successful, storing session for:', shopDomain);
+
   // Store session in database
-  await storeSessionInDB({
+  const sessionStored = await storeSessionInDB({
     id: `${shopDomain}_${Date.now()}`,
     shop: shopDomain,
     state: state || '',
@@ -48,6 +61,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     scope: result.scope,
   });
 
+  if (!sessionStored) {
+    console.error('[auth/callback] Failed to store session for:', shopDomain);
+    // Continue anyway - the session might still be usable
+  }
+
   // Store/update store info
   await upsertStore(shopDomain, result.accessToken, true);
 
@@ -55,9 +73,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   try {
     await registerWebhooks(shopDomain, result.accessToken);
   } catch (error) {
-    console.error('Failed to register webhooks:', error);
-    // Don't fail the install if webhook registration fails
+    console.error('[auth/callback] Failed to register webhooks:', error);
   }
+
+  console.log('[auth/callback] OAuth complete, redirecting to Shopify admin for:', shopDomain);
 
   // Redirect back to Shopify admin with the app
   return redirect(`https://${shopDomain}/admin/apps/${API_KEY}`);
@@ -79,7 +98,7 @@ async function registerWebhooks(shop: string, accessToken: string) {
 
   for (const webhook of webhookTopics) {
     try {
-      await fetch(`https://${shop}/admin/api/2026-04/webhooks.json`, {
+      const resp = await fetch(`https://${shop}/admin/api/2026-04/webhooks.json`, {
         method: 'POST',
         headers: {
           'X-Shopify-Access-Token': accessToken,
@@ -93,8 +112,12 @@ async function registerWebhooks(shop: string, accessToken: string) {
           },
         }),
       });
+      const result = await resp.json();
+      if (!resp.ok) {
+        console.error(`[webhook] Failed to register ${webhook.topic}:`, result);
+      }
     } catch (error) {
-      console.error(`Failed to register webhook ${webhook.topic}:`, error);
+      console.error(`[webhook] Error registering ${webhook.topic}:`, error);
     }
   }
 }
