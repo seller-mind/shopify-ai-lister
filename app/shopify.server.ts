@@ -55,7 +55,12 @@ export async function exchangeCodeForToken(shop: string, code: string): Promise<
     console.error('Token exchange failed:', response.status, await response.text());
     return null;
   }
-  return response.json();
+  const data = await response.json();
+  // Shopify API returns snake_case, map to camelCase for our codebase
+  return {
+    accessToken: data.access_token,
+    scope: data.scope,
+  };
 }
 
 /**
