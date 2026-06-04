@@ -55,7 +55,7 @@ export default function TermsPage() {
         <p style={{ marginTop: '8px' }}>This App has not been registered or filed with Chinese regulatory authorities under the Interim Measures for the Management of Generative Artificial Intelligence Services and is not intended for use within mainland China.</p>
       </div>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>6. Billing and Payments</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>6. Billing, Refunds, and EU Consumer Rights</h2>
       <p>Usage of the App beyond the free tier is billed through Shopify&apos;s billing system. By subscribing:</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
         <li style={{ marginBottom: '6px' }}>You agree to Shopify&apos;s billing terms and payment processing policies</li>
@@ -63,6 +63,20 @@ export default function TermsPage() {
         <li style={{ marginBottom: '6px' }}>Subscriptions renew automatically at the end of each billing period</li>
         <li style={{ marginBottom: '6px' }}>You may cancel at any time through your Shopify admin panel</li>
       </ul>
+
+      <h3 style={{ fontSize: '18px', marginTop: '24px', marginBottom: '12px', color: '#1a1a1a' }}>Refund Policy</h3>
+      <p>We offer a <strong>7-day money-back guarantee</strong> for all paid subscriptions. If you are not satisfied with the service, contact us within 7 days of your purchase date at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a> for a full refund.</p>
+
+      <h3 style={{ fontSize: '18px', marginTop: '24px', marginBottom: '12px', color: '#1a1a1a' }}>EU Consumer Rights (14-Day Withdrawal)</h3>
+      <p>If you are located in the European Union or European Economic Area, you have additional consumer rights under EU consumer protection laws:</p>
+      <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
+        <li style={{ marginBottom: '6px' }}><strong>Right of Withdrawal:</strong> You have the right to withdraw from your subscription contract within 14 days without giving any reason.</li>
+        <li style={{ marginBottom: '6px' }}><strong>How to Withdraw:</strong> Send an email to <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a> with your withdrawal request.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Reimbursement:</strong> We will refund all payments within 14 days of receiving your withdrawal request.</li>
+      </ul>
+
+      <h3 style={{ fontSize: '18px', marginTop: '24px', marginBottom: '12px', color: '#1a1a1a' }}>Online Dispute Resolution (ODR)</h3>
+      <p>If you are an EU consumer and have a complaint, you may also use the European Commission&apos;s Online Dispute Resolution (ODR) platform: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>https://ec.europa.eu/consumers/odr</a>. The ODR platform provides a single point of entry for consumers and traders seeking to resolve disputes out of court.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>7. Data and Privacy</h2>
       <p>Your use of the App is also governed by our <a href="/privacy" style={{ color: '#2563eb' }}>Privacy Policy</a>, which is incorporated herein by reference.</p>

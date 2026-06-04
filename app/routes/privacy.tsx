@@ -12,6 +12,52 @@ export default function PrivacyPage() {
       <h1 style={{ fontSize: '28px', marginBottom: '8px' }}>Privacy Policy for Haimo AI Lister</h1>
       <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Last updated: June 3, 2026</p>
 
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Age Restriction</h2>
+      <p>Our services are not intended for individuals under the age of 16 (or the applicable age of consent in your jurisdiction). We do not knowingly collect personal information from children. If you believe we have collected information from a child under the applicable age, please contact us immediately at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>, and we will take steps to delete such information.</p>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>AI Transparency Statement</h2>
+      <p>This service uses artificial intelligence (DeepSeek) to generate product descriptions. Users should be aware that AI-generated outputs may contain inaccuracies and should verify content independently before publishing. While we implement quality measures, we cannot guarantee the accuracy, completeness, or suitability of AI-generated content.</p>
+      <p style={{ marginTop: '8px' }}>AI-generated content is considered transformative in nature as it creates new, original text based on user-provided product information. Users remain responsible for reviewing and editing all generated content and ensuring its compliance with applicable laws and regulations.</p>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Cookie Policy</h2>
+      <p>We use limited cookies and similar technologies to provide and improve our service:</p>
+      <table style={{ width: '100%', borderCollapse: 'collapse', margin: '16px 0' }}>
+        <thead>
+          <tr>
+            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Cookie Type</th>
+            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Purpose</th>
+            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Essential Cookies</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Required for authentication and session management</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Session</td>
+          </tr>
+          <tr>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Functional Cookies</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Store user preferences and settings</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>30 days</td>
+          </tr>
+          <tr>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Analytics Cookies</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>We do not use third-party analytics cookies</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>N/A</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>You can control cookie preferences through your browser settings. Disabling essential cookies may affect the functionality of the App.</p>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>EU Consumer Rights (14-Day Withdrawal)</h2>
+      <p>If you are located in the European Union or European Economic Area, you have the following consumer rights under EU consumer protection laws:</p>
+      <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
+        <li style={{ marginBottom: '6px' }}><strong>Right of Withdrawal:</strong> You have the right to withdraw from your subscription contract within 14 days without giving any reason. The withdrawal period expires 14 days after the day on which you subscribed.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Exercise of Withdrawal:</strong> To exercise the right of withdrawal, you must inform us (Haimo Tech) of your decision to withdraw by an unequivocal statement (e.g., a letter sent by email to <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>).</li>
+        <li style={{ marginBottom: '6px' }}><strong>Reimbursement:</strong> We will reimburse all payments received from you, including the cost of delivery (if any), without undue delay and not later than 14 days from the day on which we are informed about your decision to withdraw.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Exceptions:</strong> The right of withdrawal does not apply to services fully performed before the end of the withdrawal period with your express consent, or to digital content that is supplied in a limited manner (e.g., credits used).</li>
+      </ul>
+
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Overview</h2>
       <p>Haimo AI Lister (&quot;we&quot;, &quot;our&quot;, or &quot;the App&quot;) is committed to protecting your privacy. This policy explains what data we collect, how we use it, and your rights.</p>
 
