@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [
     remix({
       ignoredRouteFiles: ['**/.*'],
+      preset: 'vercel',
       future: {
         v3_fetcherPersist: true,
         v3_relativeSplatPath: true,
