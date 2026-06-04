@@ -10,9 +10,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const shop = url.searchParams.get('shop');
   
   if (shop) {
-    // Coming from Shopify, check if we have a session
+    // Coming from Shopify - pass shop param to /app
     return redirect(`/app?shop=${encodeURIComponent(shop)}`);
   }
   
+  // For direct access without shop param, show a landing/redirect
   return redirect('/app');
 }

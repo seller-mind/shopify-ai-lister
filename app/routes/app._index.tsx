@@ -1,13 +1,20 @@
-import { json } from '@remix-run/node';
+import { json, redirect } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { authenticateAdmin } from '~/shopify.server';
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  const url = new URL(request.url);
+  const shop = url.searchParams.get('shop');
+
   try {
     const { session } = await authenticateAdmin(request);
     return json({ shop: session.shop, status: 'ok' });
   } catch {
+    // No valid session - redirect to OAuth if we have a shop param
+    if (shop) {
+      return redirect(`/auth?shop=${encodeURIComponent(shop)}`);
+    }
     return json({ shop: null, status: 'unauthenticated' });
   }
 }
