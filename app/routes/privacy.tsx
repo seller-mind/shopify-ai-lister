@@ -57,7 +57,7 @@ export default function PrivacyPage() {
             <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Supabase</td>
             <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Data storage</td>
             <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Session data, access tokens</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Singapore</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Tokyo, Japan</td>
           </tr>
           <tr>
             <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Vercel</td>
@@ -111,6 +111,31 @@ export default function PrivacyPage() {
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Geographic Restrictions</h2>
       <p>This App is not available to users in mainland China. By installing and using this App, you confirm that you are not a resident of or accessing the service from the People&apos;s Republic of China (excluding Hong Kong, Macau, and Taiwan).</p>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>CCPA Compliance (California Users)</h2>
+      <p>If you are a California resident, you have rights under the California Consumer Privacy Act (CCPA):</p>
+      <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
+        <li style={{ marginBottom: '6px' }}><strong>Right to Know:</strong> Request information about the personal data we collect and how it is used</li>
+        <li style={{ marginBottom: '6px' }}><strong>Right to Delete:</strong> Request deletion of your personal information</li>
+        <li style={{ marginBottom: '6px' }}><strong>Right to Opt Out:</strong> We do not sell personal information. There is nothing to opt out of</li>
+        <li style={{ marginBottom: '6px' }}><strong>Right to Non-Discrimination:</strong> We will not discriminate against you for exercising your rights</li>
+      </ul>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>EU AI Act Compliance</h2>
+      <p>This App uses artificial intelligence to generate product descriptions. In accordance with the EU Artificial Intelligence Act:</p>
+      <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
+        <li style={{ marginBottom: '6px' }}><strong>Transparency:</strong> All AI-generated content is clearly labeled and includes a disclaimer about potential inaccuracies</li>
+        <li style={{ marginBottom: '6px' }}><strong>Human Oversight:</strong> Users can review, verify, and edit all AI-generated content before publishing</li>
+        <li style={{ marginBottom: '6px' }}><strong>No Automated Decisions:</strong> The App does not make decisions that produce legal effects for users</li>
+      </ul>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Data Breach Notification</h2>
+      <p>In the event of a data breach affecting your personal information, we will:</p>
+      <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
+        <li style={{ marginBottom: '6px' }}>Notify affected users within 72 hours, as required by GDPR Article 33</li>
+        <li style={{ marginBottom: '6px' }}>Notify the relevant supervisory authority if the breach poses a risk to individuals&apos; rights</li>
+        <li style={{ marginBottom: '6px' }}>Take immediate steps to contain the breach and prevent further data loss</li>
+      </ul>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Contact</h2>
       <p>Questions about this privacy policy? Contact us at: <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a></p>
