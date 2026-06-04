@@ -1,4 +1,4 @@
-import { json } from '@shopify/remix-oxygen';
+import { json } from '@remix-run/node';
 
 export const meta = () => [
   { title: 'DMCA Policy - Haimo AI Lister' },

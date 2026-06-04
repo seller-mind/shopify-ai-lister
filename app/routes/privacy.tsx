@@ -1,4 +1,4 @@
-import { json } from '@shopify/remix-oxygen';
+import { json } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 
 export const meta = () => [
