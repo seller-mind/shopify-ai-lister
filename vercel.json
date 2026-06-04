@@ -1,12 +1,4 @@
 {
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Content-Security-Policy", "value": "frame-ancestors https://*.myshopify.com https://admin.shopify.com https://*.shopify.com;" }
-      ]
-    }
-  ],
   "routes": [
     { "handle": "error" },
     { "handle": "filesystem" },

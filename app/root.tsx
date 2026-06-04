@@ -18,7 +18,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       url.pathname.startsWith('/webhooks');
 
     // ─── Geo-block: China mainland (compliance) ───
-    // Skip for Shopify app requests (iframe + OAuth + webhooks)
     if (!isShopifyRequest) {
       const country = request.headers.get('x-vercel-ip-country') || '';
       if (country === 'CN') {
