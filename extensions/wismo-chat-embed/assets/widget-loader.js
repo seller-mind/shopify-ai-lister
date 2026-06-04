@@ -1,0 +1,70 @@
+/**
+ * WISMO AI - Widget Loader (<5KB)
+ * 
+ * This is the minimal loader that gets injected by the Theme App Extension.
+ * It renders the chat bubble immediately, then lazy-loads the full widget.
+ */
+(function() {
+  'use strict';
+
+  // Read config from the embed block
+  var root = document.getElementById('wismo-chat-root');
+  if (!root) return;
+  
+  var shop = root.dataset.shop;
+  var locale = root.dataset.locale || 'en';
+  var config = {};
+  try { config = JSON.parse(root.dataset.widgetConfig || '{}'); } catch(e) {}
+  
+  if (!shop) return;
+
+  var API_BASE = 'https://shopify-ai-lister-tau.vercel.app';
+  var loaded = false;
+
+  // Create host with Shadow DOM for CSS isolation
+  var host = document.createElement('div');
+  host.id = 'wismo-widget-host';
+  host.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:999999;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+  document.body.appendChild(host);
+
+  var shadow = host.attachShadow({ mode: 'open' });
+
+  // Render minimal chat bubble immediately
+  var bubble = document.createElement('button');
+  bubble.setAttribute('aria-label', 'Open chat');
+  bubble.style.cssText = 'width:56px;height:56px;border-radius:50%;background:#008060;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:transform 0.2s,box-shadow 0.2s;outline:none;';
+  bubble.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+  
+  bubble.addEventListener('mouseenter', function() {
+    bubble.style.transform = 'scale(1.08)';
+    bubble.style.boxShadow = '0 6px 20px rgba(0,0,0,0.2)';
+  });
+  bubble.addEventListener('mouseleave', function() {
+    bubble.style.transform = 'scale(1)';
+    bubble.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+  });
+
+  shadow.appendChild(bubble);
+
+  // Load full widget on first interaction
+  function loadFullWidget() {
+    if (loaded) return;
+    loaded = true;
+
+    // Remove the simple bubble - the full widget will replace it
+    host.remove();
+
+    // Load the full widget script
+    var script = document.createElement('script');
+    script.src = API_BASE + '/widget.js?shop=' + encodeURIComponent(shop);
+    script.async = true;
+    script.setAttribute('data-wismo', 'full');
+    document.body.appendChild(script);
+  }
+
+  // Trigger: click, or 3 seconds after page load
+  bubble.addEventListener('click', loadFullWidget);
+  window.addEventListener('load', function() {
+    setTimeout(loadFullWidget, 3000);
+  });
+})();

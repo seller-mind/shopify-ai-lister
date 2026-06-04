@@ -1,0 +1,7 @@
+# Theme App Extension for WISMO AI Chat Widget
+name = "wismo-chat-embed"
+type = "theme"
+
+[extensions.theme_app_extension]
+name = "WISMO AI Chat"
+description = "AI-powered WISMO (Where Is My Order) customer service chat widget"

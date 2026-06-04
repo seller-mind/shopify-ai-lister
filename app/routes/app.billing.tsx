@@ -6,7 +6,7 @@ import { json, redirect } from '@remix-run/node';
 import { useLoaderData, Form, useNavigation } from '@remix-run/react';
 import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
 import { authenticateAdmin, shopifyREST } from '~/shopify.server';
-import { getSupabaseAdmin } from '~/services/supabase.server';
+import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
 
 const PLANS = [
   {
@@ -137,12 +137,6 @@ export async function action({ request }: ActionFunctionArgs) {
     console.error('[Billing] Error:', error);
     return json({ error: 'Failed to create subscription' }, { status: 500 });
   }
-}
-
-async function getStore(shop: string) {
-  const supabase = getSupabaseAdmin();
-  const { data } = await supabase.from('stores').select('id').eq('shop', shop).single();
-  return data;
 }
 
 export default function Billing() {

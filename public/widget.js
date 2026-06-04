@@ -12,9 +12,11 @@
  */
 
 // ─── Configuration ───────────────────────────────────────────────────
-const SCRIPT_TAG = document.currentScript as HTMLScriptElement;
-const SHOP_DOMAIN = new URL(SCRIPT_TAG?.src || '').searchParams.get('shop') || '';
-const API_BASE = new URL(SCRIPT_TAG?.src || '').origin;
+const SCRIPT_TAG = document.currentScript;
+// Support both: direct script tag (?shop=) and Theme App Embed (data-shop)
+const EMBED_ROOT = document.getElementById('wismo-chat-root');
+const SHOP_DOMAIN = new URL(SCRIPT_TAG?.src || 'https://shopify-ai-lister-tau.vercel.app').searchParams.get('shop') || EMBED_ROOT?.dataset?.shop || '';
+const API_BASE = SCRIPT_TAG?.src ? new URL(SCRIPT_TAG.src).origin : 'https://shopify-ai-lister-tau.vercel.app';
 
 // ─── State ───────────────────────────────────────────────────────────
 let config: any = null;

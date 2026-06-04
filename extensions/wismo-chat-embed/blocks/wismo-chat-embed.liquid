@@ -1,0 +1,64 @@
+{% comment %}
+  WISMO AI Chat - App Embed Block
+  This block is injected into the storefront as an App Embed.
+  Merchants can enable/disable it from Theme Editor → App Embeds.
+{% endcomment %}
+
+<div 
+  id="wismo-chat-root" 
+  data-shop="{{ shop.permanent_domain }}"
+  data-locale="{{ request.locale.iso_code }}"
+  data-currency="{{ cart.currency.iso_code }}"
+  data-widget-config='{"shop":"{{ shop.permanent_domain }}","locale":"{{ request.locale.iso_code }}"}'
+></div>
+
+<script>
+  (function() {
+    var shopDomain = '{{ shop.permanent_domain }}';
+    var scriptSrc = 'https://shopify-ai-lister-tau.vercel.app/widget.js?shop=' + encodeURIComponent(shopDomain);
+    
+    // Preconnect to our server
+    var preconnect = document.createElement('link');
+    preconnect.rel = 'preconnect';
+    preconnect.href = 'https://shopify-ai-lister-tau.vercel.app';
+    document.head.appendChild(preconnect);
+    
+    // Load widget script asynchronously
+    var script = document.createElement('script');
+    script.src = scriptSrc;
+    script.async = true;
+    script.setAttribute('data-wismo', 'true');
+    document.body.appendChild(script);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "WISMO AI Chat",
+  "target": "body",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_wismo_ai",
+      "label": "Enable AI WISMO Assistant",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "primary_color",
+      "label": "Widget Color",
+      "default": "#008060"
+    },
+    {
+      "type": "select",
+      "id": "widget_position",
+      "label": "Widget Position",
+      "options": [
+        { "value": "bottom-right", "label": "Bottom Right" },
+        { "value": "bottom-left", "label": "Bottom Left" }
+      ],
+      "default": "bottom-right"
+    }
+  ]
+}
+{% endschema %}

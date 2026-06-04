@@ -196,17 +196,14 @@ export default function Settings() {
         </button>
       </Form>
 
-      {/* Install Script */}
+      {/* Install Widget */}
       <div className="card" style={{ marginTop: '24px' }}>
         <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px' }}>📦 Install Widget</h2>
-        <p style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
-          Add this snippet to your store's theme.liquid file, just before the closing <code>&lt;/body&gt;</code> tag:
-        </p>
-        <pre style={{ background: '#1a1a1a', color: '#e0e0e0', padding: '16px', borderRadius: '8px', fontSize: '13px', overflow: 'auto' }}>
-{`<script src="https://shopify-ai-lister-tau.vercel.app/widget.js?shop=${shop}" async></script>`}
-        </pre>
+        <div style={{ background: '#e3f1e8', padding: '12px 16px', borderRadius: '8px', fontSize: '13px', lineHeight: 1.6 }}>
+          <strong>Easy Install:</strong> Go to your Shopify Admin → Online Store → Themes → Customize → App Embeds → Enable "WISMO AI Chat". That's it!
+        </div>
         <p style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
-          Or enable automatic injection via ScriptTag API (available after App Store launch).
+          The widget is injected automatically via Theme App Extension — no code changes needed.
         </p>
       </div>
 
