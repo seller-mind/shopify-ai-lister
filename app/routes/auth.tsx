@@ -8,8 +8,11 @@ import { shopify } from '~/shopify.server';
  * This route should ONLY be reached via a top-level navigation,
  * never from within an iframe. It redirects to Shopify's OAuth page.
  * 
- * For iframe contexts, the app._index.tsx handles OAuth via
- * client-side redirect (App Bridge or window.top).
+ * Flow:
+ * 1. App detects no session in iframe → uses App Bridge to escape iframe
+ *    → redirects top-level window to /auth?shop=xxx (without embedded=1)
+ * 2. This route does a server-side 3xx redirect to Shopify OAuth grant screen
+ * 3. After user authorizes, Shopify redirects to /auth/callback
  */
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -31,6 +34,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   console.log('[auth] Redirecting to OAuth for shop:', shopDomain);
 
-  // Redirect to Shopify OAuth
+  // Server-side 3xx redirect to Shopify OAuth
+  // This works because we're at the top level (not in an iframe)
   return redirect(authUrl);
 }
