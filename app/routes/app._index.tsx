@@ -1,7 +1,8 @@
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { authenticateAdmin, getAuthUrl } from '~/shopify.server';
+import { useEffect } from 'react';
+import { authenticateAdmin, getAuthUrl, API_KEY } from '~/shopify.server';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -9,53 +10,85 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   try {
     const { session } = await authenticateAdmin(request);
-    return json({ shop: session.shop, status: 'ok', oauthUrl: null });
+    return json({ shop: session.shop, status: 'ok', apiKey: API_KEY, oauthUrl: null });
   } catch {
-    // No valid session - build the FULL Shopify OAuth URL and return it
-    // so the client can redirect window.top directly to Shopify.
-    // We can't do a server redirect because we're inside an iframe,
-    // and we can't redirect to /auth first because that adds a hop
-    // that may fail in the cross-origin iframe context.
     if (shop) {
       const shopDomain = shop.replace(/https?:\/\//, '').split('/')[0];
       const state = crypto.randomUUID();
       const oauthUrl = getAuthUrl(shopDomain, state);
-      return json({ shop: null, status: 'auth_required', oauthUrl });
+      return json({ shop: null, status: 'auth_required', apiKey: API_KEY, oauthUrl });
     }
-    return json({ shop: null, status: 'unauthenticated', oauthUrl: null });
+    return json({ shop: null, status: 'unauthenticated', apiKey: API_KEY, oauthUrl: null });
   }
 }
 
 export default function Dashboard() {
   const data = useLoaderData<typeof loader>();
-  
-  if (data.status === 'auth_required' && data.oauthUrl) {
+
+  useEffect(() => {
+    if (data.status !== 'auth_required' || !data.oauthUrl) return;
+
+    // For Shopify embedded apps, we must redirect the PARENT window
+    // (Shopify admin) to the OAuth URL. We cannot redirect the iframe itself.
+    //
+    // Strategy: Load @shopify/app-bridge from CDN, use its Redirect action
+    // which communicates with the parent Shopify admin to navigate top-level.
+    // Fallback: window.top.location.href
+    const loadAppBridge = () => {
+      return new Promise<void>((resolve) => {
+        // Check if already loaded
+        if ((window as any).shopify?.appBridge) {
+          resolve();
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/@shopify/app-bridge@4/umd/index.js';
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => resolve(); // Don't block on failure
+        document.head.appendChild(script);
+      });
+    };
+
+    const doRedirect = async () => {
+      await loadAppBridge();
+      try {
+        const shopify = (window as any).shopify;
+        if (shopify?.appBridge?.createApp && data.apiKey) {
+          const shopFromUrl = new URLSearchParams(window.location.search).get('shop') || '';
+          const app = shopify.appBridge.createApp({
+            apiKey: data.apiKey,
+            shopOrigin: shopFromUrl,
+          });
+          const redirect = shopify.actions?.Redirect;
+          if (redirect) {
+            redirect.create(app).dispatch(redirect.Action.REMOTE, data.oauthUrl!);
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('App Bridge redirect failed, falling back:', e);
+      }
+      // Fallback
+      if (window.top && window.top !== window) {
+        window.top.location.href = data.oauthUrl!;
+      } else {
+        window.location.href = data.oauthUrl!;
+      }
+    };
+
+    doRedirect();
+  }, [data.status, data.oauthUrl, data.apiKey]);
+
+  if (data.status === 'auth_required') {
     return (
       <div className="page">
         <h1>Authenticating...</h1>
         <p>Redirecting to Shopify authorization...</p>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Must redirect the top-level window (not the iframe)
-              // to Shopify's OAuth page. Using a form with target="_top"
-              // is more reliable than window.top.location.href across
-              // different browsers and cross-origin iframe contexts.
-              (function() {
-                var form = document.createElement('form');
-                form.method = 'GET';
-                form.action = ${JSON.stringify(data.oauthUrl)};
-                form.target = '_top';
-                document.body.appendChild(form);
-                form.submit();
-              })();
-            `,
-          }}
-        />
       </div>
     );
   }
-  
+
   return (
     <div className="page">
       <h1>Welcome to Haimo AI Lister</h1>
