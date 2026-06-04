@@ -5,7 +5,6 @@ import {
   Scripts,
   ScrollRestoration,
   useRouteError,
-  useLoaderData,
 } from '@remix-run/react';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
@@ -30,21 +29,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
       }
     }
 
-    // Pass Shopify params to the layout for App Bridge support
-    const shop = url.searchParams.get('shop');
-    const host = url.searchParams.get('host');
-
-    return json({
-      apiKey: process.env.SHOPIFY_API_KEY || '',
-      shop: shop || '',
-      host: host || '',
-      isEmbedded: url.searchParams.get('embedded') === '1',
-    });
+    return json({});
   } catch (error) {
-    // If it's a Response (like 451 geo-block), re-throw it
     if (error instanceof Response) throw error;
     console.error('[root.tsx] Loader error:', error);
-    return json({ apiKey: '', shop: '', host: '', isEmbedded: false });
+    return json({});
   }
 }
 
@@ -53,17 +42,11 @@ export function links() {
 }
 
 export default function App() {
-  const data = useLoaderData<typeof loader>();
-
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* Shopify App Bridge requires this meta tag for auto-initialization */}
-        {data.isEmbedded && data.apiKey && (
-          <meta name="shopify-api-key" content={data.apiKey} />
-        )}
         <Meta />
         <Links />
       </head>
