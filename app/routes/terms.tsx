@@ -15,7 +15,10 @@ export default function TermsPage() {
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>1. Acceptance of Terms</h2>
       <p>By installing and using Haimo AI Lister (&quot;the App&quot;), you agree to these Terms of Service. If you do not agree, please uninstall the App immediately.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>2. Description of Service</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>2. Eligibility and Age Requirements</h2>
+      <p>You must be at least 16 years of age to use this Service. If you are between 16 and 18, you represent that your parent or legal guardian has agreed to these Terms on your behalf.</p>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>3. Description of Service</h2>
       <p>Haimo AI Lister provides AI-powered product listing generation for Shopify stores. The App:</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
         <li style={{ marginBottom: '6px' }}>Generates product descriptions using artificial intelligence</li>
@@ -29,7 +32,8 @@ export default function TermsPage() {
         <p><strong>Disclaimer:</strong> Haimo AI Lister is an independent third-party application developed by Haimo Tech. &quot;Shopify&quot; is a trademark of Shopify Inc. This App uses the Shopify API in accordance with Shopify&apos;s API Terms of Service.</p>
       </div>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>3. AI-Generated Content Disclaimer</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>4. AI-Generated Content Disclaimer</h2>
+      <p>This service uses DeepSeek (deepseek-chat model) as its primary AI provider. DeepSeek processes data on servers located in China.</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
         <li style={{ marginBottom: '6px' }}>All AI-generated content is for reference only</li>
         <li style={{ marginBottom: '6px' }}>You are responsible for reviewing and editing all generated content before publishing</li>
@@ -38,7 +42,7 @@ export default function TermsPage() {
         <li style={{ marginBottom: '6px' }}>We are not responsible for any outcomes resulting from the use of AI-generated content</li>
       </ul>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>4. Usage Restrictions</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>5. Usage Restrictions</h2>
       <p>You agree NOT to:</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
         <li style={{ marginBottom: '6px' }}>Use the App for any unlawful purpose</li>
@@ -49,13 +53,13 @@ export default function TermsPage() {
         <li style={{ marginBottom: '6px' }}>Resell or redistribute the App without written permission</li>
       </ul>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>5. Geographic Restrictions</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>6. Geographic Restrictions</h2>
       <div style={{ background: '#fef2f2', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #fecaca' }}>
         <p><strong>Important:</strong> This App is not available to users in mainland China, the Hong Kong Special Administrative Region, the Macau Special Administrative Region, or Taiwan. By installing and using this App, you represent and warrant that you are not located in, and do not reside in, any of these regions.</p>
         <p style={{ marginTop: '8px' }}>This App has not been registered or filed with Chinese regulatory authorities under the Interim Measures for the Management of Generative Artificial Intelligence Services and is not intended for use within mainland China.</p>
       </div>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>6. Billing, Refunds, and EU Consumer Rights</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>7. Billing, Refunds, and EU Consumer Rights</h2>
       <p>Usage of the App beyond the free tier is billed through Shopify&apos;s billing system. By subscribing:</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
         <li style={{ marginBottom: '6px' }}>You agree to Shopify&apos;s billing terms and payment processing policies</li>
@@ -78,7 +82,7 @@ export default function TermsPage() {
       <h3 style={{ fontSize: '18px', marginTop: '24px', marginBottom: '12px', color: '#1a1a1a' }}>Online Dispute Resolution (ODR)</h3>
       <p>If you are an EU consumer and have a complaint, you may also use the European Commission&apos;s Online Dispute Resolution (ODR) platform: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>https://ec.europa.eu/consumers/odr</a>. The ODR platform provides a single point of entry for consumers and traders seeking to resolve disputes out of court.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>7. Data and Privacy</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>8. Data and Privacy</h2>
       <p>Your use of the App is also governed by our <a href="/privacy" style={{ color: '#2563eb' }}>Privacy Policy</a>, which is incorporated herein by reference.</p>
       <p style={{ marginTop: '8px' }}>Key points:</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
@@ -86,12 +90,17 @@ export default function TermsPage() {
         <li style={{ marginBottom: '6px' }}>Product data is processed in real-time and not stored after generation</li>
         <li style={{ marginBottom: '6px' }}>All data is deleted when you uninstall the App</li>
         <li style={{ marginBottom: '6px' }}>We comply with Shopify&apos;s GDPR webhook requirements</li>
+        <li style={{ marginBottom: '6px' }}>We do not sell, rent, or share your personal information with third parties for marketing purposes</li>
+        <li style={{ marginBottom: '6px' }}>Our use of cookies is described in our Privacy Policy. Essential cookies are required for site functionality</li>
+        <li style={{ marginBottom: '6px' }}>In the event of a data breach, we will notify affected users within 72 hours as required by GDPR Article 33</li>
+        <li style={{ marginBottom: '6px' }}>For international data transfers (including to our AI provider), we rely on Standard Contractual Clauses (SCCs) in accordance with GDPR Article 46</li>
       </ul>
+      <p style={{ marginTop: '8px' }}><strong>California Residents (CCPA):</strong> We do not sell your personal information. See our <a href="/privacy" style={{ color: '#2563eb' }}>Privacy Policy</a> for full CCPA rights.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>8. Intellectual Property</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>9. Intellectual Property</h2>
       <p>The App and its original content are owned by Haimo Tech and protected by international intellectual property laws. You retain ownership of all content you input into the App. AI-generated descriptions are provided for your use in your Shopify store.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>9. Limitation of Liability</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>10. Limitation of Liability</h2>
       <p>To the fullest extent permitted by law:</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
         <li style={{ marginBottom: '6px' }}>Haimo Tech shall not be liable for any indirect, incidental, special, consequential, or punitive damages</li>
@@ -100,19 +109,19 @@ export default function TermsPage() {
         <li style={{ marginBottom: '6px' }}>Our total liability shall not exceed $100 USD</li>
       </ul>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>10. Indemnification</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>11. Indemnification</h2>
       <p>You agree to indemnify and hold harmless Haimo Tech from any claims, damages, or expenses arising from your use of the App or violation of these Terms.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>11. Termination</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>12. Termination</h2>
       <p>We reserve the right to terminate or suspend access to the App at any time. You may terminate by uninstalling the App from your Shopify store. Upon uninstallation, all your data will be deleted in accordance with our Privacy Policy.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>12. Modifications</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>13. Modifications</h2>
       <p>We may update these Terms from time to time. Continued use of the App after changes constitutes acceptance of the modified Terms.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>13. Governing Law</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>14. Governing Law</h2>
       <p>These Terms shall be governed by applicable laws. Any disputes shall be resolved through good-faith negotiation, and if unresolved, through binding arbitration.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>14. Contact</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>15. Contact</h2>
       <p>Questions about these Terms? Contact: <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a></p>
     </div>
   );
