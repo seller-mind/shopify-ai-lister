@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite';
 import { vitePlugin as remix } from '@remix-run/dev';
+import { vercelPreset } from '@vercel/remix';
 import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
   plugins: [
     remix({
       ignoredRouteFiles: ['**/.*'],
-      preset: 'vercel',
+      presets: [vercelPreset()],
       future: {
         v3_fetcherPersist: true,
         v3_relativeSplatPath: true,
