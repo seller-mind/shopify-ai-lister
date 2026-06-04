@@ -89,12 +89,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.error('[auth/callback] Failed to register webhooks:', error);
   }
 
-  // Register ScriptTag for widget auto-injection
-  try {
-    await registerScriptTag(shopDomain, result.accessToken);
-  } catch (error) {
-    console.error('[auth/callback] Failed to register script tag:', error);
-  }
+  // Note: Widget injection is handled via Theme App Extension (App Embed)
+  // ScriptTag API is deprecated as of Aug 2025
+  // Merchants enable the widget in their theme editor after installing the app
 
   console.log('[auth/callback] OAuth complete! Redirecting to Shopify admin for:', shopDomain);
 
@@ -138,54 +135,5 @@ async function registerWebhooks(shop: string, accessToken: string) {
     } catch (error) {
       console.error(`[webhook] Error registering ${webhook.topic}:`, error);
     }
-  }
-}
-
-/**
- * Register ScriptTag for automatic widget injection on the storefront
- * This loads our chat widget JS on all pages of the merchant's store
- */
-async function registerScriptTag(shop: string, accessToken: string) {
-  const appUrl = process.env.SHOPIFY_APP_URL;
-  if (!appUrl) return;
-
-  const widgetSrc = `${appUrl}/widget.js?shop=${shop}`;
-  
-  try {
-    // Check if script tag already exists
-    const listResp = await fetch(`https://${shop}/admin/api/2026-04/script_tags.json?src=${encodeURIComponent(widgetSrc)}`, {
-      headers: { 'X-Shopify-Access-Token': accessToken },
-    });
-    const listData = await listResp.json();
-    
-    if (listData.script_tags?.length > 0) {
-      console.log('[script-tag] Already registered');
-      return;
-    }
-
-    // Create script tag
-    const resp = await fetch(`https://${shop}/admin/api/2026-04/script_tags.json`, {
-      method: 'POST',
-      headers: {
-        'X-Shopify-Access-Token': accessToken,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        script_tag: {
-          event: 'onload',
-          src: widgetSrc,
-          display_scope: 'online_store',
-        },
-      }),
-    });
-    
-    const result = await resp.json();
-    if (!resp.ok) {
-      console.error('[script-tag] Failed to register:', result);
-    } else {
-      console.log('[script-tag] ✅ Registered:', result.script_tag?.id);
-    }
-  } catch (error) {
-    console.error('[script-tag] Error:', error);
   }
 }
