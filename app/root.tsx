@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteError,
 } from '@remix-run/react';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
@@ -78,6 +79,13 @@ export default function App() {
 }
 
 export function ErrorBoundary() {
+  const error = useRouteError();
+  const errorMessage = error instanceof Error ? error.message : 
+    (error && typeof error === 'object' && 'statusText' in error) ? (error as any).statusText :
+    (error && typeof error === 'object' && 'data' in error) ? String((error as any).data) :
+    'Unknown error';
+  const errorStatus = (error && typeof error === 'object' && 'status' in error) ? (error as any).status : '';
+  
   return (
     <html lang="en">
       <head>
@@ -88,8 +96,10 @@ export function ErrorBoundary() {
       <body>
         <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'system-ui' }}>
           <h1 style={{ color: '#bf0711' }}>Something went wrong</h1>
+          {errorStatus && <p style={{ fontWeight: 'bold' }}>Status: {errorStatus}</p>}
+          <p style={{ color: '#666', fontSize: '14px', maxWidth: '600px', margin: '0 auto' }}>{errorMessage}</p>
           <p>Sorry, an error occurred.</p>
-          <a href="/app">Back to Home</a>
+          <a href="/app" style={{ color: '#0066cc' }}>Back to Home</a>
         </div>
       </body>
     </html>
