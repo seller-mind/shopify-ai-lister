@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { vitePlugin as remix } from '@remix-run/dev';
-import { vercelPreset } from '@vercel/remix';
+import { vercelPreset } from '@vercel/remix/vite';
 import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
