@@ -24,26 +24,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
     fullURL: request.url
   });
 
-  // If no code, this might be a re-auth request - redirect to auth
   if (!code && shop) {
     console.log('[auth/callback] No code, redirecting to /auth');
     return redirect(`/auth?shop=${encodeURIComponent(shop)}`);
   }
 
-  // Must have code and shop
   if (!code || !shop) {
     console.error('[auth/callback] Missing required OAuth parameters');
     return new Response('Missing required OAuth parameters', { status: 400 });
   }
 
-  // Validate shop domain
   const shopDomain = shop.replace(/https?:\/\//, '').split('/')[0];
   if (!shopDomain.includes('.myshopify.com')) {
     console.error('[auth/callback] Invalid shop domain:', shopDomain);
     return new Response('Invalid shop domain', { status: 400 });
   }
 
-  // Exchange code for access token
   console.log('[auth/callback] Exchanging code for token, shop:', shopDomain);
   
   let result;
@@ -61,7 +57,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   console.log('[auth/callback] Token exchange successful! Scope:', result.scope);
 
-  // Store session in database
   const sessionId = `${shopDomain}_${Date.now()}`;
   console.log('[auth/callback] Storing session:', sessionId);
   
@@ -80,7 +75,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.log('[auth/callback] ✅ Session stored successfully');
   }
 
-  // Store/update store info
   const storeId = await upsertStore(shopDomain, result.accessToken, true);
   if (!storeId) {
     console.error('[auth/callback] ❌ Failed to upsert store for:', shopDomain);
@@ -95,29 +89,26 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.error('[auth/callback] Failed to register webhooks:', error);
   }
 
+  // Register ScriptTag for widget auto-injection
+  try {
+    await registerScriptTag(shopDomain, result.accessToken);
+  } catch (error) {
+    console.error('[auth/callback] Failed to register script tag:', error);
+  }
+
   console.log('[auth/callback] OAuth complete! Redirecting to Shopify admin for:', shopDomain);
 
-  // OAuth complete - redirect back to Shopify admin app page
-  // This will load the app in the Shopify admin iframe with a valid session
   const shopName = shopDomain.replace('.myshopify.com', '');
   return redirect(`https://admin.shopify.com/store/${shopName}/apps/${API_KEY}`);
 }
 
 /**
  * Register webhooks with Shopify
- * 
- * Note: GDPR compliance webhooks (customers/data_request, customers/redact, shop/redact)
- * CANNOT be registered via the REST API. They must be configured through:
- * 1. Partner Dashboard → App setup → Mandatory webhooks
- * 2. Or shopify.app.toml (if using Shopify CLI)
- * 
- * We only register app/uninstalled via API since it's a regular webhook topic.
  */
 async function registerWebhooks(shop: string, accessToken: string) {
   const appUrl = process.env.SHOPIFY_APP_URL;
   if (!appUrl) return;
 
-  // Only register non-compliance webhooks via API
   const regularWebhooks = [
     { topic: 'app/uninstalled', address: '/webhooks/app_uninstalled' },
   ];
@@ -147,5 +138,54 @@ async function registerWebhooks(shop: string, accessToken: string) {
     } catch (error) {
       console.error(`[webhook] Error registering ${webhook.topic}:`, error);
     }
+  }
+}
+
+/**
+ * Register ScriptTag for automatic widget injection on the storefront
+ * This loads our chat widget JS on all pages of the merchant's store
+ */
+async function registerScriptTag(shop: string, accessToken: string) {
+  const appUrl = process.env.SHOPIFY_APP_URL;
+  if (!appUrl) return;
+
+  const widgetSrc = `${appUrl}/widget.js?shop=${shop}`;
+  
+  try {
+    // Check if script tag already exists
+    const listResp = await fetch(`https://${shop}/admin/api/2026-04/script_tags.json?src=${encodeURIComponent(widgetSrc)}`, {
+      headers: { 'X-Shopify-Access-Token': accessToken },
+    });
+    const listData = await listResp.json();
+    
+    if (listData.script_tags?.length > 0) {
+      console.log('[script-tag] Already registered');
+      return;
+    }
+
+    // Create script tag
+    const resp = await fetch(`https://${shop}/admin/api/2026-04/script_tags.json`, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        script_tag: {
+          event: 'onload',
+          src: widgetSrc,
+          display_scope: 'online_store',
+        },
+      }),
+    });
+    
+    const result = await resp.json();
+    if (!resp.ok) {
+      console.error('[script-tag] Failed to register:', result);
+    } else {
+      console.log('[script-tag] ✅ Registered:', result.script_tag?.id);
+    }
+  } catch (error) {
+    console.error('[script-tag] Error:', error);
   }
 }

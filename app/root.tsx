@@ -15,7 +15,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url);
     const isShopifyRequest = url.searchParams.has('shop') || 
       url.pathname.startsWith('/auth') || 
-      url.pathname.startsWith('/webhooks');
+      url.pathname.startsWith('/webhooks') ||
+      url.pathname.startsWith('/api/');
 
     // ─── Geo-block: China mainland (compliance) ───
     if (!isShopifyRequest) {
@@ -53,12 +54,11 @@ export default function App() {
         <div className="app-layout">
           <nav className="sidebar">
             <div className="logo">
-              <span className="logo-icon">✨</span> Haimo AI Lister
+              <span className="logo-icon">💬</span> WISMO AI
             </div>
             <a href="/app" className="nav-item">📊 Dashboard</a>
-            <a href="/app/generate" className="nav-item">🤖 AI Generate</a>
-            <a href="/app/billing" className="nav-item">💳 Plans</a>
             <a href="/app/settings" className="nav-item">⚙️ Settings</a>
+            <a href="/app/billing" className="nav-item">💳 Plans</a>
           </nav>
           <main className="content">
             <Outlet />
@@ -87,7 +87,7 @@ export function ErrorBoundary() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Error - Haimo AI Lister</title>
+        <title>Error - WISMO AI</title>
       </head>
       <body>
         <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'system-ui' }}>

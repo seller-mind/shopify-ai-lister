@@ -1,7 +1,7 @@
 {
-  "name": "haimo-ai-lister",
-  "version": "1.0.0",
-  "description": "AI产品描述生成器 - 专为跨境卖家设计（中文输入→英文Amazon/Shopify listing）",
+  "name": "wismo-ai",
+  "version": "2.0.0",
+  "description": "WISMO AI - AI-powered order tracking chatbot for Shopify stores",
   "private": true,
   "type": "module",
   "scripts": {
