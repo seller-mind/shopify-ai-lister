@@ -104,20 +104,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 /**
- * Register required webhooks with Shopify
+ * Register webhooks with Shopify
+ * 
+ * Note: GDPR compliance webhooks (customers/data_request, customers/redact, shop/redact)
+ * CANNOT be registered via the REST API. They must be configured through:
+ * 1. Partner Dashboard → App setup → Mandatory webhooks
+ * 2. Or shopify.app.toml (if using Shopify CLI)
+ * 
+ * We only register app/uninstalled via API since it's a regular webhook topic.
  */
 async function registerWebhooks(shop: string, accessToken: string) {
-  const webhookTopics = [
-    { topic: 'app/uninstalled', address: '/webhooks/app_uninstalled' },
-    { topic: 'customers/data_request', address: '/webhooks/customers_data_request' },
-    { topic: 'customers/redact', address: '/webhooks/customers_redact' },
-    { topic: 'shop/redact', address: '/webhooks/shop_redact' },
-  ];
-
   const appUrl = process.env.SHOPIFY_APP_URL;
   if (!appUrl) return;
 
-  for (const webhook of webhookTopics) {
+  // Only register non-compliance webhooks via API
+  const regularWebhooks = [
+    { topic: 'app/uninstalled', address: '/webhooks/app_uninstalled' },
+  ];
+
+  for (const webhook of regularWebhooks) {
     try {
       const resp = await fetch(`https://${shop}/admin/api/2026-04/webhooks.json`, {
         method: 'POST',
