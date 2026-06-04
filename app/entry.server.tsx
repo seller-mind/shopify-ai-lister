@@ -8,11 +8,19 @@ export default async function (
   responseHeaders: Headers,
   remixContext: EntryContext,
 ) {
-  const remixServer = <RemixServer context={remixContext} url={request.url} />;
-  return handleRequest(
-    request,
-    responseStatusCode,
-    responseHeaders,
-    remixServer,
-  );
+  try {
+    const remixServer = <RemixServer context={remixContext} url={request.url} />;
+    return await handleRequest(
+      request,
+      responseStatusCode,
+      responseHeaders,
+      remixServer,
+    );
+  } catch (error) {
+    console.error('[entry.server] Render error:', error);
+    return new Response(`Internal Server Error: ${error instanceof Error ? error.message : String(error)}`, {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+  }
 }

@@ -10,27 +10,33 @@ import { json } from '@remix-run/node';
 import globalStyles from '~/styles/global.css?url';
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const isShopifyRequest = url.searchParams.has('shop') || 
-    url.pathname.startsWith('/auth') || 
-    url.pathname.startsWith('/webhooks');
+  try {
+    const url = new URL(request.url);
+    const isShopifyRequest = url.searchParams.has('shop') || 
+      url.pathname.startsWith('/auth') || 
+      url.pathname.startsWith('/webhooks');
 
-  // ─── Geo-block: China mainland (compliance) ───
-  // Skip for Shopify app requests (iframe + OAuth + webhooks)
-  // Shopify users already behind VPN to access admin, blocking breaks the app
-  if (!isShopifyRequest) {
-    const country = request.headers.get('x-vercel-ip-country') || '';
-    if (country === 'CN') {
-      throw new Response('This service is not available in your region.', {
-        status: 451,
-        headers: { 'Content-Type': 'text/plain' },
-      });
+    // ─── Geo-block: China mainland (compliance) ───
+    // Skip for Shopify app requests (iframe + OAuth + webhooks)
+    if (!isShopifyRequest) {
+      const country = request.headers.get('x-vercel-ip-country') || '';
+      if (country === 'CN') {
+        throw new Response('This service is not available in your region.', {
+          status: 451,
+          headers: { 'Content-Type': 'text/plain' },
+        });
+      }
     }
-  }
 
-  return json({
-    apiKey: process.env.SHOPIFY_API_KEY!,
-  });
+    return json({
+      apiKey: process.env.SHOPIFY_API_KEY || '',
+    });
+  } catch (error) {
+    // If it's a Response (like 451 geo-block), re-throw it
+    if (error instanceof Response) throw error;
+    console.error('[root.tsx] Loader error:', error);
+    return json({ apiKey: '' });
+  }
 }
 
 export function links() {
