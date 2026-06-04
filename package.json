@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "AI产品描述生成器 - 专为跨境卖家设计（中文输入→英文Amazon/Shopify listing）",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "remix vite:dev",
     "build": "remix vite:build",
