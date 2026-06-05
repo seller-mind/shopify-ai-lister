@@ -23,7 +23,7 @@ body {
   padding: 0 20px 20px;
   font-size: 18px;
   font-weight: 700;
-  color: #5c6ac4;
+  color: #008060;
   border-bottom: 1px solid #333;
   margin-bottom: 10px;
 }
@@ -91,8 +91,8 @@ body {
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #5c6ac4;
-  box-shadow: 0 0 0 2px rgba(92,106,196,0.2);
+  border-color: #008060;
+  box-shadow: 0 0 0 2px rgba(0,128,96,0.2);
 }
 
 .btn {
@@ -108,7 +108,7 @@ body {
 }
 
 .btn-primary {
-  background: #5c6ac4;
+  background: #008060;
   color: #fff;
 }
 
@@ -131,11 +131,11 @@ body {
 }
 
 .plan-card.featured {
-  border: 2px solid #5c6ac4;
+  border: 2px solid #008060;
 }
 
 .plan-card h2 { margin-bottom: 8px; }
-.plan-card .price { font-size: 28px; font-weight: 700; margin-bottom: 16px; color: #5c6ac4; }
+.plan-card .price { font-size: 28px; font-weight: 700; margin-bottom: 16px; color: #008060; }
 .plan-card ul { list-style: none; text-align: left; }
 .plan-card li { padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
 

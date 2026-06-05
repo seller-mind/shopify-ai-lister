@@ -1,8 +1,8 @@
 import { json } from '@remix-run/node';
 
 export const meta = () => [
-  { title: 'DMCA Policy - Haimo AI Lister' },
-  { description: 'DMCA Copyright Policy for Haimo AI Lister Shopify App' },
+  { title: 'DMCA Policy - WISMO AI' },
+  { description: 'DMCA Copyright Policy for WISMO AI Shopify App' },
 ];
 
 export default function DmcaPage() {
@@ -12,10 +12,10 @@ export default function DmcaPage() {
       <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Effective: June 2026</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Designated Copyright Agent</h2>
-      <p>Haimo AI Lister respects the intellectual property rights of others and expects its users to do the same. In accordance with the Digital Millennium Copyright Act (DMCA), we have designated a Copyright Agent to receive copyright infringement notices.</p>
+      <p>WISMO AI respects the intellectual property rights of others and expects its users to do the same. In accordance with the Digital Millennium Copyright Act (DMCA), we have designated a Copyright Agent to receive copyright infringement notices.</p>
       <p style={{ marginTop: '12px' }}><strong>Designated Agent:</strong><br />
       Copyright Agent<br />
-      Haimo AI Lister / Haimo Tech<br />
+      WISMO AI / Haimo<br />
       Email: <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a></p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>How to Submit a DMCA Takedown Notice</h2>
@@ -46,7 +46,7 @@ export default function DmcaPage() {
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Fair Use Notice</h2>
       <div style={{ background: '#f0fdf4', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #bbf7d0' }}>
-        <p><strong>AI-Generated Content Notice:</strong> Haimo AI Lister uses artificial intelligence (DeepSeek) to generate product descriptions. AI-generated content is considered transformative in nature as it creates new, original text based on user-provided product information. This transformative use is distinct from copying copyrighted material. Users are solely responsible for ensuring that the content they submit for AI processing does not include copyrighted material without proper authorization.</p>
+        <p><strong>AI-Generated Content Notice:</strong> WISMO AI uses artificial intelligence (DeepSeek) to process order tracking inquiries. AI-generated content is created based on real-time Shopify order data. Merchants are solely responsible for ensuring that their use of the App complies with applicable laws and regulations.</p>
         <p style={{ marginTop: '8px' }}>Users should also be aware that AI-generated descriptions may include phrases or combinations that inadvertently resemble existing copyrighted text. While we implement measures to minimize this, we cannot guarantee that AI-generated content will not include similarities to pre-existing works.</p>
       </div>
 
@@ -57,7 +57,7 @@ export default function DmcaPage() {
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Disclaimer</h2>
       <div style={{ background: '#fff7ed', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #fed7aa' }}>
-        <p><strong>Important:</strong> This DMCA Policy is provided for informational purposes only. Haimo AI Lister is an independent third-party application developed by Haimo Tech. It is not affiliated with, endorsed by, or sponsored by Shopify Inc. "Shopify" is a trademark of Shopify Inc. The information provided in this policy does not constitute legal advice. If you have questions about your rights or obligations under the DMCA, please consult with a qualified attorney.</p>
+        <p><strong>Important:</strong> This DMCA Policy is provided for informational purposes only. WISMO AI is an independent third-party application developed by Haimo. It is not affiliated with, endorsed by, or sponsored by Shopify Inc. "Shopify" is a trademark of Shopify Inc. The information provided in this policy does not constitute legal advice. If you have questions about your rights or obligations under the DMCA, please consult with a qualified attorney.</p>
       </div>
 
       <p style={{ marginTop: '32px', color: '#666', fontSize: '14px' }}>Last updated: June 2026</p>

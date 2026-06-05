@@ -2,22 +2,22 @@ import { json } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 
 export const meta = () => [
-  { title: 'Privacy Policy - Haimo AI Lister' },
-  { description: 'Privacy Policy for Haimo AI Lister Shopify App' },
+  { title: 'Privacy Policy - WISMO AI' },
+  { description: 'Privacy Policy for WISMO AI Shopify App' },
 ];
 
 export default function PrivacyPage() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', lineHeight: '1.6', color: '#1a1a1a' }}>
-      <h1 style={{ fontSize: '28px', marginBottom: '8px' }}>Privacy Policy for Haimo AI Lister</h1>
+      <h1 style={{ fontSize: '28px', marginBottom: '8px' }}>Privacy Policy for WISMO AI</h1>
       <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Last updated: June 3, 2026</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Age Restriction</h2>
       <p>Our services are not intended for individuals under the age of 16 (or the applicable age of consent in your jurisdiction). We do not knowingly collect personal information from children. If you believe we have collected information from a child under the applicable age, please contact us immediately at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>, and we will take steps to delete such information.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>AI Transparency Statement</h2>
-      <p>This service uses artificial intelligence (DeepSeek) to generate product descriptions. Users should be aware that AI-generated outputs may contain inaccuracies and should verify content independently before publishing. While we implement quality measures, we cannot guarantee the accuracy, completeness, or suitability of AI-generated content.</p>
-      <p style={{ marginTop: '8px' }}>AI-generated content is considered transformative in nature as it creates new, original text based on user-provided product information. Users remain responsible for reviewing and editing all generated content and ensuring its compliance with applicable laws and regulations.</p>
+      <p>This service uses artificial intelligence (DeepSeek) to process order tracking inquiries and generate customer service responses. Users should be aware that AI-generated outputs may contain inaccuracies and should verify content independently. While we implement quality measures, we cannot guarantee the accuracy, completeness, or suitability of AI-generated content.</p>
+      <p style={{ marginTop: '8px' }}>AI-generated content is provided to assist with customer order inquiries. Merchants remain responsible for reviewing and ensuring the accuracy of automated responses and ensuring their compliance with applicable laws and regulations.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Cookie Policy</h2>
       <p>We use limited cookies and similar technologies to provide and improve our service:</p>

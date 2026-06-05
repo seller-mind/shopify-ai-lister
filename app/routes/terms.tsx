@@ -2,8 +2,8 @@ import { json } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 
 export const meta = () => [
-  { title: 'Terms of Service - Haimo AI Lister' },
-  { description: 'Terms of Service for Haimo AI Lister Shopify App' },
+  { title: 'Terms of Service - WISMO AI' },
+  { description: 'Terms of Service for WISMO AI Shopify App' },
 ];
 
 export default function TermsPage() {
@@ -13,15 +13,15 @@ export default function TermsPage() {
       <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Effective: June 4, 2026</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>1. Acceptance of Terms</h2>
-      <p>By installing and using Haimo AI Lister (&quot;the App&quot;), you agree to these Terms of Service. If you do not agree, please uninstall the App immediately.</p>
+      <p>By installing and using WISMO AI (&quot;the App&quot;), you agree to these Terms of Service. If you do not agree, please uninstall the App immediately.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>2. Eligibility and Age Requirements</h2>
       <p>You must be at least 16 years of age to use this Service. If you are between 16 and 18, you represent that your parent or legal guardian has agreed to these Terms on your behalf.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>3. Description of Service</h2>
-      <p>Haimo AI Lister provides AI-powered product listing generation for Shopify stores. The App:</p>
+      <p>WISMO AI provides AI-powered order tracking chatbot for Shopify stores. The App:</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
-        <li style={{ marginBottom: '6px' }}>Generates product descriptions using artificial intelligence</li>
+        <li style={{ marginBottom: '6px' }}>Processes order tracking inquiries and generates AI-powered customer service responses</li>
         <li style={{ marginBottom: '6px' }}>Supports multi-language input with English output optimization</li>
         <li style={{ marginBottom: '6px' }}>Integrates with your Shopify store via the Shopify API</li>
         <li style={{ marginBottom: '6px' }}>AI-generated content may contain inaccuracies and should be reviewed before publishing</li>
@@ -29,7 +29,7 @@ export default function TermsPage() {
       </ul>
 
       <div style={{ background: '#fff7ed', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #fed7aa' }}>
-        <p><strong>Disclaimer:</strong> Haimo AI Lister is an independent third-party application developed by Haimo Tech. &quot;Shopify&quot; is a trademark of Shopify Inc. This App uses the Shopify API in accordance with Shopify&apos;s API Terms of Service.</p>
+        <p><strong>Disclaimer:</strong> WISMO AI is an independent third-party application developed by Haimo. &quot;Shopify&quot; is a trademark of Shopify Inc. This App uses the Shopify API in accordance with Shopify&apos;s API Terms of Service.</p>
       </div>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>4. AI-Generated Content Disclaimer</h2>
@@ -98,19 +98,19 @@ export default function TermsPage() {
       <p style={{ marginTop: '8px' }}><strong>California Residents (CCPA):</strong> We do not sell your personal information. See our <a href="/privacy" style={{ color: '#2563eb' }}>Privacy Policy</a> for full CCPA rights.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>9. Intellectual Property</h2>
-      <p>The App and its original content are owned by Haimo Tech and protected by international intellectual property laws. You retain ownership of all content you input into the App. AI-generated descriptions are provided for your use in your Shopify store.</p>
+      <p>The App and its original content are owned by Haimo and protected by international intellectual property laws. You retain ownership of all content you input into the App. AI-generated descriptions are provided for your use in your Shopify store.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>10. Limitation of Liability</h2>
       <p>To the fullest extent permitted by law:</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
-        <li style={{ marginBottom: '6px' }}>Haimo Tech shall not be liable for any indirect, incidental, special, consequential, or punitive damages</li>
+        <li style={{ marginBottom: '6px' }}>Haimo shall not be liable for any indirect, incidental, special, consequential, or punitive damages</li>
         <li style={{ marginBottom: '6px' }}>We shall not be liable for any outcomes resulting from the use of AI-generated content</li>
         <li style={{ marginBottom: '6px' }}>We shall not be liable for any actions taken by Shopify against your store</li>
         <li style={{ marginBottom: '6px' }}>Our total liability shall not exceed $100 USD</li>
       </ul>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>11. Indemnification</h2>
-      <p>You agree to indemnify and hold harmless Haimo Tech from any claims, damages, or expenses arising from your use of the App or violation of these Terms.</p>
+      <p>You agree to indemnify and hold harmless Haimo from any claims, damages, or expenses arising from your use of the App or violation of these Terms.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>12. Termination</h2>
       <p>We reserve the right to terminate or suspend access to the App at any time. You may terminate by uninstalling the App from your Shopify store. Upon uninstallation, all your data will be deleted in accordance with our Privacy Policy.</p>

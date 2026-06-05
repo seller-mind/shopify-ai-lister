@@ -154,7 +154,7 @@ export async function action({ request }: ActionFunctionArgs) {
       price: plan.price,
       returnUrl,
       trialDays: plan.trialDays,
-      test: true, // Test mode for development - will be false in production
+      test: process.env.NODE_ENV === 'production' ? false : true,
     });
 
     const subscriptionResult = result?.data?.appSubscriptionCreate;
