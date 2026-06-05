@@ -9,3 +9,4 @@ node_modules
 public/build
 build
 *.tsbuildinfo
+.cache/

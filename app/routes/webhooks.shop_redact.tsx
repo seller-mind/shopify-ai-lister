@@ -9,7 +9,8 @@ import { deleteStore } from '~/services/supabase.server';
  * Fired 48 hours after a merchant uninstalls the app.
  * We must delete ALL shop data within 30 days.
  * 
- * This handler deletes all data for the shop from our database.
+ * This handler deletes all data for the shop from our database,
+ * including WISMO conversations, messages, feedback, analytics, and settings.
  */
 export async function action({ request }: ActionFunctionArgs) {
   const body = await request.text();
@@ -17,21 +18,21 @@ export async function action({ request }: ActionFunctionArgs) {
   const topic = request.headers.get('X-Shopify-Topic') || '';
   const shopDomain = request.headers.get('X-Shopify-Shop-Domain') || '';
 
-  // Verify webhook signature
+  // Verify webhook signature — MUST reject invalid HMAC
+  // This is critical: without verification, anyone could trigger shop data deletion
   const isValid = await shopify.verifyHmac(body, hmac);
   if (!isValid) {
-    console.warn(`[GDPR] Invalid HMAC for ${topic} from ${shopDomain}`);
-    console.warn('[GDPR] HMAC verification failed - still acknowledging request');
+    console.error(`[GDPR] ❌ Invalid HMAC for ${topic} from ${shopDomain} — REJECTED`);
+    return json({ error: 'Invalid signature' }, { status: 401 });
   }
 
-  console.log(`[GDPR] ${topic} from ${shopDomain}`);
+  console.log(`[GDPR] ✅ ${topic} from ${shopDomain}`);
 
   try {
     const payload = JSON.parse(body);
     console.log(`[GDPR] Shop redact: shop_id=${payload.shop_id}, shop_domain=${payload.shop_domain}`);
 
     // Delete ALL data for this shop from our database
-    // (generations, sessions, store record)
     if (shopDomain) {
       const deleted = await deleteStore(shopDomain);
       if (deleted) {

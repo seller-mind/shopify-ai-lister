@@ -203,16 +203,44 @@ export async function deleteStore(shop: string): Promise<boolean> {
       await supabase.from('generations').delete().eq('store_id', store.id);
     }
     
+    // 删除WISMO相关数据（含客户PII：邮箱、姓名、对话内容）
+    // 必须先删子表（有外键引用的），再删父表
+    const wismoConvIds = await getWismoConvIds(shop);
+    if (wismoConvIds.length > 0) {
+      await supabase.from('wismo_messages').delete().in('conversation_id', wismoConvIds);
+      await supabase.from('wismo_feedback').delete().in('conversation_id', wismoConvIds);
+    }
+    await supabase.from('wismo_conversations').delete().eq('shop', shop);
+    await supabase.from('wismo_analytics').delete().eq('shop', shop);
+    await supabase.from('wismo_settings').delete().eq('shop', shop);
+    
     // 删除sessions
     await supabase.from('shopify_sessions').delete().eq('shop', shop);
     
     // 删除store
     const { error } = await supabase.from('stores').delete().eq('shop', shop);
     
+    console.log(`[GDPR] ✅ All data deleted for ${shop} (including WISMO conversations, messages, feedback, analytics, settings)`);
     return !error;
   } catch (error) {
     console.error('Error deleting store:', error);
     return false;
+  }
+}
+
+/**
+ * 获取WISMO对话ID列表（用于级联删除消息和反馈）
+ */
+async function getWismoConvIds(shop: string): Promise<string[]> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data } = await supabase
+      .from('wismo_conversations')
+      .select('id')
+      .eq('shop', shop);
+    return data?.map((d: { id: string }) => d.id) || [];
+  } catch {
+    return [];
   }
 }
 

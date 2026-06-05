@@ -46,7 +46,7 @@ export default function DmcaPage() {
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Fair Use Notice</h2>
       <div style={{ background: '#f0fdf4', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #bbf7d0' }}>
-        <p><strong>AI-Generated Content Notice:</strong> WISMO AI uses artificial intelligence (DeepSeek) to process order tracking inquiries. AI-generated content is created based on real-time Shopify order data. Merchants are solely responsible for ensuring that their use of the App complies with applicable laws and regulations.</p>
+        <p><strong>AI-Generated Content Notice:</strong> WISMO AI uses artificial intelligence (DeepSeek) to generate responses for general customer queries. Order tracking responses are generated directly from Shopify order data without AI. AI-generated content is created based on real-time chat messages and store settings. Merchants are solely responsible for ensuring that their use of the App and its AI-generated responses complies with applicable laws and regulations.</p>
         <p style={{ marginTop: '8px' }}>Users should also be aware that AI-generated descriptions may include phrases or combinations that inadvertently resemble existing copyrighted text. While we implement measures to minimize this, we cannot guarantee that AI-generated content will not include similarities to pre-existing works.</p>
       </div>
 

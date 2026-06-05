@@ -139,7 +139,7 @@ var WINDOW_HTML = [
   '      </div>',
   '      <div>',
   '        <div class="wt">WISMO AI</div>',
-  '        <div class="ws"><span class="wdot"></span> Online</div>',
+  '        <div class="ws"><span class="wdot"></span> AI Assistant</div>',
   '      </div>',
   '    </div>',
   '    <button class="wx" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>',
@@ -150,6 +150,7 @@ var WINDOW_HTML = [
   '    <input type="text" class="win" placeholder="Ask anything..." autocomplete="off" />',
   '    <button class="wsn" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>',
   '  </div>',
+  '  <div class="wft">AI-powered · <a href="' + API + '/privacy" target="_blank" rel="noopener">Privacy</a></div>',
   '</div>',
 ].join('');
 
@@ -262,6 +263,12 @@ var WINDOW_HTML = [
 
       // Main greeting
       addMsg('bot', greetingText);
+
+      // AI disclosure (EU AI Act Art. 52 compliance)
+      var aiNotice = document.createElement('div');
+      aiNotice.className = 'mm m-bot';
+      aiNotice.innerHTML = '<div class="ma"></div><div class="mc ai-notice" style="font-size:11px;color:#888;padding:8px 12px;background:#f9fafb;border-radius:12px;">🤖 AI-powered assistant — responses are automated</div>';
+      msgs.appendChild(aiNotice);
 
       // Inline order input card
       var card = document.createElement('div');
@@ -564,6 +571,7 @@ function CSS() {
 .w.dark .wm { background: #111113; }
 .w.dark .wh { background: linear-gradient(135deg, #0a3d2e 0%, #0d4f3a 100%); }
 .w.dark .m-bot .mc { background: var(--bg-card); color: var(--text-primary); }
+.w.dark .ai-notice { background: #1a1a1e !important; color: #666 !important; }
 .w.dark .m-user .mc { background: var(--ac); color: #fff; }
 .w.dark .wi { background: #111113; border-top-color: var(--border-color); }
 .w.dark .win { background: #2c2c2e; border-color: var(--border-color); color: var(--text-primary); }
@@ -1028,6 +1036,18 @@ function CSS() {
   flex-shrink: 0;
   align-items: center;
 }
+.wft {
+  padding: 6px 16px calc(6px + env(safe-area-inset-bottom, 0px));
+  text-align: center;
+  font-size: 11px;
+  color: #999;
+  background: #fafafa;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+.w.dark .wft { background: #111113; color: #555; }
+.wft a { color: #008060; text-decoration: none; }
+.wft a:hover { text-decoration: underline; }
 .win {
   flex: 1;
   border: 1.5px solid var(--border-color);
