@@ -5,8 +5,13 @@
 import { json } from '@remix-run/node';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
+import { addCorsHeaders, handleCorsPreflightRequest } from '~/utils/cors';
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  // Handle CORS preflight
+  const preflight = handleCorsPreflightRequest(request);
+  if (preflight) return preflight;
+
   const url = new URL(request.url);
   const shop = url.searchParams.get('shop');
 
@@ -52,6 +57,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json({ enabled: false });
   }
 
+  const responseHeaders = new Headers();
+  addCorsHeaders(responseHeaders, request);
+
   return json({
     enabled: true,
     position: settings.widgetPosition,
@@ -60,5 +68,5 @@ export async function loader({ request }: LoaderFunctionArgs) {
     brandName: settings.brandName,
     apiEndpoint: `https://shopify-ai-lister-tau.vercel.app/api/chat`,
     shop,
-  });
+  }, { headers: responseHeaders });
 }

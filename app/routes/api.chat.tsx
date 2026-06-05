@@ -8,10 +8,15 @@ import { json } from '@remix-run/node';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
 import { detectIntent, lookupOrderByNumber, lookupOrdersByEmail, generateResponse, getDemoOrder } from '~/services/wismo-engine.server';
+import { addCorsHeaders, handleCorsPreflightRequest } from '~/utils/cors';
 
 // ─── Main Handler ────────────────────────────────────────────────────
 
 export async function action({ request }: ActionFunctionArgs) {
+  // Handle CORS preflight
+  const preflight = handleCorsPreflightRequest(request);
+  if (preflight) return preflight;
+
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, { status: 405 });
   }
@@ -89,11 +94,14 @@ export async function action({ request }: ActionFunctionArgs) {
     await incrementAnalytics(shop, intent.intent, replyIntent);
 
     // ─── Return ────────────────────────────────────────────────────
+    const responseHeaders = new Headers();
+    addCorsHeaders(responseHeaders, request);
+    
     return json({
       reply,
       conversationId: convId,
       intent: replyIntent,
-    });
+    }, { headers: responseHeaders });
 
   } catch (error) {
     console.error('[WISMO API] Error:', error);
