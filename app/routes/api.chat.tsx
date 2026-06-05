@@ -14,6 +14,22 @@ import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
 import { detectIntent, lookupOrderByNumber, lookupOrdersByEmail, generateResponse, getDemoOrder, detectLanguage } from '~/services/wismo-engine.server';
 import { addCorsHeaders, handleCorsPreflightRequest } from '~/utils/cors';
 
+// ─── Basic Rate Limiting (per-shop, in-memory) ─────────────────────
+const RATE_LIMITS: Record<string, { count: number; resetAt: number }> = {};
+const RATE_LIMIT_WINDOW = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 30; // 30 messages per minute per shop
+
+function checkRateLimit(shop: string): boolean {
+  const now = Date.now();
+  const entry = RATE_LIMITS[shop];
+  if (!entry || now > entry.resetAt) {
+    RATE_LIMITS[shop] = { count: 1, resetAt: now + RATE_LIMIT_WINDOW };
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_LIMIT_MAX;
+}
+
 export async function action({ request }: ActionFunctionArgs) {
   const preflight = handleCorsPreflightRequest(request);
   if (preflight) return preflight;
@@ -31,6 +47,13 @@ export async function action({ request }: ActionFunctionArgs) {
     const { shop, message, conversationId, customerEmail, customerName, customerLocale } = body;
 
     if (!shop || !message) return json({ error: 'Missing shop or message' }, { status: 400 });
+
+    // Rate limit check
+    if (!checkRateLimit(shop)) {
+      const h = new Headers();
+      addCorsHeaders(h, request);
+      return json({ error: 'Too many requests. Please try again in a moment.' }, { status: 429, headers: h });
+    }
 
     const store = await getStore(shop);
     if (!store) return json({ error: 'Store not found' }, { status: 404 });

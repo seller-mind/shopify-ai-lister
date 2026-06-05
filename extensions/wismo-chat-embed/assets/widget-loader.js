@@ -31,9 +31,9 @@
 
   // Render minimal chat bubble immediately
   var bubble = document.createElement('button');
-  bubble.setAttribute('aria-label', 'Open chat');
-  bubble.style.cssText = 'width:56px;height:56px;border-radius:50%;background:#008060;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:transform 0.2s,box-shadow 0.2s;outline:none;';
-  bubble.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+  bubble.setAttribute('aria-label', 'Track your order - AI Assistant');
+  bubble.style.cssText = 'width:56px;height:56px;border-radius:50%;background:#008060;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:transform 0.2s,box-shadow 0.2s;outline:none;position:relative;';
+  bubble.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg><span style="position:absolute;bottom:-2px;right:-2px;background:#fff;color:#008060;font-size:8px;font-weight:700;padding:1px 4px;border-radius:6px;border:1px solid #e5e7eb;line-height:1.3;">AI</span>';
   
   bubble.addEventListener('mouseenter', function() {
     bubble.style.transform = 'scale(1.08)';

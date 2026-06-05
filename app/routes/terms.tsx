@@ -78,8 +78,9 @@ export default function TermsPage() {
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
         <li style={{ marginBottom: '6px' }}>You agree to Shopify's billing terms and payment processing policies</li>
         <li style={{ marginBottom: '6px' }}>Charges will appear on your Shopify invoice</li>
-        <li style={{ marginBottom: '6px' }}>Subscriptions renew automatically at the end of each billing period</li>
-        <li style={{ marginBottom: '6px' }}>You may cancel at any time through your Shopify admin panel</li>
+        <li style={{ marginBottom: '6px' }}><strong>Automatic Renewal:</strong> Subscriptions renew automatically at the end of each billing period (every 30 days) at the then-current price, unless you cancel before the renewal date. You will be charged the same price as your current billing period unless you are notified of a price change at least 30 days in advance.</li>
+        <li style={{ marginBottom: '6px' }}><strong>How to Cancel:</strong> You may cancel at any time through your Shopify admin panel (Settings → Apps → WISMO AI → Cancel). Cancellation takes effect at the end of the current billing period — you will retain access until then.</li>
+        <li style={{ marginBottom: '6px' }}><strong>California Auto-Renewal Notice (AB 2511):</strong> Your subscription will automatically renew. You may cancel at any time. To cancel, go to your Shopify admin panel or contact us at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>.</li>
       </ul>
 
       <h3 style={{ fontSize: '18px', marginTop: '24px', marginBottom: '12px', color: '#1a1a1a' }}>Refund Policy</h3>

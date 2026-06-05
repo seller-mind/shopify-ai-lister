@@ -1,18 +1,16 @@
 import { json } from '@remix-run/node';
 
+/**
+ * Health check endpoint
+ * Only exposes status — no sensitive information
+ */
 export async function loader() {
+  // Basic health check without exposing any environment details
+  const isHealthy = !!(process.env.SHOPIFY_API_KEY && process.env.SHOPIFY_API_SECRET && process.env.SUPABASE_URL);
+  
   return json({ 
-    status: 'ok', 
+    status: isHealthy ? 'ok' : 'degraded', 
     timestamp: new Date().toISOString(),
-    env: {
-      hasShopifyKey: !!process.env.SHOPIFY_API_KEY,
-      hasShopifySecret: !!process.env.SHOPIFY_API_SECRET,
-      hasShopifyUrl: !!process.env.SHOPIFY_APP_URL,
-      hasSupabaseUrl: !!process.env.SUPABASE_URL,
-      hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      hasDeepseek: !!process.env.DEEPSEEK_API_KEY,
-      shopifyUrl: process.env.SHOPIFY_APP_URL || 'NOT_SET',
-    }
   });
 }
 

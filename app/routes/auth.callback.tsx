@@ -101,16 +101,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 /**
  * Register webhooks with Shopify
+ * Includes mandatory GDPR webhooks for App Store compliance
  */
 async function registerWebhooks(shop: string, accessToken: string) {
   const appUrl = process.env.SHOPIFY_APP_URL;
   if (!appUrl) return;
 
-  const regularWebhooks = [
+  const webhooks = [
     { topic: 'app/uninstalled', address: '/webhooks/app_uninstalled' },
+    // Mandatory GDPR webhooks for Shopify App Store
+    { topic: 'customers/data_request', address: '/webhooks/customers_data_request' },
+    { topic: 'customers/redact', address: '/webhooks/customers_redact' },
+    { topic: 'shop/redact', address: '/webhooks/shop_redact' },
   ];
 
-  for (const webhook of regularWebhooks) {
+  for (const webhook of webhooks) {
     try {
       const resp = await fetch(`https://${shop}/admin/api/2026-04/webhooks.json`, {
         method: 'POST',

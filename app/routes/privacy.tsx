@@ -156,9 +156,11 @@ export default function PrivacyPage() {
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Data Retention</h2>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
         <li style={{ marginBottom: '6px' }}><strong>Access tokens:</strong> Stored until you uninstall the App. Automatically deleted upon uninstallation via Shopify webhook.</li>
-        <li style={{ marginBottom: '6px' }}><strong>Conversations:</strong> Stored in Supabase (Tokyo) for conversation continuity and analytics. Deleted when the App is uninstalled.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Conversations & messages:</strong> Stored in Supabase (Tokyo) for conversation continuity and analytics. Retained for up to <strong>90 days</strong> from the last message, after which they are automatically purged. Deleted immediately when the App is uninstalled.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Customer PII in conversations</strong> (email, name): Anonymized after <strong>90 days</strong> of inactivity. Deleted upon customer request or App uninstallation.</li>
         <li style={{ marginBottom: '6px' }}><strong>Order data:</strong> Fetched in real-time from Shopify API. <strong>Not stored</strong> by our App after the response is sent.</li>
         <li style={{ marginBottom: '6px' }}><strong>Chat messages sent to DeepSeek:</strong> Processed in real-time and <strong>not retained</strong> by DeepSeek after generating the response.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Analytics:</strong> Aggregated, anonymized daily metrics retained for <strong>12 months</strong> for trend analysis.</li>
         <li style={{ marginBottom: '6px' }}><strong>Widget localStorage:</strong> Conversation ID stored in the customer's browser for 24 hours only, then automatically expires.</li>
       </ul>
 
