@@ -141,7 +141,20 @@ export default function TermsPage() {
       <p style={{ marginTop: '8px' }}>Any disputes arising out of or in connection with these Terms shall first be resolved through good-faith negotiation. If unresolved within 30 days, disputes shall be resolved through binding arbitration administered by the International Centre for Dispute Resolution (ICDR) under its International Arbitration Rules. The arbitration shall be conducted in English, and the seat of arbitration shall be Singapore. The arbitral tribunal shall consist of one arbitrator. Notwithstanding the foregoing, either party may seek injunctive or equitable relief in any court of competent jurisdiction.</p>
       <p style={{ marginTop: '8px' }}><strong>EU Consumers:</strong> Nothing in this section deprives you of the right to bring proceedings in your country of residence, nor does it prevent you from using the European Commission&apos;s Online Dispute Resolution platform: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>https://ec.europa.eu/consumers/odr</a>.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>16. Contact</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>16. Force Majeure</h2>
+      <p>We shall not be liable for any failure or delay in performing our obligations under these Terms where such failure or delay results from circumstances beyond our reasonable control, including but not limited to: natural disasters, war, terrorism, riots, embargoes, acts of civil or military authorities, fire, floods, accidents, strikes, shortages of transportation, facilities, fuel, energy, labor, or materials, failures of third-party service providers (including Shopify, DeepSeek, Supabase, or Vercel), internet outages, or cyberattacks.</p>
+      <p>If a force majeure event continues for more than 90 consecutive days, either party may terminate these Terms by providing written notice to the other party.</p>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>17. Severability</h2>
+      <p>If any provision of these Terms is held to be invalid, illegal, or unenforceable by a court of competent jurisdiction, such provision shall be modified to the minimum extent necessary to make it valid and enforceable, or if modification is not possible, shall be severed from these Terms. The invalidity of any provision shall not affect the validity or enforceability of the remaining provisions, which shall continue in full force and effect.</p>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>18. Entire Agreement</h2>
+      <p>These Terms, together with our <a href="/privacy" style={{ color: '#2563eb' }}>Privacy Policy</a>, constitute the entire agreement between you and Haimo Tech regarding the use of WISMO AI, and supersede all prior or contemporaneous understandings, agreements, representations, and warranties, both written and oral, regarding such subject matter. No oral or written information or advice given by Haimo Tech or its representatives shall create any warranty or obligation not expressly stated in these Terms.</p>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>19. Waiver</h2>
+      <p>The failure of Haimo Tech to enforce any right or provision of these Terms shall not constitute a waiver of such right or provision. Any waiver of any provision of these Terms will be effective only if in writing and signed by Haimo Tech. The waiver of any right or provision shall not be deemed a waiver of any other right or provision, nor shall it constitute a continuing waiver.</p>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>20. Contact</h2>
       <p>Questions about these Terms? Contact: <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a></p>
       <p style={{ marginTop: '8px' }}>For Data Processing Agreement requests, please email with &quot;DPA Request&quot; in the subject line.</p>
     </div>

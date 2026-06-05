@@ -146,6 +146,19 @@ async function handleFeedback(request: Request) {
       return json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Rate limit feedback (max 10 per conversation per minute)
+    const feedbackKey = `fb_${conversationId}`;
+    const fbEntry = RATE_LIMITS[feedbackKey];
+    const now = Date.now();
+    if (fbEntry && now <= fbEntry.resetAt && fbEntry.count >= 10) {
+      return json({ error: 'Too many requests' }, { status: 429 });
+    }
+    if (!fbEntry || now > fbEntry.resetAt) {
+      RATE_LIMITS[feedbackKey] = { count: 1, resetAt: now + RATE_LIMIT_WINDOW };
+    } else {
+      fbEntry.count++;
+    }
+
     const db = getSupabaseAdmin();
 
     // Store feedback

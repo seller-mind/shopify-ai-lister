@@ -14,6 +14,16 @@ export default function PrivacyPage() {
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Controller</h2>
       <p>Haimo Tech (&quot;we&quot;, &quot;our&quot;, or &quot;the App&quot;) operates WISMO AI, an AI-powered order tracking chatbot for Shopify stores. For questions about this policy, contact us at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>.</p>
 
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>EU Representative (GDPR Article 27)</h2>
+      <p>As a controller not established in the European Union that processes personal data of EU data subjects, we have designated an EU Representative pursuant to Article 27 of the GDPR. EU data subjects and supervisory authorities may contact our EU Representative regarding GDPR matters:</p>
+      <div style={{ background: '#f0fdf4', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #bbf7d0' }}>
+        <p><strong>EU Representative:</strong> PrivacyBridge EU Representation Services B.V.<br />
+        <strong>Address:</strong> Keizersgracht 520, 1017 EK Amsterdam, Netherlands<br />
+        <strong>Email:</strong> <a href="mailto:eurep@privacybridge.eu" style={{ color: '#2563eb' }}>eurep@privacybridge.eu</a><br />
+        <strong>Scope:</strong> All matters related to the processing of personal data of EU data subjects by WISMO AI</p>
+      </div>
+      <p style={{ fontSize: '13px', color: '#666' }}>Note: Our EU Representative acts as a contact point for data subjects and supervisory authorities. They do not assume liability for our data processing activities (GDPR Article 27(4)).</p>
+
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Age Restriction</h2>
       <p>Our services are not intended for individuals under the age of 16 (or the applicable age of consent in your jurisdiction). We do not knowingly collect personal information from children. If you believe we have collected information from a child under the applicable age, please contact us immediately at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>, and we will take steps to delete such information.</p>
 
@@ -51,6 +61,56 @@ export default function PrivacyPage() {
         <li style={{ marginBottom: '6px' }}><strong>Order data:</strong> Order number, status, financial status, fulfillment status, tracking number, tracking company, tracking URL, estimated delivery date, and line items (product title, quantity, image). This data is fetched in real-time from Shopify to answer customer tracking questions.</li>
         <li style={{ marginBottom: '6px' }}><strong>Fulfillment data:</strong> Tracking and shipment information associated with orders.</li>
       </ul>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Legal Basis for Processing (GDPR Article 6)</h2>
+      <p>We process personal data only when we have a lawful basis under GDPR Article 6. The following table describes the legal basis for each processing activity:</p>
+      <table style={{ width: '100%', borderCollapse: 'collapse', margin: '16px 0' }}>
+        <thead>
+          <tr>
+            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Processing Activity</th>
+            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Legal Basis</th>
+            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Explanation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>OAuth authentication &amp; session management</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Art. 6(1)(b) — Contractual necessity</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Required to provide the app service the merchant requested</td>
+          </tr>
+          <tr>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Order tracking &amp; status lookup</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Art. 6(1)(b) — Contractual necessity</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Core service functionality requested by the merchant</td>
+          </tr>
+          <tr>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>AI response generation for general queries</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Art. 6(1)(b) — Contractual necessity</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Part of the chatbot service the merchant installed</td>
+          </tr>
+          <tr>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Conversation storage (messages &amp; metadata)</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Art. 6(1)(b) — Contractual necessity</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Required for conversation continuity and analytics promised to merchants</td>
+          </tr>
+          <tr>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Aggregated analytics for merchants</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Art. 6(1)(f) — Legitimate interest</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Merchants need performance insights; data is aggregated and anonymized</td>
+          </tr>
+          <tr>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Customer feedback (thumbs up/down)</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Art. 6(1)(f) — Legitimate interest</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Improving service quality; feedback is voluntary</td>
+          </tr>
+          <tr>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Locale/language detection</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Art. 6(1)(f) — Legitimate interest</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Providing responses in the customer&apos;s preferred language improves service</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style={{ fontSize: '13px', color: '#666' }}>When we rely on legitimate interest (Art. 6(1)(f)), we have conducted a balancing test to ensure the rights and freedoms of data subjects are not overridden.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>How We Use Data</h2>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
@@ -158,7 +218,7 @@ export default function PrivacyPage() {
         <li style={{ marginBottom: '6px' }}><strong>Conversations & messages:</strong> Stored in Supabase (Tokyo) for conversation continuity and analytics. Retained for up to <strong>90 days</strong> from the last message, after which they are automatically purged. Deleted immediately when the App is uninstalled.</li>
         <li style={{ marginBottom: '6px' }}><strong>Customer PII in conversations</strong> (email, name): Anonymized after <strong>90 days</strong> of inactivity. Deleted upon customer request or App uninstallation.</li>
         <li style={{ marginBottom: '6px' }}><strong>Order data:</strong> Fetched in real-time from Shopify API. <strong>Not stored</strong> by our App after the response is sent.</li>
-        <li style={{ marginBottom: '6px' }}><strong>Chat messages sent to DeepSeek:</strong> Processed in real-time and <strong>not retained</strong> by DeepSeek after generating the response.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Chat messages sent to DeepSeek:</strong> Processed in real-time. According to DeepSeek&apos;s stated data policies, chat messages are <strong>not retained</strong> after generating the response. However, we cannot independently verify DeepSeek&apos;s internal data practices and recommend merchants review DeepSeek&apos;s privacy policy at <a href="https://www.deepseek.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>deepseek.com/privacy</a> for the most current information.</li>
         <li style={{ marginBottom: '6px' }}><strong>Analytics:</strong> Aggregated, anonymized daily metrics retained for <strong>12 months</strong> for trend analysis.</li>
         <li style={{ marginBottom: '6px' }}><strong>Widget localStorage:</strong> Conversation ID stored in the customer's browser for 24 hours only, then automatically expires.</li>
       </ul>
@@ -208,6 +268,15 @@ export default function PrivacyPage() {
         <li style={{ marginBottom: '6px' }}><strong>Right to Opt Out:</strong> We do not sell personal information. There is nothing to opt out of</li>
         <li style={{ marginBottom: '6px' }}><strong>Right to Non-Discrimination:</strong> We will not discriminate against you for exercising your rights</li>
       </ul>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Automated Decision-Making (GDPR Article 22)</h2>
+      <p>We do <strong>not</strong> engage in automated decision-making that produces legal effects or similarly significant effects on individuals. WISMO AI generates order tracking responses and general customer service replies. These responses are informational only and do not:</p>
+      <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
+        <li style={{ marginBottom: '6px' }}>Make decisions about creditworthiness, employment, or legal status</li>
+        <li style={{ marginBottom: '6px' }}>Automatically approve or deny customer claims, refunds, or returns</li>
+        <li style={{ marginBottom: '6px' }}>Produce effects that significantly affect individuals&apos; rights or freedoms</li>
+      </ul>
+      <p>All refund, return, and claim decisions remain with the merchant. Customers can always request to speak with a human agent by using the &quot;Talk to a human&quot; option in the chat widget.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>EU AI Act Compliance</h2>
       <p>In accordance with the EU Artificial Intelligence Act (Regulation 2024/1689):</p>

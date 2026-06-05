@@ -19,6 +19,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json({ error: 'Missing shop parameter' }, { status: 400 });
   }
 
+  // Validate shop domain format (prevent reconnaissance/abuse)
+  if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
+    return json({ error: 'Invalid shop domain' }, { status: 400 });
+  }
+
   // Verify store exists and has app installed
   const store = await getStore(shop);
   if (!store) {

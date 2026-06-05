@@ -195,6 +195,13 @@ export default function Billing() {
         </div>
       </div>
 
+      {/* Tax Disclosure */}
+      <div className="card" style={{ marginTop: '16px', padding: '12px 16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+        <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+          <strong>Tax notice:</strong> All prices are in USD. Applicable taxes (VAT, sales tax) are calculated and collected by Shopify at checkout based on your billing address. EU merchants: VAT is included in the price where required by local law.
+        </p>
+      </div>
+
       {/* Plan Change Notice */}
       {currentPlan !== 'FREE' && (
         <div className="card" style={{ marginTop: '24px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
