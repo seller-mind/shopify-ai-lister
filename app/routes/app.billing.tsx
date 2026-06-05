@@ -33,6 +33,9 @@ const PLANS = [
   },
 ];
 
+// Plan tier order for upgrade/downgrade detection
+const PLAN_TIER: Record<string, number> = { FREE: 0, STARTER: 1, PRO: 2, BUSINESS: 3 };
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session, admin } = await authenticateAdmin(request);
   
@@ -72,8 +75,24 @@ export async function action({ request }: ActionFunctionArgs) {
   const plan = PLANS.find(p => p.planId === planId);
   if (!plan) return json({ error: 'Invalid plan' }, { status: 400 });
 
+  // Check if merchant already has an active subscription (plan change = no trial)
+  let isPlanChange = false;
   try {
-    const returnUrl = `${process.env.SHOPIFY_APP_URL}/auth/billing?shop=${encodeURIComponent(session.shop)}`;
+    const result = await admin.graphql(`{
+      currentAppInstallation { subscription { name status } }
+    }`);
+    const sub = result?.data?.currentAppInstallation?.subscription;
+    if (sub?.status === 'ACTIVE') isPlanChange = true;
+  } catch { /* assume no existing sub */ }
+
+  // Plan changes (upgrade/downgrade) don't get trial days
+  const effectiveTrialDays = isPlanChange ? 0 : plan.trialDays;
+
+  try {
+    // Shopify Billing API: creating a new subscription automatically cancels
+    // the existing one, enabling plan changes (upgrade/downgrade) without
+    // requiring merchant to contact support (Shopify App Store requirement 1.2.3)
+    const returnUrl = `${process.env.SHOPIFY_APP_URL}/app/billing?shop=${encodeURIComponent(session.shop)}`;
     const result = await admin.graphql(`
       mutation CreateSubscription($name: String!, $price: Decimal!, $returnUrl: URL!, $trialDays: Int!, $test: Boolean!) {
         appSubscriptionCreate(
@@ -82,7 +101,7 @@ export async function action({ request }: ActionFunctionArgs) {
         ) { userErrors { field message } confirmationUrl appSubscription { id status } }
       }
     `, {
-      name: plan.name, price: plan.price, returnUrl, trialDays: plan.trialDays,
+      name: plan.name, price: plan.price, returnUrl, trialDays: effectiveTrialDays,
       test: process.env.NODE_ENV === 'production' ? false : true,
     });
 
@@ -143,7 +162,12 @@ export default function Billing() {
                 </button>
               ) : (
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={isSubmitting}>
-                  {isSubmitting ? 'Processing...' : `Start ${plan.trialDays}-day free trial`}
+                  {isSubmitting ? 'Processing...' : currentPlan === 'FREE' 
+                    ? `Start ${plan.trialDays}-day free trial` 
+                    : PLAN_TIER[plan.planId] > PLAN_TIER[currentPlan]
+                      ? `Upgrade to ${plan.name}`
+                      : `Downgrade to ${plan.name}`
+                  }
                 </button>
               )}
             </Form>
@@ -170,6 +194,18 @@ export default function Billing() {
           Setup in 2 minutes
         </div>
       </div>
+
+      {/* Plan Change Notice */}
+      {currentPlan !== 'FREE' && (
+        <div className="card" style={{ marginTop: '24px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+            <strong>Plan changes:</strong> Upgrading or downgrading takes effect immediately. When you upgrade, you'll be charged a prorated amount for the remainder of your billing cycle. When you downgrade, the new plan starts at your next billing date.
+          </p>
+          <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#64748b' }}>
+            <strong>Cancel:</strong> You can cancel your subscription at any time from your Shopify admin: Settings → Apps and sales channels → WISMO AI → Delete. Cancellation takes effect at the end of your current billing period.
+          </p>
+        </div>
+      )}
 
       {/* Plan Comparison */}
       <div className="card" style={{ marginTop: '32px' }}>

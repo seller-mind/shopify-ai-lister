@@ -34,8 +34,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return new Response('Missing required OAuth parameters', { status: 400 });
   }
 
+  // Validate shop domain format (prevent open redirect)
   const shopDomain = shop.replace(/https?:\/\//, '').split('/')[0];
-  if (!shopDomain.includes('.myshopify.com')) {
+  if (!shopDomain.endsWith('.myshopify.com') || shopDomain.length < 10) {
     console.error('[auth/callback] Invalid shop domain:', shopDomain);
     return new Response('Invalid shop domain', { status: 400 });
   }

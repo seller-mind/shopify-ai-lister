@@ -7,8 +7,8 @@ export function addCorsHeaders(headers: Headers, request: Request): Headers {
   const origin = request.headers.get('Origin') || '';
   
   // Allow any Shopify store domain and our own domain
-  const isShopifyStore = origin.endsWith('.myshopify.com') || 
-                         origin.includes('.myshopify.com') ||
+  // Only match valid *.myshopify.com origins (prevents subdomain bypass)
+  const isShopifyStore = /^https:\/\/[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(origin) || 
                          origin === 'https://shopify-ai-lister-tau.vercel.app';
   
   if (isShopifyStore) {
