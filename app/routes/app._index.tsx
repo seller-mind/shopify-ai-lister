@@ -7,6 +7,7 @@ import { useLoaderData, Link } from '@remix-run/react';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { authenticateAdmin, getAuthUrl } from '~/shopify.server';
 import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
+import { useEffect, useRef, useState } from 'react';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -67,6 +68,67 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 }
 
+// Animated counter hook
+function useAnimatedCounter(target: number, duration: number = 1500, delay: number = 0) {
+  const [value, setValue] = useState(0);
+  const [started, setStarted] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !started) {
+          setStarted(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [started]);
+
+  useEffect(() => {
+    if (!started) return;
+
+    const timeout = setTimeout(() => {
+      const startTime = Date.now();
+      const step = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // Ease out cubic
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setValue(Math.round(eased * target));
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        }
+      };
+      requestAnimationFrame(step);
+    }, delay);
+
+    return () => clearTimeout(timeout);
+  }, [started, target, duration, delay]);
+
+  return { value, ref };
+}
+
+// Format time saved
+function formatTimeSaved(minutes: number): string {
+  if (minutes >= 60) return `${Math.round(minutes / 60)}h`;
+  return `${minutes}m`;
+}
+
+// Get welcome message based on time
+function getWelcomeMessage(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export default function Dashboard() {
   const data = useLoaderData<typeof loader>();
 
@@ -75,7 +137,7 @@ export default function Dashboard() {
       <div className="onboarding">
         <div className="onboarding-card">
           <div className="onboarding-icon">
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+            <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
               <rect width="32" height="32" rx="8" fill="#008060"/>
               <path d="M8 20V14C8 10.6863 10.6863 8 14 8H18C21.3137 8 24 10.6863 24 14V20" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
               <circle cx="10" cy="22" r="2" fill="white"/>
@@ -94,6 +156,10 @@ export default function Dashboard() {
   }
 
   const { settings, analytics: stats, recentConversations, hasData } = data;
+  const convCounter = useAnimatedCounter(stats.totalConversations, 1200, 100);
+  const wismoCounter = useAnimatedCounter(stats.totalWismo, 1400, 200);
+  const resolvedCounter = useAnimatedCounter(stats.resolutionRate, 1000, 300);
+  const timeCounter = useAnimatedCounter(stats.timeSavedMin, 1600, 400);
 
   return (
     <div className="page">
@@ -112,6 +178,12 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Welcome message */}
+      <div className="welcome-msg">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <span>{getWelcomeMessage()}</span> — Here's your chatbot performance
+      </div>
+
       {/* Status Pill */}
       <div className={`status-pill ${settings.enabled ? 'status-active' : 'status-paused'}`}>
         <span className="status-dot" />
@@ -122,7 +194,7 @@ export default function Dashboard() {
         /* ─── Guided Empty State ────────────────────────────── */
         <div className="empty-hero">
           <div className="empty-hero-icon">
-            <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+            <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
               <rect width="64" height="64" rx="16" fill="#e3f0ea"/>
               <path d="M16 40V28C16 21.3726 21.3726 16 28 16H36C42.6274 16 48 21.3726 48 28V40" stroke="#008060" strokeWidth="3.5" strokeLinecap="round"/>
               <circle cx="22" cy="44" r="4" fill="#008060"/>
@@ -166,30 +238,30 @@ export default function Dashboard() {
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon" style={{ background: '#e3f0ea', color: '#008060' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
-              <div className="stat-value">{stats.totalConversations}</div>
+              <div className="stat-value" ref={convCounter.ref}>{convCounter.value}</div>
               <div className="stat-label">Conversations (7d)</div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon" style={{ background: '#e8f0fe', color: '#1967d2' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              <div className="stat-icon" style={{ background: '#e8f0fe', color: '#2563eb' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
               </div>
-              <div className="stat-value">{stats.totalWismo}</div>
+              <div className="stat-value" ref={wismoCounter.ref}>{wismoCounter.value}</div>
               <div className="stat-label">Order Queries</div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon" style={{ background: '#dcfce7', color: '#166534' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <div className="stat-icon" style={{ background: '#dcfce7', color: '#059669' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               </div>
-              <div className="stat-value highlight">{stats.resolutionRate}%</div>
+              <div className="stat-value highlight" ref={resolvedCounter.ref}>{resolvedCounter.value}%</div>
               <div className="stat-label">Auto-resolved</div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon" style={{ background: '#fef3cd', color: '#856404' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <div className="stat-icon" style={{ background: '#fef3c7', color: '#d97706' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               </div>
-              <div className="stat-value">{stats.timeSavedMin >= 60 ? `${Math.round(stats.timeSavedMin / 60)}h` : `${stats.timeSavedMin}m`}</div>
+              <div className="stat-value" ref={timeCounter.ref}>{formatTimeSaved(timeCounter.value)}</div>
               <div className="stat-label">Time Saved</div>
             </div>
           </div>
@@ -200,7 +272,7 @@ export default function Dashboard() {
             {recentConversations.length === 0 ? (
               <div className="empty-state">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                <p>No conversations yet this week.</p>
+                <p>No conversations yet this week. Customers will appear here once they start chatting!</p>
               </div>
             ) : (
               <table>
@@ -215,7 +287,7 @@ export default function Dashboard() {
                 <tbody>
                   {recentConversations.map((conv: any) => (
                     <tr key={conv.id}>
-                      <td style={{ fontWeight: 500 }}>{conv.customer_name || 'Guest'}</td>
+                      <td style={{ fontWeight: 600 }}>{conv.customer_name || 'Guest'}</td>
                       <td style={{ color: '#6d7175', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.first_message}</td>
                       <td>
                         <span className={`badge ${conv.status === 'active' ? 'badge-green' : conv.status === 'handoff' ? 'badge-yellow' : 'badge-gray'}`}>
@@ -232,32 +304,32 @@ export default function Dashboard() {
         </>
       )}
 
-      {/* How it Works — always visible */}
+      {/* How it Works — icon-only steps with connecting line */}
       <div className="card how-it-works">
         <h2>How WISMO AI Works</h2>
-        <div className="hiw-grid">
-          <div className="hiw-item">
-            <div className="hiw-icon">💬</div>
-            <div className="hiw-title">Customer asks</div>
-            <div className="hiw-desc">"Where is my order?"</div>
+        <div className="hiw-steps">
+          <div className="hiw-step">
+            <div className="hiw-step-icon">💬</div>
+            <div className="hiw-step-label">Customer asks</div>
+            <div className="hiw-step-sub">"Where's my order?"</div>
           </div>
-          <div className="hiw-arrow">→</div>
-          <div className="hiw-item">
-            <div className="hiw-icon">🤖</div>
-            <div className="hiw-title">AI finds order</div>
-            <div className="hiw-desc">Queries Shopify in real-time</div>
+          <div className="hiw-connector"></div>
+          <div className="hiw-step">
+            <div className="hiw-step-icon">🤖</div>
+            <div className="hiw-step-label">AI finds order</div>
+            <div className="hiw-step-sub">Real-time lookup</div>
           </div>
-          <div className="hiw-arrow">→</div>
-          <div className="hiw-item">
-            <div className="hiw-icon">📦</div>
-            <div className="hiw-title">Instant reply</div>
-            <div className="hiw-desc">Status, tracking & ETA</div>
+          <div className="hiw-connector"></div>
+          <div className="hiw-step">
+            <div className="hiw-step-icon">📦</div>
+            <div className="hiw-step-label">Instant reply</div>
+            <div className="hiw-step-sub">Status & tracking</div>
           </div>
-          <div className="hiw-arrow">→</div>
-          <div className="hiw-item">
-            <div className="hiw-icon">✅</div>
-            <div className="hiw-title">Ticket resolved</div>
-            <div className="hiw-desc">No human needed</div>
+          <div className="hiw-connector"></div>
+          <div className="hiw-step">
+            <div className="hiw-step-icon">✨</div>
+            <div className="hiw-step-label">Ticket resolved</div>
+            <div className="hiw-step-sub">No human needed</div>
           </div>
         </div>
       </div>
