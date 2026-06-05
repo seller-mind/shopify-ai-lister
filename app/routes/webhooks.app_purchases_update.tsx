@@ -1,7 +1,13 @@
+/**
+ * Webhook: app/purchases_update
+ * 
+ * Called when a merchant's subscription changes (upgrade, downgrade, cancellation).
+ * We update the store's plan in our database.
+ */
 import { json } from '@remix-run/node';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { shopify } from '~/shopify.server';
-import { deleteStore } from '~/services/supabase.server';
+import { getSupabaseAdmin } from '~/services/supabase.server';
 
 export async function action({ request }: ActionFunctionArgs) {
   const body = await request.text();
@@ -17,9 +23,28 @@ export async function action({ request }: ActionFunctionArgs) {
   
   console.log(`[Webhook] ${topic} from ${shopDomain}`);
   
-  // Handle app uninstall
-  if (topic === 'app/uninstalled' && shopDomain) {
-    await deleteStore(shopDomain);
+  try {
+    const payload = JSON.parse(body);
+    const planName = payload?.name?.toUpperCase() || 'FREE';
+    const status = payload?.status || 'unknown';
+    
+    const supabase = getSupabaseAdmin();
+    
+    if (status === 'active') {
+      await supabase
+        .from('stores')
+        .update({ plan: planName, updated_at: new Date().toISOString() })
+        .eq('shop', shopDomain);
+      console.log(`[Webhook] Updated store ${shopDomain} plan to ${planName}`);
+    } else if (status === 'cancelled' || status === 'expired') {
+      await supabase
+        .from('stores')
+        .update({ plan: 'FREE', updated_at: new Date().toISOString() })
+        .eq('shop', shopDomain);
+      console.log(`[Webhook] Downgraded store ${shopDomain} to FREE`);
+    }
+  } catch (error) {
+    console.error('[Webhook] Error processing purchases_update:', error);
   }
   
   return json({ success: true });

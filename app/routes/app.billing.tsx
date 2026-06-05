@@ -112,7 +112,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     // Create Shopify recurring charge
-    const returnUrl = `https://${session.shop}/admin/apps/${process.env.SHOPIFY_API_KEY}`;
+    // return_url is where Shopify redirects after merchant confirms/cancels
+    const returnUrl = `${process.env.SHOPIFY_APP_URL}/auth/billing?shop=${encodeURIComponent(session.shop)}`;
     
     const result = await admin.rest('/recurring_application_charges.json', {
       method: 'POST',
