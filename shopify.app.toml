@@ -1,13 +1,11 @@
 # Shopify App配置文件
-# 使用 `shopify app config link` 命令关联Shopify Partner账号
-
 name = "WISMO AI"
 client_id = "c89a54bc8d3f9038baa77056f8a55b6b"
 
-# 应用主URL（部署后需要修改为实际URL）
+# 应用主URL
 application_url = "https://shopify-ai-lister-tau.vercel.app"
 
-# 是否为嵌入式应用（必须为true才能嵌入Shopify Admin）
+# 是否为嵌入式应用
 embedded = true
 
 # 访问权限范围
@@ -20,33 +18,19 @@ redirect_urls = [
   "https://shopify-ai-lister-tau.vercel.app/auth/callback",
 ]
 
-# Webhook配置（必须包含GDPR合规Webhook）
+# Webhook配置
 [webhooks]
 api_version = "2026-04"
 
+[webhooks.privacy_compliance]
+customers_data_request = "https://shopify-ai-lister-tau.vercel.app/webhooks/customers_data_request"
+customers_redact = "https://shopify-ai-lister-tau.vercel.app/webhooks/customers_redact"
+shop_redact = "https://shopify-ai-lister-tau.vercel.app/webhooks/shop_redact"
+
 [[webhooks.subscriptions]]
 topics = ["app/uninstalled"]
+uri = "/webhooks/app_uninstalled"
 
-[[webhooks.subscriptions]]
-topics = ["customers/data_request"]
-
-[[webhooks.subscriptions]]
-topics = ["customers/redact"]
-
-[[webhooks.subscriptions]]
-topics = ["shop/redact"]
-
-[[webhooks.subscriptions]]
-topics = ["app_purchases_update"]
-
-# 应用商店配置
+# POS配置
 [pos]
-direct = false
-
-# 可选：定义收费计划
-# [[billing]]
-# name = "STARTER_PLAN"
-# amount = 19
-# currency_code = "USD"
-# interval = "EVERY_30_DAYS"
-# trial_days = 7
+embedded = false
