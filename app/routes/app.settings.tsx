@@ -102,8 +102,17 @@ export default function Settings() {
             <div className="form-group">
               <label>Widget Color</label>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input type="color" name="widget_color" defaultValue={settings.widget_color} style={{ width: '40px', height: '40px', border: '1px solid #e1e3e5', borderRadius: '8px', padding: '2px', cursor: 'pointer' }} />
-                <span style={{ fontSize: '13px', color: '#6d7175', fontFamily: 'monospace' }}>{settings.widget_color}</span>
+                <input type="color" name="widget_color" defaultValue={settings.widget_color} className="color-picker" />
+                <div className="color-presets">
+                  {['#008060', '#000000', '#1a1a2e', '#2563eb', '#7c3aed', '#db2777', '#ea580c', '#ca8a04'].map(c => (
+                    <button key={c} type="button" className={`color-swatch ${settings.widget_color === c ? 'color-swatch-active' : ''}`} style={{ background: c }} data-color={c} onClick={function() {
+                      var picker = document.querySelector('input[name="widget_color"]') as HTMLInputElement;
+                      if (picker) { picker.value = c; picker.dispatchEvent(new Event('input', { bubbles: true })); }
+                      document.querySelectorAll('.color-swatch').forEach(function(s) { s.classList.remove('color-swatch-active'); });
+                      (this as HTMLElement).classList.add('color-swatch-active');
+                    }} />
+                  ))}
+                </div>
               </div>
             </div>
           </div>

@@ -966,10 +966,15 @@ function CSS() {
   .w { bottom: 16px; right: 16px; }\
   .w.left { left: 16px; }\
   .wh { padding: 14px 16px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }\
-  .wi { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }\
+  .wi { padding: 10px 14px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }\
   .wb { width: 54px; height: 54px; border-radius: 27px; }\
   .wb svg { width: 24px; height: 24px; }\
   .oi-btn { padding: 0 16px; }\
+  .oi-card { padding: 12px 14px; }\
+  .mc { max-width: calc(100% - 48px); }\
+  .mm { max-width: 95%; }\
+  .wm { padding: 12px 14px; }\
+  .wq { padding: 0 14px 10px; }\
 }\
 ';
 }

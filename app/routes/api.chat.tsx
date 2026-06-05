@@ -60,12 +60,11 @@ export async function action({ request }: ActionFunctionArgs) {
         intent.email || customerEmail,
       );
       if (!orderInfo && (intent.orderNumber || intent.email)) {
-        // Order looked up but not found — return helpful message
+        // Order looked up but not found — return helpful message instantly
         const lang = detectLanguage(message, customerLocale);
         const notFoundReply = lang === 'en'
           ? `Hmm, I couldn't find order **#${intent.orderNumber || '...'}**. Could you double-check the number? It usually looks like **#1001**. You can also try your email address. 🔍`
           : `I couldn't find that order. Could you double-check your order number? 🔍`;
-        await saveMsg(convId, 'customer', message);
         await saveMsg(convId, 'assistant', notFoundReply, 'wismo', { orderLookup: true, notFound: true });
         await bumpAnalytics(shop, intent.intent, 'wismo');
         const h = new Headers();
@@ -82,7 +81,7 @@ export async function action({ request }: ActionFunctionArgs) {
       if (!orderInfo) orderInfo = getDemoOrder(intent.orderNumber);
     }
 
-    // Generate response with language awareness
+    // Generate response — WISMO queries with order data are INSTANT (no AI call)
     const result = await generateResponse(message, {
       shop, accessToken: store.accessToken, conversationId: convId,
       customerEmail, customerName, customerLocale, previousMessages: prev, settings,
