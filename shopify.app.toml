@@ -1,7 +1,7 @@
 # Shopify App配置文件
 # 使用 `shopify app config link` 命令关联Shopify Partner账号
 
-name = "Haimo AI Lister"
+name = "WISMO AI"
 client_id = "c89a54bc8d3f9038baa77056f8a55b6b"
 
 # 应用主URL（部署后需要修改为实际URL）
@@ -12,7 +12,7 @@ embedded = true
 
 # 访问权限范围
 [access_scopes]
-scopes = "read_products,write_products"
+scopes = "read_products,read_orders,read_fulfillments,read_themes,write_themes"
 
 # OAuth回调URL
 [auth]

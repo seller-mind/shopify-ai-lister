@@ -1,11 +1,11 @@
 /**
  * /app/billing - WISMO AI Plans & Billing
- * Uses Shopify Billing API for subscription management
+ * Uses Shopify GraphQL Billing API for subscription management
  */
 import { json, redirect } from '@remix-run/node';
 import { useLoaderData, Form, useNavigation } from '@remix-run/react';
 import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
-import { authenticateAdmin, shopifyREST } from '~/shopify.server';
+import { authenticateAdmin, shopifyGraphQL } from '~/shopify.server';
 import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
 
 const PLANS = [
@@ -61,18 +61,29 @@ const PLANS = [
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session, admin } = await authenticateAdmin(request);
   
-  // Check current subscription
+  // Check current subscription via GraphQL
   let currentPlan = 'FREE';
   try {
-    const result = await admin.rest('/recurring_application_charges.json');
-    const charges = result.recurring_application_charges || [];
-    const active = charges.find((c: any) => c.status === 'active');
-    if (active) {
-      currentPlan = active.name?.toUpperCase() || 'FREE';
+    const result = await admin.graphql(`{
+      currentAppInstallation {
+        subscription {
+          name
+          status
+          test
+        }
+      }
+    }`);
+    
+    const subscription = result?.data?.currentAppInstallation?.subscription;
+    if (subscription?.status === 'ACTIVE') {
+      const name = subscription.name.toUpperCase();
+      if (name.includes('BUSINESS')) currentPlan = 'BUSINESS';
+      else if (name.includes('PRO')) currentPlan = 'PRO';
+      else if (name.includes('STARTER')) currentPlan = 'STARTER';
     }
   } catch { /* no active subscription */ }
 
-  // Get usage
+  // Get usage stats
   let usage = { count: 0, limit: 10 };
   try {
     const supabase = getSupabaseAdmin();
@@ -80,17 +91,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const store = await getStore(session.shop);
-    if (store) {
-      const { count } = await supabase
-        .from('wismo_conversations')
-        .select('*', { count: 'exact', head: true })
-        .eq('shop', session.shop)
-        .gte('created_at', startOfMonth.toISOString());
-      
-      const limits: Record<string, number> = { FREE: 10, STARTER: 50, PRO: 500, BUSINESS: Infinity };
-      usage = { count: count || 0, limit: limits[currentPlan] || 10 };
-    }
+    const { count } = await supabase
+      .from('wismo_conversations')
+      .select('*', { count: 'exact', head: true })
+      .eq('shop', session.shop)
+      .gte('created_at', startOfMonth.toISOString());
+    
+    const limits: Record<string, number> = { FREE: 10, STARTER: 50, PRO: 500, BUSINESS: Infinity };
+    usage = { count: count || 0, limit: limits[currentPlan] || 10 };
   } catch { /* empty */ }
 
   return json({ shop: session.shop, currentPlan, usage });
@@ -111,24 +119,52 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   try {
-    // Create Shopify recurring charge
-    // return_url is where Shopify redirects after merchant confirms/cancels
+    // Use Shopify GraphQL Billing API to create subscription
     const returnUrl = `${process.env.SHOPIFY_APP_URL}/auth/billing?shop=${encodeURIComponent(session.shop)}`;
     
-    const result = await admin.rest('/recurring_application_charges.json', {
-      method: 'POST',
-      body: JSON.stringify({
-        recurring_application_charge: {
-          name: plan.name,
-          price: plan.price,
-          return_url: returnUrl,
-          trial_days: plan.trialDays,
-          test: process.env.NODE_ENV !== 'production',
-        },
-      }),
+    const result = await admin.graphql(`
+      mutation CreateSubscription($name: String!, $price: Decimal!, $returnUrl: URL!, $trialDays: Int!, $test: Boolean!) {
+        appSubscriptionCreate(
+          name: $name
+          returnUrl: $returnUrl
+          test: $test
+          trialDays: $trialDays
+          lineItems: [{
+            plan: {
+              appRecurringPricingDetails: {
+                price: { amount: $price, currencyCode: USD }
+                interval: EVERY_30_DAYS
+              }
+            }
+          }]
+        ) {
+          userErrors {
+            field
+            message
+          }
+          confirmationUrl
+          appSubscription {
+            id
+            status
+          }
+        }
+      }
+    `, {
+      name: plan.name,
+      price: plan.price,
+      returnUrl,
+      trialDays: plan.trialDays,
+      test: true, // Test mode for development - will be false in production
     });
 
-    const confirmationUrl = result.recurring_application_charge?.confirmation_url;
+    const subscriptionResult = result?.data?.appSubscriptionCreate;
+    
+    if (subscriptionResult?.userErrors?.length > 0) {
+      console.error('[Billing] User errors:', subscriptionResult.userErrors);
+      return json({ error: subscriptionResult.userErrors[0].message }, { status: 400 });
+    }
+
+    const confirmationUrl = subscriptionResult?.confirmationUrl;
     if (confirmationUrl) {
       return redirect(confirmationUrl);
     }

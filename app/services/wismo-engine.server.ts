@@ -118,6 +118,44 @@ function extractEmail(message: string): string | undefined {
   return match ? match[0] : undefined;
 }
 
+// ─── Demo Data (for testing & App Store demo) ──────────────────────
+
+const DEMO_ORDERS: OrderInfo[] = [
+  {
+    orderNumber: '#1001',
+    status: 'Shipped ✅',
+    financialStatus: 'Paid',
+    fulfillmentStatus: 'FULFILLED',
+    trackingCompany: 'USPS',
+    trackingNumber: '9400111899223100001',
+    trackingUrl: 'https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899223100001',
+    createdAt: '2026-06-03T10:30:00Z',
+    estimatedDelivery: '2026-06-07T17:00:00Z',
+    lineItems: [{ title: 'Test Product', quantity: 1 }],
+  },
+  {
+    orderNumber: '#1002',
+    status: 'Processing 📤',
+    financialStatus: 'Paid',
+    fulfillmentStatus: 'UNFULFILLED',
+    trackingCompany: null,
+    trackingNumber: null,
+    trackingUrl: null,
+    createdAt: '2026-06-05T08:15:00Z',
+    estimatedDelivery: null,
+    lineItems: [{ title: 'Test Product', quantity: 2 }],
+  },
+];
+
+export function getDemoOrder(orderNumber?: string): OrderInfo | OrderInfo[] | undefined {
+  if (orderNumber) {
+    const num = orderNumber.replace('#', '');
+    const found = DEMO_ORDERS.find(o => o.orderNumber === `#${num}`);
+    return found || undefined;
+  }
+  return DEMO_ORDERS;
+}
+
 // ─── Order Lookup ────────────────────────────────────────────────────
 
 export async function lookupOrderByNumber(

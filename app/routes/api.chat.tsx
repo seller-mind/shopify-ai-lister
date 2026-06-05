@@ -7,7 +7,7 @@
 import { json } from '@remix-run/node';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
-import { detectIntent, lookupOrderByNumber, lookupOrdersByEmail, generateResponse } from '~/services/wismo-engine.server';
+import { detectIntent, lookupOrderByNumber, lookupOrdersByEmail, generateResponse, getDemoOrder } from '~/services/wismo-engine.server';
 
 // ─── Main Handler ────────────────────────────────────────────────────
 
@@ -63,6 +63,11 @@ export async function action({ request }: ActionFunctionArgs) {
         intent.entities?.email || customerEmail,
         message,
       );
+
+      // Demo mode: if no real orders found, use demo data for testing
+      if (!orderInfo) {
+        orderInfo = getDemoOrder(intent.entities?.orderNumber);
+      }
     }
 
     // ─── Generate AI Response ──────────────────────────────────────
