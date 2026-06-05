@@ -15,6 +15,11 @@
  * ✓ Mobile-first: full-screen overlay, safe area, touch-optimized
  */
 
+// ─── HTML Escaping (XSS Prevention) ────────────────────────────────────
+function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function escAttr(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function safeHref(url) { if (!url) return ''; var u = String(url).trim(); if (/^(https?:\/\/|mailto:)/i.test(u)) return escAttr(u); return '#'; }
+
 // ─── Bootstrap ────────────────────────────────────────────────────────
 var SCRIPT = document.currentScript;
 var SRC = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src) : null;
@@ -126,7 +131,7 @@ var BUBBLE_HTML = [
 ].join('');
 
 var WINDOW_HTML = [
-  '<div class="ww" style="display:none">',
+  '<div class="ww" style="display:none" role="dialog" aria-label="WISMO AI Order Tracking Chat">',
   '  <div class="wh">',
   '    <div class="whl">',
   '      <div class="wa">',
@@ -144,10 +149,10 @@ var WINDOW_HTML = [
   '    </div>',
   '    <button class="wx" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>',
   '  </div>',
-  '  <div class="wm"></div>',
+  '  <div class="wm" role="log" aria-live="polite" aria-label="Chat messages"></div>',
   '  <div class="wq" style="display:none"></div>',
   '  <div class="wi">',
-  '    <input type="text" class="win" placeholder="Ask anything..." autocomplete="off" />',
+  '    <input type="text" class="win" placeholder="Ask anything..." autocomplete="off" aria-label="Type your message" />',
   '    <button class="wsn" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>',
   '  </div>',
   '  <div class="wft">AI-powered · <a href="' + API + '/privacy" target="_blank" rel="noopener">Privacy</a></div>',
@@ -262,7 +267,7 @@ var WINDOW_HTML = [
       var greetingText = state.config && state.config.greeting ? state.config.greeting : 'Track your order in seconds';
 
       // Main greeting
-      addMsg('bot', greetingText);
+      addMsg('bot', esc(greetingText));
 
       // AI disclosure (EU AI Act Art. 52 compliance)
       var aiNotice = document.createElement('div');
@@ -326,9 +331,9 @@ var WINDOW_HTML = [
         avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
       }
 
-      var html = content
+      var html = esc(content)  // Escape HTML first to prevent XSS
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(m, text, url) { return '<a href="' + safeHref(url) + '" target="_blank" rel="noopener">' + esc(text) + '</a>'; })
         .replace(/\n/g, '<br>');
 
       d.innerHTML = avatar + '<div class="mc"><div class="mt">' + html + '</div><div class="mts">' + formatTime(new Date()) + '</div></div>';
@@ -370,16 +375,16 @@ var WINDOW_HTML = [
       var cardHtml = '<div class="oc">';
       // Header
       cardHtml += '<div class="oc-h">';
-      cardHtml += '<div class="oc-ord"><span class="oc-icon">' + statusIcon + '</span><span class="oc-num">' + card.orderNumber + '</span></div>';
-      cardHtml += '<span class="oc-status" style="background:' + statusColor.bg + ';color:' + statusColor.fg + '">' + card.statusLabel + '</span>';
+      cardHtml += '<div class="oc-ord"><span class="oc-icon">' + statusIcon + '</span><span class="oc-num">' + esc(card.orderNumber) + '</span></div>';
+      cardHtml += '<span class="oc-status" style="background:' + statusColor.bg + ';color:' + statusColor.fg + '">' + esc(card.statusLabel) + '</span>';
       cardHtml += '</div>';
 
       // Items with optional images
       if (card.items && card.items.length) {
         cardHtml += '<div class="oc-items">';
         card.items.forEach(function(item, idx) {
-          var img = card.itemImages && card.itemImages[idx] ? '<img src="' + card.itemImages[idx] + '" class="oc-item-img" />' : '';
-          cardHtml += '<span class="oc-item">' + img + item + '</span>';
+          var img = card.itemImages && card.itemImages[idx] ? '<img src="' + escAttr(card.itemImages[idx]) + '" class="oc-item-img" />' : '';
+          cardHtml += '<span class="oc-item">' + img + esc(item) + '</span>';
         });
         cardHtml += '</div>';
       }
@@ -396,8 +401,8 @@ var WINDOW_HTML = [
           if (idx < card.timeline.length - 1) cardHtml += '<div class="tl-line' + (step.completed ? ' done' : '') + '"></div>';
           cardHtml += '</div>';
           cardHtml += '<div class="tl-info">';
-          cardHtml += '<div class="tl-label">' + step.label + '</div>';
-          if (step.date) cardHtml += '<div class="tl-date">' + step.date + '</div>';
+          cardHtml += '<div class="tl-label">' + esc(step.label) + '</div>';
+          if (step.date) cardHtml += '<div class="tl-date">' + esc(step.date) + '</div>';
           cardHtml += '</div></div>';
         });
         cardHtml += '</div>';
@@ -406,16 +411,16 @@ var WINDOW_HTML = [
       // Tracking
       if (card.trackingCompany && card.trackingNumber) {
         cardHtml += '<div class="oc-track">';
-        cardHtml += '<div class="oc-carrier">🚚 ' + card.trackingCompany + ' · ' + card.trackingNumber + '</div>';
+        cardHtml += '<div class="oc-carrier">🚚 ' + esc(card.trackingCompany) + ' · ' + esc(card.trackingNumber) + '</div>';
         if (card.trackingUrl) {
-          cardHtml += '<a href="' + card.trackingUrl + '" target="_blank" rel="noopener" class="oc-track-btn">Track Package →</a>';
+          cardHtml += '<a href="' + safeHref(card.trackingUrl) + '" target="_blank" rel="noopener" class="oc-track-btn">Track Package →</a>';
         }
         cardHtml += '</div>';
       }
 
       // Estimated delivery
       if (card.estimatedDelivery) {
-        cardHtml += '<div class="oc-eta">📅 Est. delivery: <b>' + card.estimatedDelivery + '</b></div>';
+        cardHtml += '<div class="oc-eta">📅 Est. delivery: <b>' + esc(card.estimatedDelivery) + '</b></div>';
       }
 
       cardHtml += '</div>';

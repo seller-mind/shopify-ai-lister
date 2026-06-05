@@ -48,6 +48,11 @@ export async function action({ request }: ActionFunctionArgs) {
 
     if (!shop || !message) return json({ error: 'Missing shop or message' }, { status: 400 });
 
+    // Validate shop domain format (prevent API abuse)
+    if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
+      return json({ error: 'Invalid shop domain' }, { status: 400 });
+    }
+
     // Rate limit check
     if (!checkRateLimit(shop)) {
       const h = new Headers();

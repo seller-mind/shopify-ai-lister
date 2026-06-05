@@ -9,7 +9,7 @@ export default function TermsPage() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', lineHeight: '1.6', color: '#1a1a1a' }}>
       <h1 style={{ fontSize: '28px', marginBottom: '8px' }}>Terms of Service</h1>
-      <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Effective: June 5, 2026</p>
+      <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Effective: June 6, 2026</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>1. Acceptance of Terms</h2>
       <p>By installing and using WISMO AI (&quot;the App&quot;), you agree to these Terms of Service. If you do not agree, please uninstall the App immediately.</p>
@@ -136,8 +136,10 @@ export default function TermsPage() {
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>14. Modifications</h2>
       <p>We may update these Terms from time to time. For material changes, we will notify you via email or through the Shopify App Store. Continued use of the App after changes constitutes acceptance of the modified Terms.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>15. Governing Law</h2>
-      <p>These Terms shall be governed by applicable laws. For EU consumers, the laws of your country of residence shall apply to the extent required by EU consumer protection law. Any disputes shall first be resolved through good-faith negotiation, and if unresolved, through binding arbitration.</p>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>15. Governing Law &amp; Dispute Resolution</h2>
+      <p>These Terms shall be governed by applicable laws. For EU consumers, the laws of your country of residence shall apply to the extent required by EU consumer protection law.</p>
+      <p style={{ marginTop: '8px' }}>Any disputes arising out of or in connection with these Terms shall first be resolved through good-faith negotiation. If unresolved within 30 days, disputes shall be resolved through binding arbitration administered by the International Centre for Dispute Resolution (ICDR) under its International Arbitration Rules. The arbitration shall be conducted in English, and the seat of arbitration shall be Singapore. The arbitral tribunal shall consist of one arbitrator. Notwithstanding the foregoing, either party may seek injunctive or equitable relief in any court of competent jurisdiction.</p>
+      <p style={{ marginTop: '8px' }}><strong>EU Consumers:</strong> Nothing in this section deprives you of the right to bring proceedings in your country of residence, nor does it prevent you from using the European Commission&apos;s Online Dispute Resolution platform: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>https://ec.europa.eu/consumers/odr</a>.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>16. Contact</h2>
       <p>Questions about these Terms? Contact: <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a></p>

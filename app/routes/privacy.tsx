@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', lineHeight: '1.6', color: '#1a1a1a' }}>
       <h1 style={{ fontSize: '28px', marginBottom: '8px' }}>Privacy Policy for WISMO AI</h1>
-      <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Last updated: June 5, 2026</p>
+      <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Last updated: June 6, 2026</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Controller</h2>
       <p>Haimo Tech (&quot;we&quot;, &quot;our&quot;, or &quot;the App&quot;) operates WISMO AI, an AI-powered order tracking chatbot for Shopify stores. For questions about this policy, contact us at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>.</p>
@@ -70,61 +70,60 @@ export default function PrivacyPage() {
         <li style={{ marginBottom: '6px' }}>We do <strong>not</strong> share chat conversations with anyone except the merchant who owns the store</li>
       </ul>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Third-Party Services</h2>
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Third-Party Services (Subprocessors)</h2>
+      <p>We use the following third-party service providers (subprocessors) to operate WISMO AI:</p>
       <table style={{ width: '100%', borderCollapse: 'collapse', margin: '16px 0' }}>
         <thead>
           <tr>
-            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Service</th>
+            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Provider</th>
             <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Purpose</th>
-            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Data Shared</th>
-            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Server Location</th>
+            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Location</th>
+            <th style={{ border: '1px solid #e5e7eb', padding: '10px 12px', textAlign: 'left', background: '#f9fafb' }}>Transfer Basis</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>DeepSeek</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>AI customer service response generation (for non-WISMO queries only)</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Chat messages only (no order data sent to AI; processed in real-time, not stored by DeepSeek)</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>China</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Supabase Inc.</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Database hosting (conversations, messages, analytics, settings)</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Tokyo, Japan (EU adequacy decision)</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>EU adequacy (Japan)</td>
           </tr>
           <tr>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Shopify</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Store integration, order lookup</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Access token for API calls; no data sent to Shopify</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>United States / Canada</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>DeepSeek (High-Flyer AI)</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>AI response generation for non-WISMO queries only</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>China (no EU adequacy)</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>SCCs + encryption + data minimization</td>
           </tr>
           <tr>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Supabase</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Data storage (conversations, settings, analytics)</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Conversation data, settings, access tokens</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Tokyo, Japan</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Vercel Inc.</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Application hosting &amp; deployment</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>USA (EU-US Data Privacy Framework)</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>DPF certification</td>
           </tr>
           <tr>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Vercel</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>App hosting</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>HTTP request data (temporary, not persisted)</td>
-            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>United States</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>Shopify Inc.</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>OAuth, API access, billing</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>USA/Canada (DPF certified)</td>
+            <td style={{ border: '1px solid #e5e7eb', padding: '10px 12px' }}>DPF certification</td>
           </tr>
         </tbody>
       </table>
+      <p style={{ fontSize: '14px', color: '#666' }}>We will notify merchants via email of any changes to our subprocessor list at least 30 days before the change takes effect, giving you the opportunity to object.</p>
 
-      <div style={{ background: '#fff7ed', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #fed7aa' }}>
-        <p><strong>⚠️ Important Notice for EU/EEA Users:</strong> This App uses DeepSeek as its AI provider, whose servers are located in China. When customers ask general questions (not order tracking), their chat messages are transmitted to DeepSeek's servers for AI processing. <strong>Order data is NOT sent to DeepSeek</strong> — order tracking responses are generated locally without AI. DeepSeek processes chat data in real-time and does not retain it after generating the response. For international data transfers, we implement appropriate safeguards as described below.</p>
+      
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>International Data Transfers</h2>
+      <p>Your data may be transferred to and processed in countries outside your jurisdiction. We protect your data during international transfers through:</p>
+      <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
+        <li style={{ marginBottom: '6px' }}><strong>EU Adequacy Decisions:</strong> Data stored in Supabase (Tokyo, Japan) benefits from the EU&apos;s adequacy decision for Japan (Commission Implementing Decision 2019/1919), ensuring equivalent data protection standards.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Data Privacy Framework (DPF):</strong> Vercel and Shopify are certified under the EU-U.S. Data Privacy Framework, providing adequate safeguards for U.S.-based processing.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Standard Contractual Clauses (SCCs):</strong> For transfers to DeepSeek in China (which lacks an EU adequacy decision), we rely on the European Commission&apos;s Standard Contractual Clauses (Module 3: Processor to Controller), supplemented by encryption in transit (TLS 1.3) and at rest, data minimization (only non-WISMO chat messages are sent; order data never leaves our system), and pseudonymization of customer identifiers where feasible.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Transfer Impact Assessment:</strong> We have assessed the legal framework of China and implemented supplementary measures (encryption, data minimization, limited retention) to ensure essentially equivalent protection of personal data.</li>
+      </ul>
+      <div style={{ background: '#fef2f2', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #fecaca' }}>
+        <p><strong>China Data Transfer Notice:</strong> Chat messages for non-WISMO queries are sent to DeepSeek&apos;s servers in China for AI processing. China&apos;s data protection laws (PIPL, Cybersecurity Law) may grant government authorities access to data under certain circumstances. We mitigate this risk through: (1) only sending minimal chat messages (no order data, no financial data), (2) real-time processing without retention by DeepSeek, (3) encryption in transit and at rest, and (4) pseudonymization where feasible. If you are an EU merchant concerned about this transfer, you may contact us to discuss additional safeguards or alternative processing arrangements.</p>
       </div>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>GDPR Safeguards for International Transfers</h2>
-      <p>We take the following measures to protect personal data during international transfers, particularly to our AI provider (DeepSeek, China):</p>
-      <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
-        <li style={{ marginBottom: '6px' }}><strong>Data minimization:</strong> Only chat messages are sent to DeepSeek. Order data (customer names, addresses, financial information) is <strong>never</strong> transmitted to the AI provider.</li>
-        <li style={{ marginBottom: '6px' }}><strong>Encryption:</strong> All data transfers are encrypted in transit using TLS 1.2+.</li>
-        <li style={{ marginBottom: '6px' }}><strong>No retention:</strong> DeepSeek processes data in real-time and does not retain your data after generating responses.</li>
-        <li style={{ marginBottom: '6px' }}><strong>Pseudonymization:</strong> Customer emails and names are not included in AI prompts — only the chat message text is sent.</li>
-        <li style={{ marginBottom: '6px' }}><strong>Standard Contractual Clauses:</strong> We rely on Standard Contractual Clauses (SCCs) as adopted by the European Commission for transfers to DeepSeek, in accordance with GDPR Article 46.</li>
-        <li style={{ marginBottom: '6px' }}><strong>Transfer Impact Assessment:</strong> We have conducted an assessment of the legal framework in the recipient country and implemented supplementary measures where necessary.</li>
-        <li style={{ marginBottom: '6px' }}><strong>Right to object:</strong> You may uninstall the App at any time to stop all data processing and transfers.</li>
-      </ul>
-
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Cookie & Local Storage Policy</h2>
+<h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Cookie & Local Storage Policy</h2>
       <p>We use limited cookies and local storage technologies:</p>
       <table style={{ width: '100%', borderCollapse: 'collapse', margin: '16px 0' }}>
         <thead>

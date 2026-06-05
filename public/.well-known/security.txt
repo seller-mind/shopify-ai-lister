@@ -1,0 +1,10 @@
+Contact: mailto:haimozhouqiu@outlook.com
+Contact: https://shopify-ai-lister-tau.vercel.app/privacy
+Preferred-Languages: en
+Canonical: https://shopify-ai-lister-tau.vercel.app/.well-known/security.txt
+Policy: https://shopify-ai-lister-tau.vercel.app/privacy
+
+# WISMO AI Security Disclosure Policy
+# We appreciate responsible disclosure of security vulnerabilities.
+# Please report via email with details and we will respond within 72 hours.
+# We ask that you give us 90 days to address the issue before public disclosure.
