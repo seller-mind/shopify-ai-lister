@@ -43,7 +43,7 @@ interface OrderInfo {
   trackingUrl: string | null;
   createdAt: string;
   estimatedDelivery: string | null;
-  lineItems: { title: string; quantity: number }[];
+  lineItems: { title: string; quantity: number; imageUrl?: string | null }[];
 }
 
 interface TimelineStep {
@@ -58,6 +58,7 @@ interface OrderCard {
   status: string;
   statusLabel: string;
   items: string[];
+  itemImages?: string[];
   trackingCompany?: string;
   trackingNumber?: string;
   trackingUrl?: string;
@@ -367,7 +368,7 @@ export async function lookupOrderByNumber(
               fulfillments(first: 5) {
                 edges { node { trackingCompany trackingNumber trackingUrl status estimatedDeliveryAt } }
               }
-              lineItems(first: 10) { edges { node { title quantity } } }
+              lineItems(first: 10) { edges { node { title quantity image { url } } } }
             }
           }
         }
@@ -394,7 +395,7 @@ export async function lookupOrderByNumber(
       trackingUrl,
       createdAt: order.createdAt,
       estimatedDelivery: f?.estimatedDeliveryAt || null,
-      lineItems: order.lineItems?.edges?.map((e: any) => ({ title: e.node.title, quantity: e.node.quantity })) || [],
+      lineItems: order.lineItems?.edges?.map((e: any) => ({ title: e.node.title, quantity: e.node.quantity, imageUrl: e.node.image?.url || null })) || [],
     };
   } catch (e) {
     console.error('[WISMO] Order lookup error:', e);
@@ -415,7 +416,7 @@ export async function lookupOrdersByEmail(
             node {
               name displayFulfillmentStatus displayFinancialStatus createdAt
               fulfillments(first: 1) { edges { node { trackingCompany trackingNumber trackingUrl estimatedDeliveryAt } } }
-              lineItems(first: 5) { edges { node { title quantity } } }
+              lineItems(first: 5) { edges { node { title quantity image { url } } } }
             }
           }
         }
@@ -433,7 +434,7 @@ export async function lookupOrdersByEmail(
         financialStatus: fmtFin(o.displayFinancialStatus), fulfillmentStatus: o.displayFulfillmentStatus,
         trackingCompany: f?.trackingCompany || null, trackingNumber: f?.trackingNumber || null,
         trackingUrl, createdAt: o.createdAt, estimatedDelivery: f?.estimatedDeliveryAt || null,
-        lineItems: o.lineItems?.edges?.map((e: any) => ({ title: e.node.title, quantity: e.node.quantity })) || [],
+        lineItems: o.lineItems?.edges?.map((e: any) => ({ title: e.node.title, quantity: e.node.quantity, imageUrl: e.node.image?.url || null })) || [],
       };
     });
   } catch (e) {
@@ -487,6 +488,7 @@ function buildOrderCard(order: OrderInfo): OrderCard {
     status: order.fulfillmentStatus || 'UNKNOWN',
     statusLabel: order.status,
     items: order.lineItems.map(i => `${i.title}${i.quantity > 1 ? ` ×${i.quantity}` : ''}`),
+    itemImages: order.lineItems.map(i => i.imageUrl || undefined).filter(Boolean) as string[] | undefined,
     trackingCompany: order.trackingCompany || undefined,
     trackingNumber: order.trackingNumber || undefined,
     trackingUrl: order.trackingUrl || undefined,

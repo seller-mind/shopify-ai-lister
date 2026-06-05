@@ -77,11 +77,14 @@ export default function Settings() {
         {/* Widget Toggle */}
         <div className="card">
           <h2>Widget Status</h2>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-            <div style={{ position: 'relative' }}>
-              <input type="checkbox" name="enabled" defaultChecked={settings.enabled} style={{ width: '44px', height: '24px', appearance: 'none', background: settings.enabled ? '#008060' : '#d1d5db', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.2s' }} />
+          <label className="toggle-label">
+            <div className="toggle-wrap">
+              <input type="checkbox" name="enabled" defaultChecked={settings.enabled} className="toggle-input" />
+              <div className="toggle-track">
+                <div className="toggle-thumb" />
+              </div>
             </div>
-            <span style={{ fontSize: '14px', fontWeight: 500 }}>Enable WISMO AI on your store</span>
+            <span className="toggle-text">Enable WISMO AI on your store</span>
           </label>
         </div>
 

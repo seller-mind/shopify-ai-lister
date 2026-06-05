@@ -1,12 +1,14 @@
 /**
- * WISMO AI - Storefront Chat Widget v5
+ * WISMO AI - Storefront Chat Widget v6
  * 
  * "The World's Best WISMO Chatbot"
  * ─────────────────────────────────────
+ * ✓ ONE-STEP Tracking: inline order input in greeting card — no extra clicks
+ * ✓ Conversation Memory: persists across page loads via localStorage
+ * ✓ Product Images: thumbnails in order card from Shopify
  * ✓ Premium Design: Apple-level polish, color-coded status, bot avatar
  * ✓ Instant Speed: greeting renders before API, 0ms order responses
- * ✓ Zero Learning Curve: clear prompt, smart placeholder, big quick actions
- * ✓ Real Solutions: order card timeline, tracking button, return policy link
+ * ✓ Zero Learning Curve: order input is the FIRST thing you see
  * ✓ Multi-language: auto-detect + respond in customer's language (20+)
  * ✓ Dark Mode: smooth auto-detect with refined palette
  * ✓ Feedback: thumbs up/down with thank-you animation
@@ -18,6 +20,7 @@ var SCRIPT = document.currentScript;
 var SRC = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src) : null;
 var SHOP = (SRC ? SRC.searchParams.get('shop') : '') || (document.getElementById('wismo-chat-root') || {}).dataset?.shop || '';
 var API = SRC ? SRC.origin : 'https://shopify-ai-lister-tau.vercel.app';
+var STORAGE_KEY = 'wismo_conv_' + SHOP;
 
 // ─── State ────────────────────────────────────────────────────────────
 var state = {
@@ -30,8 +33,26 @@ var state = {
   darkMode: false,
   lang: 'en',
   lastMsgId: 0,
-  inputStep: 'idle', // idle | awaiting_order | awaiting_email | chatting
 };
+
+// ─── Restore conversation from localStorage ───────────────────────────
+try {
+  var saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    var parsed = JSON.parse(saved);
+    if (parsed.convId && Date.now() - parsed.ts < 86400000) { // 24h
+      state.convId = parsed.convId;
+    }
+  }
+} catch(e) {}
+
+function saveConv() {
+  try {
+    if (state.convId) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ convId: state.convId, ts: Date.now() }));
+    }
+  } catch(e) {}
+}
 
 // ─── Dark Mode Detection ──────────────────────────────────────────────
 try {
@@ -41,9 +62,7 @@ try {
     var shadow = document.getElementById('wismo-host');
     if (shadow && shadow.shadowRoot) {
       var w = shadow.shadowRoot.querySelector('.w');
-      if (w) {
-        w.classList.toggle('dark', state.darkMode);
-      }
+      if (w) w.classList.toggle('dark', state.darkMode);
     }
   });
 } catch(e) {}
@@ -108,7 +127,6 @@ var BUBBLE_HTML = [
 
 var WINDOW_HTML = [
   '<div class="ww" style="display:none">',
-  // Header
   '  <div class="wh">',
   '    <div class="whl">',
   '      <div class="wa">',
@@ -126,13 +144,10 @@ var WINDOW_HTML = [
   '    </div>',
   '    <button class="wx" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>',
   '  </div>',
-  // Messages
   '  <div class="wm"></div>',
-  // Quick replies
   '  <div class="wq" style="display:none"></div>',
-  // Input
   '  <div class="wi">',
-  '    <input type="text" class="win" placeholder="Type your order number..." autocomplete="off" />',
+  '    <input type="text" class="win" placeholder="Ask anything..." autocomplete="off" />',
   '    <button class="wsn" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>',
   '  </div>',
   '</div>',
@@ -155,7 +170,7 @@ var WINDOW_HTML = [
     var msgs = shadow.querySelector('.wm');
     var qr = shadow.querySelector('.wq');
 
-    // Open
+    // ─── Open ──────────────────────────────────────────────
     bubble.addEventListener('click', function() {
       state.open = true;
       win.style.display = 'flex';
@@ -164,20 +179,14 @@ var WINDOW_HTML = [
       bubble.style.display = 'none';
       if (!state.greeted) {
         state.greeted = true;
-        state.inputStep = 'awaiting_order';
         setTimeout(function() {
-          var greeting = state.config && state.config.greeting ? state.config.greeting : 'Hi! 👋 I can track your order instantly.';
-          addMsg('bot', greeting);
-          setTimeout(function() {
-            showQR(['📦 Track My Order', '💬 Ask a Question']);
-            input.placeholder = 'Type order # (e.g., #1001)...';
-          }, 300);
-        }, 150);
+          showGreeting();
+        }, 120);
       }
       setTimeout(function() { input.focus(); }, 400);
     });
 
-    // Close
+    // ─── Close ─────────────────────────────────────────────
     closeBtn.addEventListener('click', function() {
       win.classList.remove('ww-in');
       win.classList.add('ww-out');
@@ -188,17 +197,16 @@ var WINDOW_HTML = [
       }, 250);
     });
 
-    // Send
+    // ─── Send ──────────────────────────────────────────────
     var send = function(text) {
       if (!text || state.typing) return;
-      text = text || input.value.trim();
+      text = text.trim();
       if (!text) return;
       input.value = '';
+      updateSendBtn();
       hideQR();
       addMsg('user', text);
       state.typing = true;
-      state.inputStep = 'chatting';
-      input.placeholder = 'Ask anything...';
       var typing = addTyping();
 
       fetch(API + '/api/chat', {
@@ -212,16 +220,17 @@ var WINDOW_HTML = [
         state.typing = false;
         if (d.error) { addMsg('bot', 'Something went wrong. Please try again.'); return; }
         state.convId = d.conversationId;
+        saveConv();
         if (d.language) state.lang = d.language;
 
         if (d.orderCard) {
-          addOrderCard(d.orderCard, d.reply);
+          addOrderCard(d.orderCard);
         } else {
           addMsg('bot', d.reply);
         }
 
         if (d.quickReplies && d.quickReplies.length) {
-          setTimeout(function() { showQR(d.quickReplies); }, 200);
+          setTimeout(function() { showQR(d.quickReplies); }, 150);
         }
       })
       .catch(function() {
@@ -231,19 +240,80 @@ var WINDOW_HTML = [
       });
     };
 
-    sendBtn.addEventListener('click', function() { send(input.value.trim()); });
+    sendBtn.addEventListener('click', function() { send(input.value); });
     input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input.value.trim()); }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input.value); }
     });
+    input.addEventListener('input', function() { updateSendBtn(); });
+    updateSendBtn();
 
-    // ─── Message Helpers ─────────────────────────────────────────
+    function updateSendBtn() {
+      if (input.value.trim()) {
+        sendBtn.classList.add('wsn-active');
+      } else {
+        sendBtn.classList.remove('wsn-active');
+      }
+    }
+
+    // ─── Greeting with inline order input ──────────────────
+    function showGreeting() {
+      var brand = state.config && state.config.brandName ? state.config.brandName : '';
+      var greetingText = state.config && state.config.greeting ? state.config.greeting : 'Track your order in seconds';
+
+      // Main greeting
+      addMsg('bot', greetingText);
+
+      // Inline order input card
+      var card = document.createElement('div');
+      card.className = 'mm m-bot';
+      var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
+      card.innerHTML = avatar + '<div class="mc"><div class="oi-card">' +
+        '<div class="oi-label">📦 Enter your order number</div>' +
+        '<div class="oi-row">' +
+        '<input type="text" class="oi-input" placeholder="#1001" autocomplete="off" />' +
+        '<button class="oi-btn">Track</button>' +
+        '</div>' +
+        '<div class="oi-hint">or use your email address</div>' +
+        '</div></div>';
+      msgs.appendChild(card);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      // Wire the inline input
+      var oiInput = card.querySelector('.oi-input');
+      var oiBtn = card.querySelector('.oi-btn');
+      oiInput.focus();
+
+      var trackOrder = function() {
+        var val = oiInput.value.trim();
+        if (!val) return;
+        // Hide the input card with animation
+        card.style.transition = 'opacity 0.2s, max-height 0.2s';
+        card.style.opacity = '0';
+        card.style.maxHeight = '0';
+        card.style.marginBottom = '0';
+        card.style.overflow = 'hidden';
+        setTimeout(function() { card.remove(); }, 200);
+        send(val);
+      };
+
+      oiBtn.addEventListener('click', trackOrder);
+      oiInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); trackOrder(); }
+      });
+
+      // Also show "Ask a question" as secondary option
+      setTimeout(function() {
+        showQR(['💬 Ask a question']);
+      }, 300);
+    }
+
+    // ─── Message Helpers ─────────────────────────────────────
     function addMsg(role, content) {
       var msgId = 'msg-' + (++state.lastMsgId);
       var d = document.createElement('div');
       d.className = 'mm m-' + role;
       d.dataset.msgId = msgId;
 
-      // Bot avatar
       var avatar = '';
       if (role === 'bot') {
         avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
@@ -254,16 +324,13 @@ var WINDOW_HTML = [
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
         .replace(/\n/g, '<br>');
 
-      var timeStr = formatTime(new Date());
-      d.innerHTML = avatar + '<div class="mc"><div class="mt">' + html + '</div><div class="mts">' + timeStr + '</div></div>';
+      d.innerHTML = avatar + '<div class="mc"><div class="mt">' + html + '</div><div class="mts">' + formatTime(new Date()) + '</div></div>';
 
-      // Feedback buttons for bot messages
       if (role === 'bot') {
         var fb = document.createElement('div');
         fb.className = 'fb';
         fb.innerHTML = '<button class="fb-up" title="Helpful" data-msg="' + msgId + '">👍</button><button class="fb-down" title="Not helpful" data-msg="' + msgId + '">👎</button>';
         d.querySelector('.mc').appendChild(fb);
-
         setTimeout(function() {
           var up = fb.querySelector('.fb-up');
           var down = fb.querySelector('.fb-down');
@@ -275,7 +342,6 @@ var WINDOW_HTML = [
       msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
 
-      // Auto-hide feedback after 12 seconds
       if (role === 'bot') {
         setTimeout(function() {
           var fbEl = d.querySelector('.fb');
@@ -284,28 +350,29 @@ var WINDOW_HTML = [
       }
     }
 
-    // ─── Order Card ──────────────────────────────────────────────
-    function addOrderCard(card, fallbackText) {
+    // ─── Order Card ──────────────────────────────────────────
+    function addOrderCard(card) {
       var msgId = 'msg-' + (++state.lastMsgId);
       var d = document.createElement('div');
-      d.className = 'mm m-bot oc-wrap';
+      d.className = 'mm m-bot';
       d.dataset.msgId = msgId;
 
       var statusColor = getStatusColor(card.status);
       var statusIcon = getStatusIcon(card.status);
 
       var cardHtml = '<div class="oc">';
-      // Header with colored status
+      // Header
       cardHtml += '<div class="oc-h">';
       cardHtml += '<div class="oc-ord"><span class="oc-icon">' + statusIcon + '</span><span class="oc-num">' + card.orderNumber + '</span></div>';
       cardHtml += '<span class="oc-status" style="background:' + statusColor.bg + ';color:' + statusColor.fg + '">' + card.statusLabel + '</span>';
       cardHtml += '</div>';
 
-      // Items
+      // Items with optional images
       if (card.items && card.items.length) {
         cardHtml += '<div class="oc-items">';
-        card.items.forEach(function(item) {
-          cardHtml += '<span class="oc-item">' + item + '</span>';
+        card.items.forEach(function(item, idx) {
+          var img = card.itemImages && card.itemImages[idx] ? '<img src="' + card.itemImages[idx] + '" class="oc-item-img" />' : '';
+          cardHtml += '<span class="oc-item">' + img + item + '</span>';
         });
         cardHtml += '</div>';
       }
@@ -315,10 +382,9 @@ var WINDOW_HTML = [
         cardHtml += '<div class="oc-tl">';
         card.timeline.forEach(function(step, idx) {
           var cls = 'tl-step' + (step.completed ? ' done' : '') + (step.current ? ' active' : '');
-          var lineClass = step.completed ? 'tl-line done' : 'tl-line';
           cardHtml += '<div class="' + cls + '">';
           cardHtml += '<div class="tl-track">';
-          if (idx > 0) cardHtml += '<div class="' + lineClass + '"></div>';
+          if (idx > 0) cardHtml += '<div class="tl-line' + (step.completed ? ' done' : '') + '"></div>';
           cardHtml += '<div class="tl-dot"></div>';
           if (idx < card.timeline.length - 1) cardHtml += '<div class="tl-line' + (step.completed ? ' done' : '') + '"></div>';
           cardHtml += '</div>';
@@ -330,7 +396,7 @@ var WINDOW_HTML = [
         cardHtml += '</div>';
       }
 
-      // Tracking section
+      // Tracking
       if (card.trackingCompany && card.trackingNumber) {
         cardHtml += '<div class="oc-track">';
         cardHtml += '<div class="oc-carrier">🚚 ' + card.trackingCompany + ' · ' + card.trackingNumber + '</div>';
@@ -347,18 +413,14 @@ var WINDOW_HTML = [
 
       cardHtml += '</div>';
 
-      // Bot avatar
       var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
-
       d.innerHTML = avatar + '<div class="mc">' + cardHtml;
 
-      // Feedback
       var fb = document.createElement('div');
       fb.className = 'fb';
       fb.innerHTML = '<button class="fb-up" title="Helpful" data-msg="' + msgId + '">👍</button><button class="fb-down" title="Not helpful" data-msg="' + msgId + '">👎</button>';
       d.querySelector('.mc').appendChild(fb);
 
-      // Timestamp
       var timeEl = document.createElement('div');
       timeEl.className = 'mts';
       timeEl.textContent = formatTime(new Date());
@@ -380,7 +442,7 @@ var WINDOW_HTML = [
       }, 12000);
     }
 
-    // ─── Feedback Submit ─────────────────────────────────────────
+    // ─── Feedback ────────────────────────────────────────────
     function submitFeedback(msgId, rating, fbEl) {
       fbEl.classList.add('fb-done');
       var btns = fbEl.querySelectorAll('button');
@@ -388,14 +450,12 @@ var WINDOW_HTML = [
       var activeBtn = rating === 'positive' ? fbEl.querySelector('.fb-up') : fbEl.querySelector('.fb-down');
       if (activeBtn) activeBtn.classList.add('fb-selected');
       if (rating === 'positive') {
-        // Show quick thank you
         var thank = document.createElement('div');
         thank.className = 'fb-thanks';
         thank.textContent = 'Thanks! ❤️';
         fbEl.appendChild(thank);
         setTimeout(function() { thank.remove(); }, 2000);
       }
-
       fetch(API + '/api/chat?action=feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -420,14 +480,7 @@ var WINDOW_HTML = [
         b.className = 'qb';
         b.textContent = t;
         b.style.animationDelay = (i * 60) + 'ms';
-        b.addEventListener('click', function() {
-          // Smart: if "Track My Order", prompt for order number
-          if (t.indexOf('Track') > -1 || t.indexOf('📦') > -1) {
-            state.inputStep = 'awaiting_order';
-            input.placeholder = 'Type order # (e.g., #1001)...';
-          }
-          send(t);
-        });
+        b.addEventListener('click', function() { send(t); });
         qr.appendChild(b);
       });
       qr.style.display = 'flex';
@@ -448,11 +501,11 @@ function formatTime(d) {
 
 function getStatusColor(status) {
   switch (status) {
-    case 'FULFILLED': return { bg: '#e3f0ea', fg: '#006649' };
-    case 'UNFULFILLED': return { bg: '#e8f0fe', fg: '#1967d2' };
-    case 'PARTIALLY_FULFILLED': return { bg: '#fff3e0', fg: '#e65100' };
+    case 'FULFILLED': return { bg: '#dcfce7', fg: '#166534' };
+    case 'UNFULFILLED': return { bg: '#dbeafe', fg: '#1e40af' };
+    case 'PARTIALLY_FULFILLED': return { bg: '#ffedd5', fg: '#9a3412' };
     case 'RESTOCKED': return { bg: '#fce4ec', fg: '#c62828' };
-    case 'PENDING': return { bg: '#fff8e1', fg: '#f57f17' };
+    case 'PENDING': return { bg: '#fef9c3', fg: '#854d0e' };
     default: return { bg: '#f1f2f3', fg: '#6d7175' };
   }
 }
@@ -473,7 +526,7 @@ function CSS() {
   return '\
 .w {\
   --ac: #008060;\
-  --ac-light: #e3f0ea;\
+  --ac-light: #dcfce7;\
   --ac-dark: #006649;\
   --radius: 14px;\
   --shadow: 0 12px 48px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08);\
@@ -516,7 +569,7 @@ function CSS() {
 .w.dark .wq { background: #111113; }\
 .w.dark .qb { background: var(--bg-card); border-color: var(--ac); color: var(--ac); }\
 .w.dark .qb:hover { background: var(--ac); color: #fff; }\
-.w.dark .ma { background: #1a3d30; }\
+.w.dark .ma { background: #1a3d30; color: #4ade80; }\
 .w.dark .oc { background: var(--bg-card); border-color: var(--border-color); }\
 .w.dark .oc-h { border-color: var(--border-color); }\
 .w.dark .oc-track { border-color: var(--border-color); }\
@@ -528,6 +581,11 @@ function CSS() {
 .w.dark .tl-line { background: #38383a; }\
 .w.dark .tl-line.done { background: var(--ac); }\
 .w.dark .tl-step:not(.done):not(.active) .tl-dot { background: #2c2c2e; border-color: #38383a; }\
+.w.dark .oi-card { background: #1c1c1e; border-color: #38383a; }\
+.w.dark .oi-label { color: var(--text-primary); }\
+.w.dark .oi-input { background: #2c2c2e; border-color: #38383a; color: var(--text-primary); }\
+.w.dark .oi-input::placeholder { color: var(--text-tertiary); }\
+.w.dark .oi-hint { color: var(--text-tertiary); }\
 .w.dark .fb button { color: var(--text-tertiary); }\
 .w.dark .mts { color: var(--text-tertiary); }\
 \
@@ -636,7 +694,6 @@ function CSS() {
   from { opacity: 0; transform: translateY(8px); }\
   to { opacity: 1; transform: translateY(0); }\
 }\
-\
 .m-user { margin-left: auto; flex-direction: row-reverse; }\
 \
 /* Bot avatar */\
@@ -672,14 +729,7 @@ function CSS() {
 }\
 .mm a { color: var(--ac); text-decoration: underline; }\
 .m-user .mc a { color: #fff; text-decoration: underline; }\
-\
-/* Message timestamp */\
-.mts {\
-  font-size: 10px;\
-  color: var(--text-tertiary);\
-  margin-top: 4px;\
-  padding: 0 2px;\
-}\
+.mts { font-size: 10px; color: var(--text-tertiary); margin-top: 4px; padding: 0 2px; }\
 .m-user .mts { text-align: right; }\
 \
 /* Typing */\
@@ -694,6 +744,62 @@ function CSS() {
 @keyframes bounce {\
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }\
   30% { transform: translateY(-5px); opacity: 1; }\
+}\
+\
+/* ─── Inline Order Input Card ─────────────────────── */\
+.oi-card {\
+  background: var(--bg-msg);\
+  border: 1px solid var(--border-color);\
+  border-radius: 12px;\
+  padding: 14px 16px;\
+}\
+.oi-label {\
+  font-size: 14px;\
+  font-weight: 600;\
+  color: var(--text-primary);\
+  margin-bottom: 10px;\
+}\
+.oi-row {\
+  display: flex;\
+  gap: 8px;\
+}\
+.oi-input {\
+  flex: 1;\
+  border: 1.5px solid var(--border-color);\
+  border-radius: 10px;\
+  padding: 10px 14px;\
+  font-size: 15px;\
+  font-family: inherit;\
+  outline: none;\
+  background: var(--bg-card);\
+  color: var(--text-primary);\
+  transition: border-color 0.2s, box-shadow 0.2s;\
+  min-height: 44px;\
+}\
+.oi-input:focus {\
+  border-color: var(--ac);\
+  box-shadow: 0 0 0 3px rgba(0,128,96,0.08);\
+}\
+.oi-input::placeholder { color: var(--text-tertiary); font-weight: 500; }\
+.oi-btn {\
+  background: var(--ac);\
+  color: #fff;\
+  border: none;\
+  border-radius: 10px;\
+  padding: 0 20px;\
+  font-size: 15px;\
+  font-weight: 700;\
+  cursor: pointer;\
+  font-family: inherit;\
+  transition: opacity 0.15s, transform 0.1s;\
+  white-space: nowrap;\
+}\
+.oi-btn:hover { opacity: 0.88; }\
+.oi-btn:active { transform: scale(0.96); }\
+.oi-hint {\
+  font-size: 12px;\
+  color: var(--text-tertiary);\
+  margin-top: 8px;\
 }\
 \
 /* ─── Order Card ────────────────────────────────────── */\
@@ -722,12 +828,7 @@ function CSS() {
   border-radius: 12px;\
   letter-spacing: 0.01em;\
 }\
-.oc-items {\
-  display: flex;\
-  flex-wrap: wrap;\
-  gap: 6px;\
-  margin-bottom: 14px;\
-}\
+.oc-items { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }\
 .oc-item {\
   font-size: 12px;\
   color: var(--text-secondary);\
@@ -735,6 +836,16 @@ function CSS() {
   padding: 4px 10px;\
   border-radius: 8px;\
   border: 1px solid var(--border-light);\
+  display: flex;\
+  align-items: center;\
+  gap: 6px;\
+}\
+.oc-item-img {\
+  width: 24px;\
+  height: 24px;\
+  border-radius: 4px;\
+  object-fit: cover;\
+  flex-shrink: 0;\
 }\
 \
 /* Timeline */\
@@ -761,13 +872,9 @@ function CSS() {
   z-index: 1;\
   transition: all 0.3s;\
 }\
-.tl-step.done .tl-dot {\
-  background: var(--ac);\
-  border-color: var(--ac);\
-}\
+.tl-step.done .tl-dot { background: var(--ac); border-color: var(--ac); }\
 .tl-step.active .tl-dot {\
-  background: var(--ac);\
-  border-color: var(--ac);\
+  background: var(--ac); border-color: var(--ac);\
   box-shadow: 0 0 0 4px rgba(0,128,96,0.12);\
   animation: pulse 2s ease-in-out infinite;\
 }\
@@ -775,13 +882,7 @@ function CSS() {
   0%, 100% { box-shadow: 0 0 0 4px rgba(0,128,96,0.12); }\
   50% { box-shadow: 0 0 0 8px rgba(0,128,96,0.06); }\
 }\
-.tl-line {\
-  width: 2px;\
-  flex: 1;\
-  min-height: 8px;\
-  background: #e1e3e5;\
-  transition: background 0.3s;\
-}\
+.tl-line { width: 2px; flex: 1; min-height: 8px; background: #e1e3e5; transition: background 0.3s; }\
 .tl-line.done { background: var(--ac); }\
 .tl-info { flex: 1; padding-bottom: 4px; }\
 .tl-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }\
@@ -799,155 +900,76 @@ function CSS() {
 }\
 .oc-carrier { font-size: 12px; color: var(--text-secondary); }\
 .oc-track-btn {\
-  color: var(--ac);\
-  text-decoration: none;\
-  font-weight: 700;\
-  font-size: 13px;\
-  padding: 6px 14px;\
-  border-radius: 8px;\
-  background: var(--ac-light);\
+  color: var(--ac); text-decoration: none; font-weight: 700; font-size: 13px;\
+  padding: 6px 14px; border-radius: 8px; background: var(--ac-light);\
   transition: all 0.15s;\
 }\
 .oc-track-btn:hover { background: var(--ac); color: #fff; }\
-\
-.oc-eta {\
-  font-size: 12px;\
-  color: var(--text-secondary);\
-  margin-top: 8px;\
-  padding-top: 6px;\
-}\
+.oc-eta { font-size: 12px; color: var(--text-secondary); margin-top: 8px; padding-top: 6px; }\
 .oc-eta b { color: var(--text-primary); }\
 \
 /* ─── Feedback ────────────────────────────────────── */\
-.fb {\
-  display: flex;\
-  gap: 2px;\
-  margin-top: 6px;\
-  transition: opacity 0.4s;\
-}\
+.fb { display: flex; gap: 2px; margin-top: 6px; transition: opacity 0.4s; }\
 .fb button {\
-  background: none;\
-  border: none;\
-  cursor: pointer;\
-  padding: 3px 4px;\
-  font-size: 14px;\
-  color: var(--text-tertiary);\
-  border-radius: 6px;\
-  transition: all 0.15s;\
-  outline: none;\
-  opacity: 0.4;\
+  background: none; border: none; cursor: pointer; padding: 3px 4px;\
+  font-size: 14px; color: var(--text-tertiary); border-radius: 6px;\
+  transition: all 0.15s; outline: none; opacity: 0.4;\
 }\
 .mc:hover > .fb button { opacity: 0.7; }\
 .fb button:hover { opacity: 1 !important; background: var(--border-light); transform: scale(1.15); }\
-.fb-up.fb-selected { opacity: 1 !important; }\
-.fb-down.fb-selected { opacity: 1 !important; }\
+.fb-up.fb-selected, .fb-down.fb-selected { opacity: 1 !important; }\
 .fb.fb-done button { pointer-events: none; opacity: 0.5; }\
 .fb.fb-done .fb-selected { opacity: 1 !important; }\
 .fb.fb-fade { opacity: 0; }\
-.fb-thanks {\
-  font-size: 12px;\
-  color: var(--ac);\
-  font-weight: 600;\
-  margin-left: 4px;\
-  animation: fadeUp 0.3s ease-out;\
-}\
-@keyframes fadeUp {\
-  from { opacity: 0; transform: translateY(4px); }\
-  to { opacity: 1; transform: translateY(0); }\
-}\
+.fb-thanks { font-size: 12px; color: var(--ac); font-weight: 600; margin-left: 4px; animation: fadeUp 0.3s ease-out; }\
+@keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }\
 \
-/* ─── Quick Replies ────────────────────────────────────── */\
-.wq {\
-  padding: 0 18px 12px;\
-  display: flex;\
-  flex-wrap: wrap;\
-  gap: 8px;\
-  background: var(--bg-msg);\
-  flex-shrink: 0;\
-}\
+/* ─── Quick Replies ────────────────────────────────── */\
+.wq { padding: 0 18px 12px; display: flex; flex-wrap: wrap; gap: 8px; background: var(--bg-msg); flex-shrink: 0; }\
 .qb {\
-  background: var(--bg-card);\
-  border: 1.5px solid var(--ac);\
-  color: var(--ac);\
-  padding: 8px 16px;\
-  border-radius: 20px;\
-  font-size: 13px;\
-  font-weight: 600;\
-  cursor: pointer;\
-  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);\
-  font-family: inherit;\
-  outline: none;\
+  background: var(--bg-card); border: 1.5px solid var(--ac); color: var(--ac);\
+  padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;\
+  cursor: pointer; transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);\
+  font-family: inherit; outline: none;\
   animation: qrIn 0.3s cubic-bezier(0.16,1,0.3,1) both;\
 }\
-@keyframes qrIn {\
-  from { opacity: 0; transform: translateY(8px) scale(0.9); }\
-  to { opacity: 1; transform: translateY(0) scale(1); }\
-}\
+@keyframes qrIn { from { opacity: 0; transform: translateY(8px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }\
 .qb:hover { background: var(--ac); color: #fff; transform: scale(1.03); }\
 .qb:active { transform: scale(0.96); }\
 \
 /* ─── Input ────────────────────────────────────── */\
 .wi {\
-  padding: 12px 16px;\
-  border-top: 1px solid var(--border-color);\
-  display: flex;\
-  gap: 10px;\
-  background: #fff;\
-  flex-shrink: 0;\
-  align-items: center;\
+  padding: 12px 16px; border-top: 1px solid var(--border-color);\
+  display: flex; gap: 10px; background: #fff; flex-shrink: 0; align-items: center;\
 }\
 .win {\
-  flex: 1;\
-  border: 1.5px solid var(--border-color);\
-  border-radius: 22px;\
-  padding: 10px 18px;\
-  font-size: 14px;\
-  outline: none;\
+  flex: 1; border: 1.5px solid var(--border-color); border-radius: 22px;\
+  padding: 10px 18px; font-size: 14px; outline: none;\
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;\
-  font-family: inherit;\
-  background: var(--bg-input);\
-  color: var(--text-primary);\
-  min-height: 44px;\
+  font-family: inherit; background: var(--bg-input); color: var(--text-primary); min-height: 44px;\
 }\
-.win:focus {\
-  border-color: var(--ac);\
-  box-shadow: 0 0 0 3px rgba(0,128,96,0.08);\
-  background: var(--bg-card);\
-}\
+.win:focus { border-color: var(--ac); box-shadow: 0 0 0 3px rgba(0,128,96,0.08); background: var(--bg-card); }\
 .win::placeholder { color: var(--text-tertiary); }\
 .wsn {\
-  width: 44px; height: 44px;\
-  border-radius: 22px;\
-  background: var(--ac);\
-  color: #fff;\
-  border: none;\
-  cursor: pointer;\
-  display: flex;\
-  align-items: center;\
-  justify-content: center;\
-  transition: opacity 0.15s, transform 0.15s;\
-  flex-shrink: 0;\
-  outline: none;\
+  width: 44px; height: 44px; border-radius: 22px; background: var(--border-color);\
+  color: #fff; border: none; cursor: pointer;\
+  display: flex; align-items: center; justify-content: center;\
+  transition: all 0.2s; flex-shrink: 0; outline: none;\
 }\
-.wsn:hover { opacity: 0.88; }\
-.wsn:active { transform: scale(0.9); }\
+.wsn-active { background: var(--ac) !important; cursor: pointer; }\
+.wsn-active:hover { opacity: 0.88; }\
+.wsn-active:active { transform: scale(0.9); }\
 \
 /* ─── Mobile ────────────────────────────────────── */\
 @media (max-width: 480px) {\
-  .ww {\
-    width: 100vw;\
-    height: 100vh;\
-    height: 100dvh;\
-    border-radius: 0;\
-    bottom: 0;\
-    right: 0;\
-  }\
+  .ww { width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; bottom: 0; right: 0; }\
   .w { bottom: 16px; right: 16px; }\
   .w.left { left: 16px; }\
   .wh { padding: 14px 16px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }\
   .wi { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }\
   .wb { width: 54px; height: 54px; border-radius: 27px; }\
   .wb svg { width: 24px; height: 24px; }\
+  .oi-btn { padding: 0 16px; }\
 }\
 ';
 }
