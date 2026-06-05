@@ -1,26 +1,25 @@
 /**
- * WISMO AI - Storefront Chat Widget v4
+ * WISMO AI - Storefront Chat Widget v5
  * 
- * "The best WISMO chatbot in the world"
+ * "The World's Best WISMO Chatbot"
  * ─────────────────────────────────────
- * ✓ Instant: greeting renders before API loads
- * ✓ Beautiful: Polaris-inspired design, SVG icons, smooth animations
- * ✓ Order Card: visual timeline + tracking info
- * ✓ Multi-language: auto-detect + respond in customer's language
- * ✓ Dark Mode: auto-detect system preference
- * ✓ Feedback: thumbs up/down after bot responses
- * ✓ Zero learning curve: "Track your order" is the obvious action
- * ✓ Smart: instant order responses, AI only for general queries
- * ✓ Lightweight: Shadow DOM isolated
+ * ✓ Premium Design: Apple-level polish, color-coded status, bot avatar
+ * ✓ Instant Speed: greeting renders before API, 0ms order responses
+ * ✓ Zero Learning Curve: clear prompt, smart placeholder, big quick actions
+ * ✓ Real Solutions: order card timeline, tracking button, return policy link
+ * ✓ Multi-language: auto-detect + respond in customer's language (20+)
+ * ✓ Dark Mode: smooth auto-detect with refined palette
+ * ✓ Feedback: thumbs up/down with thank-you animation
+ * ✓ Mobile-first: full-screen overlay, safe area, touch-optimized
  */
 
-// ─── Bootstrap (instant, no API wait) ────────────────────────────────
+// ─── Bootstrap ────────────────────────────────────────────────────────
 var SCRIPT = document.currentScript;
 var SRC = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src) : null;
 var SHOP = (SRC ? SRC.searchParams.get('shop') : '') || (document.getElementById('wismo-chat-root') || {}).dataset?.shop || '';
 var API = SRC ? SRC.origin : 'https://shopify-ai-lister-tau.vercel.app';
 
-// ─── State ───────────────────────────────────────────────────────────
+// ─── State ────────────────────────────────────────────────────────────
 var state = {
   config: null,
   convId: null,
@@ -31,9 +30,10 @@ var state = {
   darkMode: false,
   lang: 'en',
   lastMsgId: 0,
+  inputStep: 'idle', // idle | awaiting_order | awaiting_email | chatting
 };
 
-// ─── Dark Mode Detection ─────────────────────────────────────────────
+// ─── Dark Mode Detection ──────────────────────────────────────────────
 try {
   state.darkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
@@ -41,7 +41,9 @@ try {
     var shadow = document.getElementById('wismo-host');
     if (shadow && shadow.shadowRoot) {
       var w = shadow.shadowRoot.querySelector('.w');
-      if (w) w.classList.toggle('dark', state.darkMode);
+      if (w) {
+        w.classList.toggle('dark', state.darkMode);
+      }
     }
   });
 } catch(e) {}
@@ -60,7 +62,7 @@ try {
     .catch(function() { removeShell(); });
 })();
 
-// ─── Shell (renders instantly) ───────────────────────────────────────
+// ─── Shell ────────────────────────────────────────────────────────────
 function renderShell() {
   var host = document.createElement('div');
   host.id = 'wismo-host';
@@ -69,7 +71,6 @@ function renderShell() {
   var s = document.createElement('style');
   s.textContent = CSS();
   shadow.appendChild(s);
-
   var el = document.createElement('div');
   el.className = 'w' + (state.darkMode ? ' dark' : '');
   el.innerHTML = BUBBLE_HTML + WINDOW_HTML;
@@ -93,10 +94,15 @@ function applyConfig(c) {
   if (title && c.brandName) title.textContent = c.brandName;
 }
 
-// ─── HTML Fragments ──────────────────────────────────────────────────
+// ─── HTML ─────────────────────────────────────────────────────────────
 var BUBBLE_HTML = [
-  '<button class="wb" aria-label="Chat with us">',
-  '  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  '<button class="wb" aria-label="Track your order">',
+  '  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">',
+  '    <rect x="1" y="3" width="15" height="13" rx="2"/>',
+  '    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>',
+  '    <circle cx="5.5" cy="18.5" r="2.5"/>',
+  '    <circle cx="18.5" cy="18.5" r="2.5"/>',
+  '  </svg>',
   '</button>',
 ].join('');
 
@@ -105,8 +111,18 @@ var WINDOW_HTML = [
   // Header
   '  <div class="wh">',
   '    <div class="whl">',
-  '      <div class="wa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>',
-  '      <div><div class="wt">WISMO AI</div><div class="ws">Online · Instant tracking</div></div>',
+  '      <div class="wa">',
+  '        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">',
+  '          <rect x="1" y="3" width="15" height="13" rx="2"/>',
+  '          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>',
+  '          <circle cx="5.5" cy="18.5" r="2.5"/>',
+  '          <circle cx="18.5" cy="18.5" r="2.5"/>',
+  '        </svg>',
+  '      </div>',
+  '      <div>',
+  '        <div class="wt">WISMO AI</div>',
+  '        <div class="ws"><span class="wdot"></span> Online</div>',
+  '      </div>',
   '    </div>',
   '    <button class="wx" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>',
   '  </div>',
@@ -116,13 +132,13 @@ var WINDOW_HTML = [
   '  <div class="wq" style="display:none"></div>',
   // Input
   '  <div class="wi">',
-  '    <input type="text" class="win" placeholder="Order number or question..." autocomplete="off" />',
+  '    <input type="text" class="win" placeholder="Type your order number..." autocomplete="off" />',
   '    <button class="wsn" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>',
   '  </div>',
   '</div>',
 ].join('');
 
-// ─── Event Wiring ────────────────────────────────────────────────────
+// ─── Events ───────────────────────────────────────────────────────────
 (function wireEvents() {
   var poll = setInterval(function() {
     var shadow = document.getElementById('wismo-host');
@@ -143,23 +159,33 @@ var WINDOW_HTML = [
     bubble.addEventListener('click', function() {
       state.open = true;
       win.style.display = 'flex';
+      win.classList.remove('ww-out');
+      win.classList.add('ww-in');
       bubble.style.display = 'none';
       if (!state.greeted) {
         state.greeted = true;
+        state.inputStep = 'awaiting_order';
         setTimeout(function() {
-          var greeting = state.config && state.config.greeting ? state.config.greeting : 'Track your order in seconds';
+          var greeting = state.config && state.config.greeting ? state.config.greeting : 'Hi! 👋 I can track your order instantly.';
           addMsg('bot', greeting);
-          showQR(['📦 Track my order', '💬 Ask a question']);
-        }, 200);
+          setTimeout(function() {
+            showQR(['📦 Track My Order', '💬 Ask a Question']);
+            input.placeholder = 'Type order # (e.g., #1001)...';
+          }, 300);
+        }, 150);
       }
-      input.focus();
+      setTimeout(function() { input.focus(); }, 400);
     });
 
     // Close
     closeBtn.addEventListener('click', function() {
-      state.open = false;
-      win.style.display = 'none';
-      bubble.style.display = 'flex';
+      win.classList.remove('ww-in');
+      win.classList.add('ww-out');
+      setTimeout(function() {
+        state.open = false;
+        win.style.display = 'none';
+        bubble.style.display = 'flex';
+      }, 250);
     });
 
     // Send
@@ -171,6 +197,8 @@ var WINDOW_HTML = [
       hideQR();
       addMsg('user', text);
       state.typing = true;
+      state.inputStep = 'chatting';
+      input.placeholder = 'Ask anything...';
       var typing = addTyping();
 
       fetch(API + '/api/chat', {
@@ -186,14 +214,15 @@ var WINDOW_HTML = [
         state.convId = d.conversationId;
         if (d.language) state.lang = d.language;
 
-        // If we have an order card, render it as a rich card
         if (d.orderCard) {
           addOrderCard(d.orderCard, d.reply);
         } else {
           addMsg('bot', d.reply);
         }
 
-        if (d.quickReplies && d.quickReplies.length) showQR(d.quickReplies);
+        if (d.quickReplies && d.quickReplies.length) {
+          setTimeout(function() { showQR(d.quickReplies); }, 200);
+        }
       })
       .catch(function() {
         typing.remove();
@@ -213,21 +242,28 @@ var WINDOW_HTML = [
       var d = document.createElement('div');
       d.className = 'mm m-' + role;
       d.dataset.msgId = msgId;
-      // Format markdown-lite
+
+      // Bot avatar
+      var avatar = '';
+      if (role === 'bot') {
+        avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
+      }
+
       var html = content
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
         .replace(/\n/g, '<br>');
-      d.innerHTML = html;
 
-      // Add feedback buttons for bot messages
+      var timeStr = formatTime(new Date());
+      d.innerHTML = avatar + '<div class="mc"><div class="mt">' + html + '</div><div class="mts">' + timeStr + '</div></div>';
+
+      // Feedback buttons for bot messages
       if (role === 'bot') {
         var fb = document.createElement('div');
         fb.className = 'fb';
-        fb.innerHTML = '<button class="fb-up" title="Helpful" data-msg="' + msgId + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button><button class="fb-down" title="Not helpful" data-msg="' + msgId + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg></button>';
-        d.appendChild(fb);
+        fb.innerHTML = '<button class="fb-up" title="Helpful" data-msg="' + msgId + '">👍</button><button class="fb-down" title="Not helpful" data-msg="' + msgId + '">👎</button>';
+        d.querySelector('.mc').appendChild(fb);
 
-        // Wire feedback buttons
         setTimeout(function() {
           var up = fb.querySelector('.fb-up');
           var down = fb.querySelector('.fb-down');
@@ -239,12 +275,12 @@ var WINDOW_HTML = [
       msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
 
-      // Auto-hide feedback after 10 seconds
+      // Auto-hide feedback after 12 seconds
       if (role === 'bot') {
         setTimeout(function() {
           var fbEl = d.querySelector('.fb');
-          if (fbEl && !fbEl.classList.contains('fb-done')) fbEl.style.opacity = '0';
-        }, 10000);
+          if (fbEl && !fbEl.classList.contains('fb-done')) fbEl.classList.add('fb-fade');
+        }, 12000);
       }
     }
 
@@ -252,28 +288,40 @@ var WINDOW_HTML = [
     function addOrderCard(card, fallbackText) {
       var msgId = 'msg-' + (++state.lastMsgId);
       var d = document.createElement('div');
-      d.className = 'mm m-bot';
+      d.className = 'mm m-bot oc-wrap';
       d.dataset.msgId = msgId;
 
+      var statusColor = getStatusColor(card.status);
+      var statusIcon = getStatusIcon(card.status);
+
       var cardHtml = '<div class="oc">';
-      // Header
+      // Header with colored status
       cardHtml += '<div class="oc-h">';
-      cardHtml += '<span class="oc-num">📦 ' + card.orderNumber + '</span>';
-      cardHtml += '<span class="oc-status">' + card.statusLabel + '</span>';
+      cardHtml += '<div class="oc-ord"><span class="oc-icon">' + statusIcon + '</span><span class="oc-num">' + card.orderNumber + '</span></div>';
+      cardHtml += '<span class="oc-status" style="background:' + statusColor.bg + ';color:' + statusColor.fg + '">' + card.statusLabel + '</span>';
       cardHtml += '</div>';
 
       // Items
       if (card.items && card.items.length) {
-        cardHtml += '<div class="oc-items">' + card.items.join(', ') + '</div>';
+        cardHtml += '<div class="oc-items">';
+        card.items.forEach(function(item) {
+          cardHtml += '<span class="oc-item">' + item + '</span>';
+        });
+        cardHtml += '</div>';
       }
 
       // Timeline
       if (card.timeline && card.timeline.length) {
         cardHtml += '<div class="oc-tl">';
-        card.timeline.forEach(function(step) {
+        card.timeline.forEach(function(step, idx) {
           var cls = 'tl-step' + (step.completed ? ' done' : '') + (step.current ? ' active' : '');
+          var lineClass = step.completed ? 'tl-line done' : 'tl-line';
           cardHtml += '<div class="' + cls + '">';
+          cardHtml += '<div class="tl-track">';
+          if (idx > 0) cardHtml += '<div class="' + lineClass + '"></div>';
           cardHtml += '<div class="tl-dot"></div>';
+          if (idx < card.timeline.length - 1) cardHtml += '<div class="tl-line' + (step.completed ? ' done' : '') + '"></div>';
+          cardHtml += '</div>';
           cardHtml += '<div class="tl-info">';
           cardHtml += '<div class="tl-label">' + step.label + '</div>';
           if (step.date) cardHtml += '<div class="tl-date">' + step.date + '</div>';
@@ -282,12 +330,12 @@ var WINDOW_HTML = [
         cardHtml += '</div>';
       }
 
-      // Tracking info
+      // Tracking section
       if (card.trackingCompany && card.trackingNumber) {
         cardHtml += '<div class="oc-track">';
-        cardHtml += '<span>🚚 ' + card.trackingCompany + '</span>';
+        cardHtml += '<div class="oc-carrier">🚚 ' + card.trackingCompany + ' · ' + card.trackingNumber + '</div>';
         if (card.trackingUrl) {
-          cardHtml += '<a href="' + card.trackingUrl + '" target="_blank" rel="noopener" class="oc-link">Track →</a>';
+          cardHtml += '<a href="' + card.trackingUrl + '" target="_blank" rel="noopener" class="oc-track-btn">Track Package →</a>';
         }
         cardHtml += '</div>';
       }
@@ -299,14 +347,22 @@ var WINDOW_HTML = [
 
       cardHtml += '</div>';
 
-      // Also include text fallback below the card for context
-      d.innerHTML = cardHtml;
+      // Bot avatar
+      var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
 
-      // Feedback buttons
+      d.innerHTML = avatar + '<div class="mc">' + cardHtml;
+
+      // Feedback
       var fb = document.createElement('div');
       fb.className = 'fb';
-      fb.innerHTML = '<button class="fb-up" title="Helpful" data-msg="' + msgId + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button><button class="fb-down" title="Not helpful" data-msg="' + msgId + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg></button>';
-      d.appendChild(fb);
+      fb.innerHTML = '<button class="fb-up" title="Helpful" data-msg="' + msgId + '">👍</button><button class="fb-down" title="Not helpful" data-msg="' + msgId + '">👎</button>';
+      d.querySelector('.mc').appendChild(fb);
+
+      // Timestamp
+      var timeEl = document.createElement('div');
+      timeEl.className = 'mts';
+      timeEl.textContent = formatTime(new Date());
+      d.querySelector('.mc').appendChild(timeEl);
 
       setTimeout(function() {
         var up = fb.querySelector('.fb-up');
@@ -320,8 +376,8 @@ var WINDOW_HTML = [
 
       setTimeout(function() {
         var fbEl = d.querySelector('.fb');
-        if (fbEl && !fbEl.classList.contains('fb-done')) fbEl.style.opacity = '0';
-      }, 10000);
+        if (fbEl && !fbEl.classList.contains('fb-done')) fbEl.classList.add('fb-fade');
+      }, 12000);
     }
 
     // ─── Feedback Submit ─────────────────────────────────────────
@@ -331,6 +387,14 @@ var WINDOW_HTML = [
       btns.forEach(function(b) { b.style.pointerEvents = 'none'; });
       var activeBtn = rating === 'positive' ? fbEl.querySelector('.fb-up') : fbEl.querySelector('.fb-down');
       if (activeBtn) activeBtn.classList.add('fb-selected');
+      if (rating === 'positive') {
+        // Show quick thank you
+        var thank = document.createElement('div');
+        thank.className = 'fb-thanks';
+        thank.textContent = 'Thanks! ❤️';
+        fbEl.appendChild(thank);
+        setTimeout(function() { thank.remove(); }, 2000);
+      }
 
       fetch(API + '/api/chat?action=feedback', {
         method: 'POST',
@@ -342,7 +406,8 @@ var WINDOW_HTML = [
     function addTyping() {
       var d = document.createElement('div');
       d.className = 'mm m-bot typing';
-      d.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>';
+      var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
+      d.innerHTML = avatar + '<div class="mc"><div class="dots"><i></i><i></i><i></i></div></div>';
       msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
       return d;
@@ -350,11 +415,19 @@ var WINDOW_HTML = [
 
     function showQR(items) {
       qr.innerHTML = '';
-      items.forEach(function(t) {
+      items.forEach(function(t, i) {
         var b = document.createElement('button');
         b.className = 'qb';
         b.textContent = t;
-        b.addEventListener('click', function() { send(t); });
+        b.style.animationDelay = (i * 60) + 'ms';
+        b.addEventListener('click', function() {
+          // Smart: if "Track My Order", prompt for order number
+          if (t.indexOf('Track') > -1 || t.indexOf('📦') > -1) {
+            state.inputStep = 'awaiting_order';
+            input.placeholder = 'Type order # (e.g., #1001)...';
+          }
+          send(t);
+        });
         qr.appendChild(b);
       });
       qr.style.display = 'flex';
@@ -364,6 +437,37 @@ var WINDOW_HTML = [
   }, 50);
 })();
 
+// ─── Helpers ──────────────────────────────────────────────────────────
+
+function formatTime(d) {
+  var h = d.getHours(), m = d.getMinutes();
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+}
+
+function getStatusColor(status) {
+  switch (status) {
+    case 'FULFILLED': return { bg: '#e3f0ea', fg: '#006649' };
+    case 'UNFULFILLED': return { bg: '#e8f0fe', fg: '#1967d2' };
+    case 'PARTIALLY_FULFILLED': return { bg: '#fff3e0', fg: '#e65100' };
+    case 'RESTOCKED': return { bg: '#fce4ec', fg: '#c62828' };
+    case 'PENDING': return { bg: '#fff8e1', fg: '#f57f17' };
+    default: return { bg: '#f1f2f3', fg: '#6d7175' };
+  }
+}
+
+function getStatusIcon(status) {
+  switch (status) {
+    case 'FULFILLED': return '🚚';
+    case 'UNFULFILLED': return '📦';
+    case 'PARTIALLY_FULFILLED': return '📤';
+    case 'RESTOCKED': return '↩️';
+    case 'PENDING': return '⏳';
+    default: return '📦';
+  }
+}
+
 // ─── CSS ──────────────────────────────────────────────────────────────
 function CSS() {
   return '\
@@ -371,15 +475,15 @@ function CSS() {
   --ac: #008060;\
   --ac-light: #e3f0ea;\
   --ac-dark: #006649;\
-  --radius: 12px;\
-  --shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);\
-  --bg-msg: #f8f9fa;\
-  --bg-card: #fff;\
+  --radius: 14px;\
+  --shadow: 0 12px 48px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08);\
+  --bg-msg: #f4f5f7;\
+  --bg-card: #ffffff;\
   --bg-input: #fafbfc;\
-  --text-primary: #1c1c1e;\
+  --text-primary: #1a1a1a;\
   --text-secondary: #6d7175;\
   --text-tertiary: #8c9196;\
-  --border-color: #e1e3e5;\
+  --border-color: #e5e7eb;\
   --border-light: #f1f2f3;\
   position: fixed;\
   bottom: 24px;\
@@ -387,44 +491,53 @@ function CSS() {
   z-index: 2147483647;\
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;\
   -webkit-font-smoothing: antialiased;\
+  -moz-osx-font-smoothing: grayscale;\
 }\
 \
-/* Dark mode */\
+/* ─── Dark Mode ────────────────────────────────────── */\
 .w.dark {\
-  --bg-msg: #1c1c1e;\
-  --bg-card: #2c2c2e;\
-  --bg-input: #2c2c2e;\
+  --bg-msg: #111113;\
+  --bg-card: #1c1c1e;\
+  --bg-input: #1c1c1e;\
   --text-primary: #f5f5f7;\
   --text-secondary: #a1a1a6;\
   --text-tertiary: #86868b;\
-  --border-color: #3a3a3c;\
+  --border-color: #38383a;\
   --border-light: #2c2c2e;\
 }\
-.w.dark .ww { background: #1c1c1e; }\
-.w.dark .wm { background: #1c1c1e; }\
-.w.dark .m-bot { background: var(--bg-card); color: var(--text-primary); }\
-.w.dark .m-user { background: var(--ac); color: #fff; }\
-.w.dark .wi { background: #1c1c1e; border-top-color: var(--border-color); }\
+.w.dark .ww { background: #111113; }\
+.w.dark .wm { background: #111113; }\
+.w.dark .wh { background: linear-gradient(135deg, #0a3d2e 0%, #0d4f3a 100%); }\
+.w.dark .m-bot .mc { background: var(--bg-card); color: var(--text-primary); }\
+.w.dark .m-user .mc { background: var(--ac); color: #fff; }\
+.w.dark .wi { background: #111113; border-top-color: var(--border-color); }\
 .w.dark .win { background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary); }\
 .w.dark .win::placeholder { color: var(--text-tertiary); }\
-.w.dark .wq { background: #1c1c1e; }\
+.w.dark .wq { background: #111113; }\
 .w.dark .qb { background: var(--bg-card); border-color: var(--ac); color: var(--ac); }\
 .w.dark .qb:hover { background: var(--ac); color: #fff; }\
+.w.dark .ma { background: #1a3d30; }\
 .w.dark .oc { background: var(--bg-card); border-color: var(--border-color); }\
 .w.dark .oc-h { border-color: var(--border-color); }\
-.w.dark .oc-status { background: rgba(0,128,96,0.2); color: #4ade80; }\
+.w.dark .oc-track { border-color: var(--border-color); }\
+.w.dark .oc-carrier { color: var(--text-secondary); }\
+.w.dark .oc-eta { color: var(--text-secondary); }\
+.w.dark .oc-eta b { color: var(--text-primary); }\
 .w.dark .tl-label { color: var(--text-primary); }\
 .w.dark .tl-date { color: var(--text-tertiary); }\
-.w.dark .oc-track { border-color: var(--border-color); }\
-.w.dark .oc-eta { color: var(--text-secondary); }\
+.w.dark .tl-line { background: #38383a; }\
+.w.dark .tl-line.done { background: var(--ac); }\
+.w.dark .tl-step:not(.done):not(.active) .tl-dot { background: #2c2c2e; border-color: #38383a; }\
+.w.dark .fb button { color: var(--text-tertiary); }\
+.w.dark .mts { color: var(--text-tertiary); }\
 \
 .w.left { right: auto; left: 24px; }\
 \
-/* Bubble */\
+/* ─── Bubble ────────────────────────────────────── */\
 .wb {\
-  width: 56px;\
-  height: 56px;\
-  border-radius: 28px;\
+  width: 60px;\
+  height: 60px;\
+  border-radius: 30px;\
   background: var(--ac);\
   color: #fff;\
   border: none;\
@@ -432,98 +545,147 @@ function CSS() {
   display: flex;\
   align-items: center;\
   justify-content: center;\
-  box-shadow: 0 4px 16px rgba(0,128,96,0.35);\
-  transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;\
+  box-shadow: 0 6px 24px rgba(0,128,96,0.4), 0 2px 8px rgba(0,128,96,0.2);\
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;\
   outline: none;\
+  animation: bubbleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;\
 }\
-.wb:hover { transform: scale(1.06); box-shadow: 0 6px 20px rgba(0,128,96,0.45); }\
-.wb:active { transform: scale(0.97); }\
+@keyframes bubbleIn {\
+  from { opacity: 0; transform: scale(0.6) translateY(10px); }\
+  to { opacity: 1; transform: scale(1) translateY(0); }\
+}\
+.wb:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(0,128,96,0.5); }\
+.wb:active { transform: scale(0.95); }\
 \
-/* Window */\
+/* ─── Window ────────────────────────────────────── */\
 .ww {\
-  width: 400px;\
-  height: 580px;\
-  border-radius: 16px;\
+  width: 420px;\
+  height: 620px;\
+  border-radius: 18px;\
   overflow: hidden;\
   display: flex;\
   flex-direction: column;\
   box-shadow: var(--shadow);\
   background: #fff;\
-  animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);\
 }\
-@keyframes slideUp {\
-  from { opacity: 0; transform: translateY(16px) scale(0.96); }\
+.ww-in { animation: winIn 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }\
+.ww-out { animation: winOut 0.25s cubic-bezier(0.4,0,1,1) forwards; }\
+@keyframes winIn {\
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }\
   to { opacity: 1; transform: translateY(0) scale(1); }\
 }\
+@keyframes winOut {\
+  from { opacity: 1; transform: translateY(0) scale(1); }\
+  to { opacity: 0; transform: translateY(12px) scale(0.97); }\
+}\
 \
-/* Header */\
+/* ─── Header ────────────────────────────────────── */\
 .wh {\
-  background: var(--ac);\
+  background: linear-gradient(135deg, #008060 0%, #00a878 100%);\
   color: #fff;\
-  padding: 14px 18px;\
+  padding: 16px 20px;\
   display: flex;\
   align-items: center;\
   justify-content: space-between;\
   flex-shrink: 0;\
 }\
-.whl { display: flex; align-items: center; gap: 10px; }\
+.whl { display: flex; align-items: center; gap: 12px; }\
 .wa {\
-  width: 36px; height: 36px;\
-  border-radius: 50%;\
+  width: 38px; height: 38px;\
+  border-radius: 12px;\
   background: rgba(255,255,255,0.18);\
   display: flex; align-items: center; justify-content: center;\
+  backdrop-filter: blur(4px);\
 }\
-.wt { font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }\
-.ws { font-size: 12px; opacity: 0.8; margin-top: 1px; }\
+.wt { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }\
+.ws { font-size: 12px; opacity: 0.85; margin-top: 2px; display: flex; align-items: center; gap: 5px; }\
+.wdot {\
+  width: 7px; height: 7px;\
+  border-radius: 50%;\
+  background: #4ade80;\
+  display: inline-block;\
+  box-shadow: 0 0 6px rgba(74,222,128,0.5);\
+}\
 .wx {\
-  background: none; border: none; color: rgba(255,255,255,0.8);\
-  cursor: pointer; padding: 6px; border-radius: 8px;\
+  background: none; border: none; color: rgba(255,255,255,0.7);\
+  cursor: pointer; padding: 8px; border-radius: 10px;\
   transition: background 0.15s, color 0.15s; outline: none;\
 }\
 .wx:hover { background: rgba(255,255,255,0.15); color: #fff; }\
 \
-/* Messages */\
+/* ─── Messages ────────────────────────────────────── */\
 .wm {\
   flex: 1;\
-  padding: 14px 16px;\
+  padding: 16px 18px;\
   overflow-y: auto;\
   background: var(--bg-msg);\
   -webkit-overflow-scrolling: touch;\
+  scroll-behavior: smooth;\
 }\
-.wm::-webkit-scrollbar { width: 5px; }\
-.wm::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }\
+.wm::-webkit-scrollbar { width: 4px; }\
+.wm::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }\
+\
 .mm {\
-  margin-bottom: 8px;\
-  max-width: 85%;\
+  margin-bottom: 10px;\
+  display: flex;\
+  gap: 8px;\
+  max-width: 92%;\
+  animation: msgIn 0.25s cubic-bezier(0.16,1,0.3,1) both;\
+}\
+@keyframes msgIn {\
+  from { opacity: 0; transform: translateY(8px); }\
+  to { opacity: 1; transform: translateY(0); }\
+}\
+\
+.m-user { margin-left: auto; flex-direction: row-reverse; }\
+\
+/* Bot avatar */\
+.ma {\
+  width: 28px; height: 28px;\
+  border-radius: 8px;\
+  background: var(--ac-light);\
+  display: flex; align-items: center; justify-content: center;\
+  flex-shrink: 0;\
+  color: var(--ac);\
+  margin-top: 2px;\
+}\
+\
+/* Message content */\
+.mc {\
   padding: 10px 14px;\
   border-radius: 14px;\
   font-size: 14px;\
-  line-height: 1.5;\
+  line-height: 1.55;\
   word-wrap: break-word;\
-  animation: fadeIn 0.18s ease-out;\
+  max-width: calc(100% - 40px);\
 }\
-@keyframes fadeIn {\
-  from { opacity: 0; transform: translateY(6px); }\
-  to { opacity: 1; transform: translateY(0); }\
-}\
-.mm a { color: var(--ac); text-decoration: underline; }\
-.m-bot {\
+.m-bot .mc {\
   background: var(--bg-card);\
   color: var(--text-primary);\
   border-bottom-left-radius: 4px;\
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);\
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);\
 }\
-.m-user {\
+.m-user .mc {\
   background: var(--ac);\
   color: #fff;\
-  margin-left: auto;\
   border-bottom-right-radius: 4px;\
 }\
+.mm a { color: var(--ac); text-decoration: underline; }\
+.m-user .mc a { color: #fff; text-decoration: underline; }\
+\
+/* Message timestamp */\
+.mts {\
+  font-size: 10px;\
+  color: var(--text-tertiary);\
+  margin-top: 4px;\
+  padding: 0 2px;\
+}\
+.m-user .mts { text-align: right; }\
 \
 /* Typing */\
-.dots { display: flex; gap: 4px; padding: 3px 0; }\
+.dots { display: flex; gap: 4px; padding: 4px 0; }\
 .dots i {\
-  width: 6px; height: 6px; border-radius: 50%;\
+  width: 7px; height: 7px; border-radius: 50%;\
   background: #b0b0b0;\
   animation: bounce 1.4s ease-in-out infinite;\
 }\
@@ -531,148 +693,175 @@ function CSS() {
 .dots i:nth-child(3) { animation-delay: 0.32s; }\
 @keyframes bounce {\
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }\
-  30% { transform: translateY(-4px); opacity: 1; }\
+  30% { transform: translateY(-5px); opacity: 1; }\
 }\
 \
-/* Order Card */\
+/* ─── Order Card ────────────────────────────────────── */\
 .oc {\
   background: var(--bg-card);\
   border: 1px solid var(--border-color);\
-  border-radius: 10px;\
-  padding: 12px 14px;\
-  margin-bottom: 6px;\
+  border-radius: 12px;\
+  padding: 14px 16px;\
+  margin-bottom: 4px;\
 }\
 .oc-h {\
   display: flex;\
   justify-content: space-between;\
   align-items: center;\
-  padding-bottom: 8px;\
+  padding-bottom: 10px;\
   border-bottom: 1px solid var(--border-light);\
-  margin-bottom: 10px;\
+  margin-bottom: 12px;\
 }\
-.oc-num { font-weight: 600; font-size: 14px; color: var(--text-primary); }\
+.oc-ord { display: flex; align-items: center; gap: 6px; }\
+.oc-icon { font-size: 16px; }\
+.oc-num { font-weight: 700; font-size: 15px; color: var(--text-primary); }\
 .oc-status {\
   font-size: 11px;\
-  font-weight: 600;\
-  padding: 3px 8px;\
-  border-radius: 10px;\
-  background: var(--ac-light);\
-  color: var(--ac-dark);\
+  font-weight: 700;\
+  padding: 4px 10px;\
+  border-radius: 12px;\
+  letter-spacing: 0.01em;\
 }\
-.oc-items { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }\
+.oc-items {\
+  display: flex;\
+  flex-wrap: wrap;\
+  gap: 6px;\
+  margin-bottom: 14px;\
+}\
+.oc-item {\
+  font-size: 12px;\
+  color: var(--text-secondary);\
+  background: var(--bg-msg);\
+  padding: 4px 10px;\
+  border-radius: 8px;\
+  border: 1px solid var(--border-light);\
+}\
 \
 /* Timeline */\
-.oc-tl { margin-bottom: 10px; }\
+.oc-tl { margin-bottom: 12px; padding-left: 2px; }\
 .tl-step {\
   display: flex;\
-  align-items: flex-start;\
-  gap: 10px;\
-  padding: 5px 0;\
-  position: relative;\
+  align-items: stretch;\
+  gap: 12px;\
+  min-height: 36px;\
+}\
+.tl-track {\
+  display: flex;\
+  flex-direction: column;\
+  align-items: center;\
+  width: 16px;\
+  flex-shrink: 0;\
 }\
 .tl-dot {\
-  width: 10px;\
-  height: 10px;\
+  width: 12px; height: 12px;\
   border-radius: 50%;\
   background: #d1d5db;\
   border: 2px solid #d1d5db;\
   flex-shrink: 0;\
-  margin-top: 3px;\
-  position: relative;\
   z-index: 1;\
+  transition: all 0.3s;\
 }\
 .tl-step.done .tl-dot {\
   background: var(--ac);\
   border-color: var(--ac);\
 }\
-.tl-step.done .tl-dot::after {\
-  content: "";\
-  position: absolute;\
-  top: 10px;\
-  left: 50%;\
-  transform: translateX(-50%);\
-  width: 2px;\
-  height: 22px;\
-  background: var(--ac);\
-}\
-.tl-step.done:last-child .tl-dot::after { display: none; }\
-.tl-step:not(.done) .tl-dot {\
-  background: #fff;\
-  border-color: #d1d5db;\
-}\
 .tl-step.active .tl-dot {\
   background: var(--ac);\
   border-color: var(--ac);\
-  box-shadow: 0 0 0 3px rgba(0,128,96,0.15);\
+  box-shadow: 0 0 0 4px rgba(0,128,96,0.12);\
   animation: pulse 2s ease-in-out infinite;\
 }\
 @keyframes pulse {\
-  0%, 100% { box-shadow: 0 0 0 3px rgba(0,128,96,0.15); }\
-  50% { box-shadow: 0 0 0 6px rgba(0,128,96,0.08); }\
+  0%, 100% { box-shadow: 0 0 0 4px rgba(0,128,96,0.12); }\
+  50% { box-shadow: 0 0 0 8px rgba(0,128,96,0.06); }\
 }\
-.tl-info { flex: 1; }\
-.tl-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }\
-.tl-step.done .tl-label { color: var(--text-secondary); }\
-.tl-step.active .tl-label { color: var(--ac-dark); font-weight: 600; }\
-.tl-date { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }\
+.tl-line {\
+  width: 2px;\
+  flex: 1;\
+  min-height: 8px;\
+  background: #e1e3e5;\
+  transition: background 0.3s;\
+}\
+.tl-line.done { background: var(--ac); }\
+.tl-info { flex: 1; padding-bottom: 4px; }\
+.tl-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }\
+.tl-step.done .tl-label { color: var(--text-secondary); font-weight: 500; }\
+.tl-step.active .tl-label { color: var(--ac-dark); font-weight: 700; }\
+.tl-date { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }\
 \
 /* Tracking */\
 .oc-track {\
   display: flex;\
   justify-content: space-between;\
   align-items: center;\
-  padding: 8px 0;\
+  padding: 10px 0 4px;\
   border-top: 1px solid var(--border-light);\
-  font-size: 12px;\
-  color: var(--text-secondary);\
 }\
-.oc-link {\
+.oc-carrier { font-size: 12px; color: var(--text-secondary); }\
+.oc-track-btn {\
   color: var(--ac);\
   text-decoration: none;\
-  font-weight: 600;\
-  font-size: 12px;\
-  transition: opacity 0.15s;\
+  font-weight: 700;\
+  font-size: 13px;\
+  padding: 6px 14px;\
+  border-radius: 8px;\
+  background: var(--ac-light);\
+  transition: all 0.15s;\
 }\
-.oc-link:hover { opacity: 0.7; }\
+.oc-track-btn:hover { background: var(--ac); color: #fff; }\
 \
 .oc-eta {\
   font-size: 12px;\
   color: var(--text-secondary);\
-  margin-top: 6px;\
+  margin-top: 8px;\
+  padding-top: 6px;\
 }\
 .oc-eta b { color: var(--text-primary); }\
 \
-/* Feedback */\
+/* ─── Feedback ────────────────────────────────────── */\
 .fb {\
   display: flex;\
-  gap: 4px;\
+  gap: 2px;\
   margin-top: 6px;\
-  opacity: 0.5;\
-  transition: opacity 0.3s;\
+  transition: opacity 0.4s;\
 }\
-.mm:hover .fb { opacity: 1; }\
 .fb button {\
   background: none;\
   border: none;\
   cursor: pointer;\
-  padding: 3px;\
+  padding: 3px 4px;\
+  font-size: 14px;\
   color: var(--text-tertiary);\
-  border-radius: 4px;\
+  border-radius: 6px;\
   transition: all 0.15s;\
   outline: none;\
+  opacity: 0.4;\
 }\
-.fb button:hover { color: var(--text-secondary); background: var(--border-light); }\
-.fb-up.fb-selected { color: var(--ac) !important; }\
-.fb-down.fb-selected { color: #e74c3c !important; }\
-.fb.fb-done { opacity: 0.7; }\
-.fb.fb-done button { pointer-events: none; }\
+.mc:hover > .fb button { opacity: 0.7; }\
+.fb button:hover { opacity: 1 !important; background: var(--border-light); transform: scale(1.15); }\
+.fb-up.fb-selected { opacity: 1 !important; }\
+.fb-down.fb-selected { opacity: 1 !important; }\
+.fb.fb-done button { pointer-events: none; opacity: 0.5; }\
+.fb.fb-done .fb-selected { opacity: 1 !important; }\
+.fb.fb-fade { opacity: 0; }\
+.fb-thanks {\
+  font-size: 12px;\
+  color: var(--ac);\
+  font-weight: 600;\
+  margin-left: 4px;\
+  animation: fadeUp 0.3s ease-out;\
+}\
+@keyframes fadeUp {\
+  from { opacity: 0; transform: translateY(4px); }\
+  to { opacity: 1; transform: translateY(0); }\
+}\
 \
-/* Quick Replies */\
+/* ─── Quick Replies ────────────────────────────────────── */\
 .wq {\
-  padding: 0 16px 10px;\
+  padding: 0 18px 12px;\
   display: flex;\
   flex-wrap: wrap;\
-  gap: 6px;\
+  gap: 8px;\
   background: var(--bg-msg);\
   flex-shrink: 0;\
 }\
@@ -680,48 +869,55 @@ function CSS() {
   background: var(--bg-card);\
   border: 1.5px solid var(--ac);\
   color: var(--ac);\
-  padding: 7px 14px;\
-  border-radius: 18px;\
+  padding: 8px 16px;\
+  border-radius: 20px;\
   font-size: 13px;\
-  font-weight: 500;\
+  font-weight: 600;\
   cursor: pointer;\
-  transition: all 0.15s;\
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);\
   font-family: inherit;\
   outline: none;\
+  animation: qrIn 0.3s cubic-bezier(0.16,1,0.3,1) both;\
 }\
-.qb:hover { background: var(--ac); color: #fff; }\
+@keyframes qrIn {\
+  from { opacity: 0; transform: translateY(8px) scale(0.9); }\
+  to { opacity: 1; transform: translateY(0) scale(1); }\
+}\
+.qb:hover { background: var(--ac); color: #fff; transform: scale(1.03); }\
 .qb:active { transform: scale(0.96); }\
 \
-/* Input */\
+/* ─── Input ────────────────────────────────────── */\
 .wi {\
-  padding: 10px 14px;\
+  padding: 12px 16px;\
   border-top: 1px solid var(--border-color);\
   display: flex;\
-  gap: 8px;\
+  gap: 10px;\
   background: #fff;\
   flex-shrink: 0;\
+  align-items: center;\
 }\
 .win {\
   flex: 1;\
   border: 1.5px solid var(--border-color);\
-  border-radius: 20px;\
-  padding: 9px 16px;\
+  border-radius: 22px;\
+  padding: 10px 18px;\
   font-size: 14px;\
   outline: none;\
-  transition: border-color 0.2s, box-shadow 0.2s;\
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;\
   font-family: inherit;\
   background: var(--bg-input);\
   color: var(--text-primary);\
+  min-height: 44px;\
 }\
 .win:focus {\
   border-color: var(--ac);\
-  box-shadow: 0 0 0 3px rgba(0,128,96,0.1);\
+  box-shadow: 0 0 0 3px rgba(0,128,96,0.08);\
   background: var(--bg-card);\
 }\
 .win::placeholder { color: var(--text-tertiary); }\
 .wsn {\
-  width: 38px; height: 38px;\
-  border-radius: 19px;\
+  width: 44px; height: 44px;\
+  border-radius: 22px;\
   background: var(--ac);\
   color: #fff;\
   border: none;\
@@ -729,19 +925,29 @@ function CSS() {
   display: flex;\
   align-items: center;\
   justify-content: center;\
-  transition: opacity 0.15s, transform 0.1s;\
+  transition: opacity 0.15s, transform 0.15s;\
   flex-shrink: 0;\
   outline: none;\
 }\
 .wsn:hover { opacity: 0.88; }\
-.wsn:active { transform: scale(0.93); }\
+.wsn:active { transform: scale(0.9); }\
 \
-/* Mobile */\
+/* ─── Mobile ────────────────────────────────────── */\
 @media (max-width: 480px) {\
-  .ww { width: 100vw; height: 100vh; border-radius: 0; bottom: 0; right: 0; }\
+  .ww {\
+    width: 100vw;\
+    height: 100vh;\
+    height: 100dvh;\
+    border-radius: 0;\
+    bottom: 0;\
+    right: 0;\
+  }\
   .w { bottom: 16px; right: 16px; }\
   .w.left { left: 16px; }\
-  .oc { padding: 10px 12px; }\
+  .wh { padding: 14px 16px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }\
+  .wi { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }\
+  .wb { width: 54px; height: 54px; border-radius: 27px; }\
+  .wb svg { width: 24px; height: 24px; }\
 }\
 ';
 }

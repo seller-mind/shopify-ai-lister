@@ -242,8 +242,16 @@ export function detectIntent(
 }
 
 function extractOrderNumber(message: string): string | undefined {
-  const m = /#(\d{3,6})/.exec(message) || /order\s*#?\s*(\d{3,6})/i.exec(message);
-  return m ? m[1] : undefined;
+  // 1. #1001, # 1001
+  let m = /#\s*(\d{3,6})/.exec(message);
+  if (m) return m[1];
+  // 2. order #1001, order 1001, order#1001, order number 1001
+  m = /order\s*(?:#|number|#\s*)?\s*(\d{3,6})/i.exec(message);
+  if (m) return m[1];
+  // 3. "1001" as standalone number when context suggests order (3-6 digits, preceded by space/start)
+  m = /(?:^|\s)(\d{3,6})(?:\s|$|[.,!?])/.exec(message);
+  if (m && message.toLowerCase().match(/order|track|find|where|ship|deliver|#/i)) return m[1];
+  return undefined;
 }
 
 function extractEmail(message: string): string | undefined {
@@ -529,10 +537,14 @@ export async function generateResponse(
       };
     }
     if (scenario === 'return' || intent.scenario === 'return') {
+      const returnReply = t(lang, 'return_no_order', context.settings.brandName || 'our store');
+      const returnLink = context.settings.returnPolicy
+        ? `\n\n🔗 Return policy: ${context.settings.returnPolicy}`
+        : '';
       return {
-        reply: t(lang, 'return_no_order', context.settings.brandName || 'our store'),
+        reply: returnReply + returnLink,
         intent: 'wismo',
-        quickReplies: ['📦 Track my order', '💬 Talk to a human'],
+        quickReplies: ['📦 Track my order', context.settings.returnPolicy ? '↩️ Return policy' : '💬 Talk to a human'].filter(Boolean),
         detectedLanguage: lang,
       };
     }
@@ -542,8 +554,8 @@ export async function generateResponse(
       reply: t(lang, 'ask_order_info', brand),
       intent: 'wismo',
       quickReplies: lang === 'en'
-        ? ['I have my order number', 'I used my email']
-        : ['📦 Track my order'],
+        ? ['📦 I have my order #', '📧 I used my email', '💬 Talk to a human']
+        : ['📦 Track my order', '💬 Talk to a human'],
       detectedLanguage: lang,
     };
   }
@@ -595,18 +607,19 @@ function getContextualQuickReplies(orders: OrderInfo | OrderInfo[], scenario?: s
 function t(lang: string, key: string, ...args: string[]): string {
   const templates: Record<string, Record<string, string>> = {
     en: {
-      ask_order_info: `I'd love to help you track your order from **{0}**! Just share your order number (like #1001) or the email you used when ordering. 📦`,
+      ask_order_info: `I'd love to help you find your order from **{0}**! 👇\n\nJust type your order number (like **#1001**) or the email you used when ordering.`,
       handoff: `I'll connect you with a human agent right away. Please hold on for a moment. ⏳`,
-      customs_no_order: `Customs clearance can take 3-7 business days for international shipments. This is normal and usually resolves on its own. To check your specific order status, please share your order number. 📦`,
-      lost_no_order: `I'm sorry to hear your package may be lost! Let me look into this for you. Please share your order number so I can check the tracking details and help you file a claim if needed. 📦`,
-      return_no_order: `I can help you with returns for **{0}**. Please share your order number and I'll look up your return options. 🔄`,
+      customs_no_order: `Customs clearance can take 3-7 business days for international shipments. This is normal and usually resolves on its own. To check your specific order, please share your order number (like **#1001**). 📦`,
+      lost_no_order: `I'm sorry to hear your package may be lost! Let me look into this for you. Please share your order number (like **#1001**) so I can check the tracking details and help you. 📦`,
+      return_no_order: `I can help you with returns for **{0}**. Please share your order number (like **#1001**) and I'll look up your return options. 🔄`,
       order_processing: `📦 **{0}** — {1}\n\n   Items: {2}\n   ⏳ Being prepared — we'll notify you once it ships!`,
       order_shipped: `📦 **{0}** — {1}\n\n   Items: {2}\n   🚚 {3}: {4}\n   📅 Est. delivery: **{5}**`,
       order_no_tracking: `📦 **{0}** — {1}\n\n   Items: {2}\n   📅 Est. delivery: **{3}**`,
       customs_note: `\n\n   🛃 **Note:** Your package may be going through customs clearance. This typically takes 3-7 business days and is completely normal for international shipments.`,
       delay_note: `\n\n   ⚠️ **Heads up:** There may be a delay with this shipment. If your estimated delivery has passed, I recommend contacting the carrier directly or I can connect you with a human agent.`,
       lost_note: `\n\n   🔍 I'm sorry your package hasn't arrived. I'd recommend contacting the carrier first. If they can't help, I can connect you with our support team to file a claim.`,
-      multiple_orders: `I found **{0}** orders:\n\n`,
+      multiple_orders: `I found **{0}** orders for you:\n\n`,
+      order_not_found: `Hmm, I couldn't find that order. Could you double-check the number? It usually looks like **#1001**. You can also try your email address. 🔍`,
     },
     zh: {
       ask_order_info: `我很乐意帮您查询来自**{0}**的订单！请提供您的订单号（如#1001）或下单时使用的邮箱。📦`,

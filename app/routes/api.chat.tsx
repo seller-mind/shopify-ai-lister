@@ -59,6 +59,26 @@ export async function action({ request }: ActionFunctionArgs) {
         intent.orderNumber,
         intent.email || customerEmail,
       );
+      if (!orderInfo && (intent.orderNumber || intent.email)) {
+        // Order looked up but not found — return helpful message
+        const lang = detectLanguage(message, customerLocale);
+        const notFoundReply = lang === 'en'
+          ? `Hmm, I couldn't find order **#${intent.orderNumber || '...'}**. Could you double-check the number? It usually looks like **#1001**. You can also try your email address. 🔍`
+          : `I couldn't find that order. Could you double-check your order number? 🔍`;
+        await saveMsg(convId, 'customer', message);
+        await saveMsg(convId, 'assistant', notFoundReply, 'wismo', { orderLookup: true, notFound: true });
+        await bumpAnalytics(shop, intent.intent, 'wismo');
+        const h = new Headers();
+        addCorsHeaders(h, request);
+        return json({
+          reply: notFoundReply,
+          conversationId: convId,
+          intent: 'wismo',
+          quickReplies: ['📦 Try another order #', '📧 Try my email', '💬 Talk to a human'],
+          orderCard: null,
+          language: lang || 'en',
+        }, { headers: h });
+      }
       if (!orderInfo) orderInfo = getDemoOrder(intent.orderNumber);
     }
 
