@@ -142,6 +142,43 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Feature Highlights */}
+      <div className="card" style={{ background: 'linear-gradient(135deg, #e3f0ea 0%, #f0f7f4 100%)', border: '1px solid #c8e0d3' }}>
+        <h2 style={{ color: '#006649' }}>✨ What WISMO AI Does</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '12px' }}>
+          <div style={{ textAlign: 'center', padding: '12px' }}>
+            <div style={{ fontSize: '24px', marginBottom: '6px' }}>📦</div>
+            <div style={{ fontWeight: 600, fontSize: '13px', color: '#1c1c1e' }}>Instant Order Tracking</div>
+            <div style={{ fontSize: '12px', color: '#6d7175', marginTop: '4px' }}>Customers get real-time status instantly — no AI delay</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '12px' }}>
+            <div style={{ fontSize: '24px', marginBottom: '6px' }}>🌍</div>
+            <div style={{ fontWeight: 600, fontSize: '13px', color: '#1c1c1e' }}>20+ Languages</div>
+            <div style={{ fontSize: '12px', color: '#6d7175', marginTop: '4px' }}>Auto-detects customer language and replies natively</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '12px' }}>
+            <div style={{ fontSize: '24px', marginBottom: '6px' }}>🚚</div>
+            <div style={{ fontWeight: 600, fontSize: '13px', color: '#1c1c1e' }}>1000+ Carriers</div>
+            <div style={{ fontSize: '12px', color: '#6d7175', marginTop: '4px' }}>USPS, UPS, FedEx, DHL, and global logistics providers</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '12px' }}>
+            <div style={{ fontSize: '24px', marginBottom: '6px' }}>🛃</div>
+            <div style={{ fontWeight: 600, fontSize: '13px', color: '#1c1c1e' }}>Smart Scenarios</div>
+            <div style={{ fontSize: '12px', color: '#6d7175', marginTop: '4px' }}>Customs, delays, lost packages — proactive solutions</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '12px' }}>
+            <div style={{ fontSize: '24px', marginBottom: '6px' }}>🌙</div>
+            <div style={{ fontWeight: 600, fontSize: '13px', color: '#1c1c1e' }}>Dark Mode</div>
+            <div style={{ fontSize: '12px', color: '#6d7175', marginTop: '4px' }}>Auto-adapts to customer's system preference</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '12px' }}>
+            <div style={{ fontSize: '24px', marginBottom: '6px' }}>👍</div>
+            <div style={{ fontWeight: 600, fontSize: '13px', color: '#1c1c1e' }}>Customer Feedback</div>
+            <div style={{ fontSize: '12px', color: '#6d7175', marginTop: '4px' }}>Thumbs up/down on every response for quality insights</div>
+          </div>
+        </div>
+      </div>
+
       {/* Conversations */}
       <div className="card">
         <h2>Recent Conversations</h2>

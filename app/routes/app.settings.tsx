@@ -35,6 +35,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const greeting = (fd.get('greeting') as string) || 'Track your order in seconds';
   const brandName = (fd.get('brand_name') as string) || '';
   const autoReplyLanguage = (fd.get('auto_reply_language') as string) || 'auto';
+  const returnPolicy = (fd.get('return_policy') as string) || '';
 
   const faqQuestions = fd.getAll('faq_question') as string[];
   const faqAnswers = fd.getAll('faq_answer') as string[];
@@ -43,7 +44,7 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     const { error } = await getSupabaseAdmin().from('wismo_settings').upsert({
       shop: session.shop, enabled, widget_position: widgetPosition, widget_color: widgetColor,
-      greeting, brand_name: brandName, auto_reply_language: autoReplyLanguage, faq_items: faqItems,
+      greeting, brand_name: brandName, auto_reply_language: autoReplyLanguage, return_policy: returnPolicy, faq_items: faqItems,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'shop' });
 
@@ -121,14 +122,33 @@ export default function Settings() {
           <div className="form-group">
             <label>Response Language</label>
             <select name="auto_reply_language" defaultValue={settings.auto_reply_language}>
-              <option value="auto">Auto-detect (recommended)</option>
-              <option value="en">English</option>
-              <option value="zh">中文</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-              <option value="de">Deutsch</option>
-              <option value="ja">日本語</option>
+              <option value="auto">🌐 Auto-detect (recommended)</option>
+              <option value="en">🇺🇸 English</option>
+              <option value="zh">🇨🇳 中文</option>
+              <option value="es">🇪🇸 Español</option>
+              <option value="fr">🇫🇷 Français</option>
+              <option value="de">🇩🇪 Deutsch</option>
+              <option value="ja">🇯🇵 日本語</option>
+              <option value="ko">🇰🇷 한국어</option>
+              <option value="pt">🇧🇷 Português</option>
+              <option value="it">🇮🇹 Italiano</option>
+              <option value="nl">🇳🇱 Nederlands</option>
+              <option value="ru">🇷🇺 Русский</option>
+              <option value="ar">🇸🇦 العربية</option>
+              <option value="th">🇹🇭 ไทย</option>
+              <option value="vi">🇻🇳 Tiếng Việt</option>
+              <option value="id">🇮🇩 Bahasa Indonesia</option>
+              <option value="tr">🇹🇷 Türkçe</option>
+              <option value="pl">🇵🇱 Polski</option>
+              <option value="sv">🇸🇪 Svenska</option>
+              <option value="hi">🇮🇳 हिन्दी</option>
             </select>
+            <p className="hint">Auto-detect means the AI will respond in the customer's language (20+ languages supported)</p>
+          </div>
+          <div className="form-group">
+            <label>Return Policy URL</label>
+            <input type="text" name="return_policy" defaultValue={settings.return_policy || ''} placeholder="https://yourstore.com/policies/refund-policy" />
+            <p className="hint">When customers ask about returns, the AI will reference your return policy</p>
           </div>
         </div>
 
