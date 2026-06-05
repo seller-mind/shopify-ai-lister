@@ -1,457 +1,433 @@
 /**
- * WISMO AI - Storefront Chat Widget v2
+ * WISMO AI - Storefront Chat Widget v3
  * 
  * "The best WISMO chatbot in the world"
- * - Quick reply buttons for instant actions
- * - Beautiful, smooth animations
- * - Order status with visual indicators
- * - Fast: order responses are instant
- * - < 50KB, Shadow DOM isolated
+ * ─────────────────────────────────────
+ * ✓ Instant: greeting renders before API loads
+ * ✓ Beautiful: Polaris-inspired design, SVG icons, smooth animations
+ * ✓ Zero learning curve: "Track your order" is the obvious action
+ * ✓ Smart: instant order responses, AI only for general queries
+ * ✓ Lightweight: < 30KB, Shadow DOM isolated
  */
 
-// ─── Configuration ───────────────────────────────────────────────────
-var SCRIPT_TAG = document.currentScript;
-var EMBED_ROOT = document.getElementById('wismo-chat-root');
-var SHOP_DOMAIN = new URL(SCRIPT_TAG && SCRIPT_TAG.src ? SCRIPT_TAG.src : 'https://shopify-ai-lister-tau.vercel.app').searchParams.get('shop') || (EMBED_ROOT ? EMBED_ROOT.dataset.shop : '') || '';
-var API_BASE = SCRIPT_TAG && SCRIPT_TAG.src ? new URL(SCRIPT_TAG.src).origin : 'https://shopify-ai-lister-tau.vercel.app';
+// ─── Bootstrap (instant, no API wait) ────────────────────────────────
+var SCRIPT = document.currentScript;
+var SRC = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src) : null;
+var SHOP = (SRC ? SRC.searchParams.get('shop') : '') || (document.getElementById('wismo-chat-root') || {}).dataset?.shop || '';
+var API = SRC ? SRC.origin : 'https://shopify-ai-lister-tau.vercel.app';
 
 // ─── State ───────────────────────────────────────────────────────────
-var config = null;
-var conversationId = null;
-var isOpen = false;
-var isTyping = false;
-var hasGreeted = false;
+var state = {
+  config: null,
+  convId: null,
+  open: false,
+  typing: false,
+  greeted: false,
+  loading: true,
+};
 
-// ─── Initialize ──────────────────────────────────────────────────────
-async function init() {
-  try {
-    var res = await fetch(API_BASE + '/api/widget-config?shop=' + encodeURIComponent(SHOP_DOMAIN));
-    config = await res.json();
-    if (!config || !config.enabled) return;
-    renderWidget();
-  } catch (e) {
-    console.error('[WISMO] Failed to initialize:', e);
-  }
+// ─── Boot ─────────────────────────────────────────────────────────────
+(function boot() {
+  // Render widget shell instantly (before config loads)
+  renderShell();
+  // Fetch config in background
+  fetch(API + '/api/widget-config?shop=' + encodeURIComponent(SHOP))
+    .then(function(r) { return r.json(); })
+    .then(function(c) {
+      if (!c || !c.enabled) { removeShell(); return; }
+      state.config = c;
+      state.loading = false;
+      applyConfig(c);
+    })
+    .catch(function() { removeShell(); });
+})();
+
+// ─── Shell (renders instantly) ───────────────────────────────────────
+function renderShell() {
+  var host = document.createElement('div');
+  host.id = 'wismo-host';
+  document.body.appendChild(host);
+  var shadow = host.attachShadow({ mode: 'open' });
+  var s = document.createElement('style');
+  s.textContent = CSS();
+  shadow.appendChild(s);
+
+  var el = document.createElement('div');
+  el.className = 'w';
+  el.innerHTML = BUBBLE_HTML + WINDOW_HTML;
+  shadow.appendChild(el);
 }
 
-// ─── Render Widget ───────────────────────────────────────────────────
-function renderWidget() {
-  var host = document.createElement('div');
-  host.id = 'wismo-widget-host';
-  document.body.appendChild(host);
+function removeShell() {
+  var h = document.getElementById('wismo-host');
+  if (h) h.remove();
+}
 
-  var shadow = host.attachShadow({ mode: 'open' });
+function applyConfig(c) {
+  var shadow = document.getElementById('wismo-host').shadowRoot;
+  // Apply color
+  if (c.color) {
+    shadow.querySelector('.w').style.setProperty('--ac', c.color);
+  }
+  if (c.position === 'bottom-left') {
+    shadow.querySelector('.w').classList.add('left');
+  }
+  // Apply brand name
+  var title = shadow.querySelector('.wt');
+  if (title && c.brandName) title.textContent = c.brandName;
+}
 
-  var style = document.createElement('style');
-  style.textContent = getStyles();
-  shadow.appendChild(style);
+// ─── HTML Fragments ──────────────────────────────────────────────────
+var BUBBLE_HTML = [
+  '<button class="wb" aria-label="Chat with us">',
+  '  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  '</button>',
+].join('');
 
-  var container = document.createElement('div');
-  container.className = 'wismo-container';
-  container.innerHTML = [
-    '<!-- Chat Bubble -->',
-    '<button class="wismo-bubble" aria-label="Chat with us">',
-    '  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">',
-    '    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>',
-    '  </svg>',
-    '  <span class="wismo-bubble-badge" style="display:none">1</span>',
-    '</button>',
-    '',
-    '<!-- Chat Window -->',
-    '<div class="wismo-window" style="display:none">',
-    '  <div class="wismo-header">',
-    '    <div class="wismo-header-left">',
-    '      <div class="wismo-avatar">',
-    '        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-    '      </div>',
-    '      <div>',
-    '        <div class="wismo-title">' + (config.brandName || 'WISMO AI') + '</div>',
-    '        <div class="wismo-subtitle">⚡ Typically replies instantly</div>',
-    '      </div>',
-    '    </div>',
-    '    <button class="wismo-close" aria-label="Close chat">',
-    '      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
-    '    </button>',
-    '  </div>',
-    '  <div class="wismo-messages"></div>',
-    '  <div class="wismo-quick-replies" style="display:none"></div>',
-    '  <div class="wismo-input-area">',
-    '    <input type="text" class="wismo-input" placeholder="Ask about your order..." autocomplete="off" />',
-    '    <button class="wismo-send" aria-label="Send">',
-    '      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
-    '    </button>',
-    '  </div>',
-    '</div>'
-  ].join('\n');
-  shadow.appendChild(container);
+var WINDOW_HTML = [
+  '<div class="ww" style="display:none">',
+  // Header
+  '  <div class="wh">',
+  '    <div class="whl">',
+  '      <div class="wa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>',
+  '      <div><div class="wt">WISMO AI</div><div class="ws">Online now</div></div>',
+  '    </div>',
+  '    <button class="wx" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>',
+  '  </div>',
+  // Messages
+  '  <div class="wm"></div>',
+  // Quick replies
+  '  <div class="wq" style="display:none"></div>',
+  // Input
+  '  <div class="wi">',
+  '    <input type="text" class="win" placeholder="Order number or question..." autocomplete="off" />',
+  '    <button class="wsn" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>',
+  '  </div>',
+  '</div>',
+].join('');
 
-  // ─── Elements ──────────────────────────────────────────────────
-  var bubble = container.querySelector('.wismo-bubble');
-  var windowEl = container.querySelector('.wismo-window');
-  var closeBtn = container.querySelector('.wismo-close');
-  var input = container.querySelector('.wismo-input');
-  var sendBtn = container.querySelector('.wismo-send');
-  var messagesDiv = container.querySelector('.wismo-messages');
-  var quickRepliesDiv = container.querySelector('.wismo-quick-replies');
+// ─── Event Wiring (after DOM ready) ──────────────────────────────────
+(function wireEvents() {
+  // Wait for shell
+  var poll = setInterval(function() {
+    var shadow = document.getElementById('wismo-host');
+    if (!shadow) return;
+    shadow = shadow.shadowRoot;
+    if (!shadow) return;
+    clearInterval(poll);
 
-  // Position
-  if (config.position === 'bottom-left') container.classList.add('wismo-left');
+    var bubble = shadow.querySelector('.wb');
+    var win = shadow.querySelector('.ww');
+    var closeBtn = shadow.querySelector('.wx');
+    var input = shadow.querySelector('.win');
+    var sendBtn = shadow.querySelector('.wsn');
+    var msgs = shadow.querySelector('.wm');
+    var qr = shadow.querySelector('.wq');
 
-  // ─── Open / Close ──────────────────────────────────────────────
-  bubble.addEventListener('click', function() {
-    isOpen = true;
-    windowEl.style.display = 'flex';
-    bubble.style.display = 'none';
-    if (!hasGreeted) {
-      showGreeting();
-      hasGreeted = true;
-    }
-    input.focus();
-  });
+    // Open
+    bubble.addEventListener('click', function() {
+      state.open = true;
+      win.style.display = 'flex';
+      bubble.style.display = 'none';
+      if (!state.greeted) {
+        state.greeted = true;
+        setTimeout(function() {
+          var greeting = state.config && state.config.greeting ? state.config.greeting : 'Track your order in seconds';
+          addMsg('bot', greeting);
+          showQR(['📦 Track my order', '💬 Ask a question']);
+        }, 200);
+      }
+      input.focus();
+    });
 
-  closeBtn.addEventListener('click', function() {
-    isOpen = false;
-    windowEl.style.display = 'none';
-    bubble.style.display = 'flex';
-  });
+    // Close
+    closeBtn.addEventListener('click', function() {
+      state.open = false;
+      win.style.display = 'none';
+      bubble.style.display = 'flex';
+    });
 
-  // ─── Send Message ──────────────────────────────────────────────
-  var sendMessage = async function(text) {
-    if (!text || isTyping) return;
-    if (!text) text = input.value.trim();
-    if (!text) return;
+    // Send
+    var send = function(text) {
+      if (!text || state.typing) return;
+      text = text || input.value.trim();
+      if (!text) return;
+      input.value = '';
+      hideQR();
+      addMsg('user', text);
+      state.typing = true;
+      var typing = addTyping();
 
-    input.value = '';
-    hideQuickReplies();
-    addMessage('customer', text);
-    
-    isTyping = true;
-    var typingEl = addTypingIndicator();
-
-    try {
-      var res = await fetch(API_BASE + '/api/chat', {
+      fetch(API + '/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shop: SHOP_DOMAIN, message: text, conversationId: conversationId }),
+        body: JSON.stringify({ shop: SHOP, message: text, conversationId: state.convId }),
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        typing.remove();
+        state.typing = false;
+        if (d.error) { addMsg('bot', 'Something went wrong. Please try again.'); return; }
+        state.convId = d.conversationId;
+        addMsg('bot', d.reply);
+        if (d.quickReplies && d.quickReplies.length) showQR(d.quickReplies);
+      })
+      .catch(function() {
+        typing.remove();
+        state.typing = false;
+        addMsg('bot', 'Connection error. Please try again.');
       });
+    };
 
-      var data = await res.json();
-      typingEl.remove();
-      isTyping = false;
-
-      if (data.error) {
-        addMessage('assistant', 'Sorry, something went wrong. Please try again.');
-        return;
-      }
-
-      conversationId = data.conversationId;
-      addMessage('assistant', data.reply);
-      
-      // Show quick reply buttons if available
-      if (data.quickReplies && data.quickReplies.length > 0) {
-        showQuickReplies(data.quickReplies);
-      }
-    } catch (e) {
-      typingEl.remove();
-      isTyping = false;
-      addMessage('assistant', 'Connection error. Please try again.');
-    }
-  };
-
-  sendBtn.addEventListener('click', function() { sendMessage(input.value.trim()); });
-  input.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(input.value.trim());
-    }
-  });
-
-  // ─── Greeting with Quick Actions ───────────────────────────────
-  function showGreeting() {
-    var greeting = config.greeting || 'Hi! 👋 How can I help you today?';
-    addMessage('assistant', greeting);
-    showQuickReplies(['📦 Track my order', '💬 Ask a question']);
-  }
-
-  // ─── Quick Replies ─────────────────────────────────────────────
-  function showQuickReplies(replies) {
-    quickRepliesDiv.innerHTML = '';
-    replies.forEach(function(text) {
-      var btn = document.createElement('button');
-      btn.className = 'wismo-quick-btn';
-      btn.textContent = text;
-      btn.addEventListener('click', function() {
-        sendMessage(text);
-      });
-      quickRepliesDiv.appendChild(btn);
+    sendBtn.addEventListener('click', function() { send(input.value.trim()); });
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input.value.trim()); }
     });
-    quickRepliesDiv.style.display = 'flex';
-  }
 
-  function hideQuickReplies() {
-    quickRepliesDiv.style.display = 'none';
-    quickRepliesDiv.innerHTML = '';
-  }
+    // ─── Helpers ───────────────────────────────────────────────
+    function addMsg(role, content) {
+      var d = document.createElement('div');
+      d.className = 'mm m-' + role;
+      // Format markdown-lite
+      var html = content
+        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+        .replace(/\n/g, '<br>');
+      d.innerHTML = html;
+      msgs.appendChild(d);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
 
-  // ─── Message Helpers ───────────────────────────────────────────
-  function addMessage(role, content) {
-    var div = document.createElement('div');
-    div.className = 'wismo-message wismo-' + role;
-    
-    var formatted = content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-      .replace(/\n/g, '<br>');
-    
-    div.innerHTML = formatted;
-    messagesDiv.appendChild(div);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
+    function addTyping() {
+      var d = document.createElement('div');
+      d.className = 'mm m-bot typing';
+      d.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>';
+      msgs.appendChild(d);
+      msgs.scrollTop = msgs.scrollHeight;
+      return d;
+    }
 
-  function addTypingIndicator() {
-    var div = document.createElement('div');
-    div.className = 'wismo-message wismo-assistant wismo-typing';
-    div.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
-    messagesDiv.appendChild(div);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    return div;
-  }
-}
+    function showQR(items) {
+      qr.innerHTML = '';
+      items.forEach(function(t) {
+        var b = document.createElement('button');
+        b.className = 'qb';
+        b.textContent = t;
+        b.addEventListener('click', function() { send(t); });
+        qr.appendChild(b);
+      });
+      qr.style.display = 'flex';
+    }
 
-// ─── Styles ──────────────────────────────────────────────────────────
-function getStyles() {
-  var color = config && config.color ? config.color : '#008060';
-  
+    function hideQR() { qr.style.display = 'none'; qr.innerHTML = ''; }
+  }, 50);
+})();
+
+// ─── CSS ──────────────────────────────────────────────────────────────
+function CSS() {
   return '\
-    .wismo-container {\
-      position: fixed;\
-      bottom: 20px;\
-      right: 20px;\
-      z-index: 999999;\
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\
-    }\
-    .wismo-container.wismo-left { right: auto; left: 20px; }\
-    .wismo-bubble {\
-      width: 60px;\
-      height: 60px;\
-      border-radius: 50%;\
-      background: ' + color + ';\
-      color: #fff;\
-      border: none;\
-      cursor: pointer;\
-      display: flex;\
-      align-items: center;\
-      justify-content: center;\
-      box-shadow: 0 4px 16px rgba(0,128,96,0.3);\
-      transition: transform 0.2s, box-shadow 0.2s;\
-      position: relative;\
-    }\
-    .wismo-bubble:hover {\
-      transform: scale(1.08);\
-      box-shadow: 0 6px 24px rgba(0,128,96,0.4);\
-    }\
-    .wismo-bubble-badge {\
-      position: absolute;\
-      top: -2px;\
-      right: -2px;\
-      background: #e74c3c;\
-      color: #fff;\
-      font-size: 11px;\
-      font-weight: 700;\
-      min-width: 18px;\
-      height: 18px;\
-      border-radius: 9px;\
-      display: flex;\
-      align-items: center;\
-      justify-content: center;\
-      border: 2px solid #fff;\
-    }\
-    .wismo-window {\
-      width: 380px;\
-      max-height: 600px;\
-      border-radius: 16px;\
-      overflow: hidden;\
-      display: flex;\
-      flex-direction: column;\
-      box-shadow: 0 12px 48px rgba(0,0,0,0.15);\
-      background: #fff;\
-      animation: wismo-slide-up 0.3s cubic-bezier(0.16,1,0.3,1);\
-    }\
-    @keyframes wismo-slide-up {\
-      from { opacity: 0; transform: translateY(20px) scale(0.95); }\
-      to { opacity: 1; transform: translateY(0) scale(1); }\
-    }\
-    .wismo-header {\
-      background: ' + color + ';\
-      color: #fff;\
-      padding: 16px 20px;\
-      display: flex;\
-      align-items: center;\
-      justify-content: space-between;\
-    }\
-    .wismo-header-left {\
-      display: flex;\
-      align-items: center;\
-      gap: 12px;\
-    }\
-    .wismo-avatar {\
-      width: 40px;\
-      height: 40px;\
-      border-radius: 50%;\
-      background: rgba(255,255,255,0.2);\
-      display: flex;\
-      align-items: center;\
-      justify-content: center;\
-    }\
-    .wismo-title {\
-      font-weight: 700;\
-      font-size: 16px;\
-    }\
-    .wismo-subtitle {\
-      font-size: 12px;\
-      opacity: 0.85;\
-      margin-top: 1px;\
-    }\
-    .wismo-close {\
-      background: none;\
-      border: none;\
-      color: #fff;\
-      cursor: pointer;\
-      padding: 6px;\
-      border-radius: 50%;\
-      transition: background 0.2s;\
-    }\
-    .wismo-close:hover { background: rgba(255,255,255,0.2); }\
-    .wismo-messages {\
-      flex: 1;\
-      padding: 16px;\
-      overflow-y: auto;\
-      min-height: 280px;\
-      max-height: 400px;\
-      background: #fafbfc;\
-    }\
-    .wismo-message {\
-      margin-bottom: 10px;\
-      max-width: 85%;\
-      padding: 10px 14px;\
-      border-radius: 16px;\
-      font-size: 14px;\
-      line-height: 1.55;\
-      word-wrap: break-word;\
-      animation: wismo-msg-in 0.2s ease-out;\
-    }\
-    @keyframes wismo-msg-in {\
-      from { opacity: 0; transform: translateY(8px); }\
-      to { opacity: 1; transform: translateY(0); }\
-    }\
-    .wismo-message a {\
-      color: ' + color + ';\
-      text-decoration: underline;\
-    }\
-    .wismo-assistant {\
-      background: #fff;\
-      color: #1a1a1a;\
-      border-bottom-left-radius: 4px;\
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);\
-    }\
-    .wismo-customer {\
-      background: ' + color + ';\
-      color: #fff;\
-      margin-left: auto;\
-      border-bottom-right-radius: 4px;\
-    }\
-    .typing-dots {\
-      display: flex;\
-      gap: 4px;\
-      padding: 2px 0;\
-    }\
-    .typing-dots span {\
-      width: 7px;\
-      height: 7px;\
-      border-radius: 50%;\
-      background: #aaa;\
-      animation: wismo-dot 1.4s infinite;\
-    }\
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }\
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }\
-    @keyframes wismo-dot {\
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }\
-      30% { transform: translateY(-5px); opacity: 1; }\
-    }\
-    .wismo-quick-replies {\
-      padding: 0 16px 8px;\
-      display: flex;\
-      flex-wrap: wrap;\
-      gap: 6px;\
-      background: #fafbfc;\
-    }\
-    .wismo-quick-btn {\
-      background: #fff;\
-      border: 1.5px solid ' + color + ';\
-      color: ' + color + ';\
-      padding: 6px 14px;\
-      border-radius: 20px;\
-      font-size: 13px;\
-      font-weight: 500;\
-      cursor: pointer;\
-      transition: all 0.15s;\
-      font-family: inherit;\
-    }\
-    .wismo-quick-btn:hover {\
-      background: ' + color + ';\
-      color: #fff;\
-    }\
-    .wismo-input-area {\
-      padding: 12px 16px;\
-      border-top: 1px solid #eee;\
-      display: flex;\
-      gap: 8px;\
-      background: #fff;\
-    }\
-    .wismo-input {\
-      flex: 1;\
-      border: 1.5px solid #e5e7eb;\
-      border-radius: 22px;\
-      padding: 10px 18px;\
-      font-size: 14px;\
-      outline: none;\
-      transition: border-color 0.2s;\
-      font-family: inherit;\
-    }\
-    .wismo-input:focus {\
-      border-color: ' + color + ';\
-    }\
-    .wismo-input::placeholder {\
-      color: #aaa;\
-    }\
-    .wismo-send {\
-      width: 40px;\
-      height: 40px;\
-      border-radius: 50%;\
-      background: ' + color + ';\
-      color: #fff;\
-      border: none;\
-      cursor: pointer;\
-      display: flex;\
-      align-items: center;\
-      justify-content: center;\
-      transition: opacity 0.15s;\
-      flex-shrink: 0;\
-    }\
-    .wismo-send:hover { opacity: 0.85; }\
-    @media (max-width: 480px) {\
-      .wismo-window {\
-        width: calc(100vw - 16px);\
-        max-height: calc(100vh - 80px);\
-        bottom: 8px;\
-        right: 8px;\
-        border-radius: 12px;\
-      }\
-      .wismo-container { bottom: 12px; right: 12px; }\
-      .wismo-container.wismo-left { left: 12px; }\
-    }\
-  ';
+.w {\
+  --ac: #008060;\
+  --ac-light: #e3f0ea;\
+  --ac-dark: #006649;\
+  --radius: 12px;\
+  --shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);\
+  position: fixed;\
+  bottom: 24px;\
+  right: 24px;\
+  z-index: 2147483647;\
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;\
+  -webkit-font-smoothing: antialiased;\
+}\
+.w.left { right: auto; left: 24px; }\
+\
+/* Bubble */\
+.wb {\
+  width: 56px;\
+  height: 56px;\
+  border-radius: 28px;\
+  background: var(--ac);\
+  color: #fff;\
+  border: none;\
+  cursor: pointer;\
+  display: flex;\
+  align-items: center;\
+  justify-content: center;\
+  box-shadow: 0 4px 16px rgba(0,128,96,0.35);\
+  transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;\
+  outline: none;\
+}\
+.wb:hover { transform: scale(1.06); box-shadow: 0 6px 20px rgba(0,128,96,0.45); }\
+.wb:active { transform: scale(0.97); }\
+\
+/* Window */\
+.ww {\
+  width: 390px;\
+  height: 560px;\
+  border-radius: 16px;\
+  overflow: hidden;\
+  display: flex;\
+  flex-direction: column;\
+  box-shadow: var(--shadow);\
+  background: #fff;\
+  animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);\
+}\
+@keyframes slideUp {\
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }\
+  to { opacity: 1; transform: translateY(0) scale(1); }\
+}\
+\
+/* Header */\
+.wh {\
+  background: var(--ac);\
+  color: #fff;\
+  padding: 14px 18px;\
+  display: flex;\
+  align-items: center;\
+  justify-content: space-between;\
+  flex-shrink: 0;\
+}\
+.whl { display: flex; align-items: center; gap: 10px; }\
+.wa {\
+  width: 36px; height: 36px;\
+  border-radius: 50%;\
+  background: rgba(255,255,255,0.18);\
+  display: flex; align-items: center; justify-content: center;\
+}\
+.wt { font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }\
+.ws { font-size: 12px; opacity: 0.8; margin-top: 1px; }\
+.wx {\
+  background: none; border: none; color: rgba(255,255,255,0.8);\
+  cursor: pointer; padding: 6px; border-radius: 8px;\
+  transition: background 0.15s, color 0.15s; outline: none;\
+}\
+.wx:hover { background: rgba(255,255,255,0.15); color: #fff; }\
+\
+/* Messages */\
+.wm {\
+  flex: 1;\
+  padding: 14px 16px;\
+  overflow-y: auto;\
+  background: #f8f9fa;\
+  -webkit-overflow-scrolling: touch;\
+}\
+.wm::-webkit-scrollbar { width: 5px; }\
+.wm::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }\
+.mm {\
+  margin-bottom: 8px;\
+  max-width: 82%;\
+  padding: 10px 14px;\
+  border-radius: 14px;\
+  font-size: 14px;\
+  line-height: 1.5;\
+  word-wrap: break-word;\
+  animation: fadeIn 0.18s ease-out;\
+}\
+@keyframes fadeIn {\
+  from { opacity: 0; transform: translateY(6px); }\
+  to { opacity: 1; transform: translateY(0); }\
+}\
+.mm a { color: var(--ac); text-decoration: underline; }\
+.m-bot {\
+  background: #fff;\
+  color: #1c1c1e;\
+  border-bottom-left-radius: 4px;\
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);\
+}\
+.m-user {\
+  background: var(--ac);\
+  color: #fff;\
+  margin-left: auto;\
+  border-bottom-right-radius: 4px;\
+}\
+\
+/* Typing */\
+.dots { display: flex; gap: 4px; padding: 3px 0; }\
+.dots i {\
+  width: 6px; height: 6px; border-radius: 50%;\
+  background: #b0b0b0;\
+  animation: bounce 1.4s ease-in-out infinite;\
+}\
+.dots i:nth-child(2) { animation-delay: 0.16s; }\
+.dots i:nth-child(3) { animation-delay: 0.32s; }\
+@keyframes bounce {\
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }\
+  30% { transform: translateY(-4px); opacity: 1; }\
+}\
+\
+/* Quick Replies */\
+.wq {\
+  padding: 0 16px 10px;\
+  display: flex;\
+  flex-wrap: wrap;\
+  gap: 6px;\
+  background: #f8f9fa;\
+  flex-shrink: 0;\
+}\
+.qb {\
+  background: #fff;\
+  border: 1.5px solid var(--ac);\
+  color: var(--ac);\
+  padding: 7px 14px;\
+  border-radius: 18px;\
+  font-size: 13px;\
+  font-weight: 500;\
+  cursor: pointer;\
+  transition: all 0.15s;\
+  font-family: inherit;\
+  outline: none;\
+}\
+.qb:hover { background: var(--ac); color: #fff; }\
+.qb:active { transform: scale(0.96); }\
+\
+/* Input */\
+.wi {\
+  padding: 10px 14px;\
+  border-top: 1px solid #eef0f2;\
+  display: flex;\
+  gap: 8px;\
+  background: #fff;\
+  flex-shrink: 0;\
+}\
+.win {\
+  flex: 1;\
+  border: 1.5px solid #e5e7eb;\
+  border-radius: 20px;\
+  padding: 9px 16px;\
+  font-size: 14px;\
+  outline: none;\
+  transition: border-color 0.2s, box-shadow 0.2s;\
+  font-family: inherit;\
+  background: #fafbfc;\
+}\
+.win:focus {\
+  border-color: var(--ac);\
+  box-shadow: 0 0 0 3px rgba(0,128,96,0.1);\
+  background: #fff;\
+}\
+.win::placeholder { color: #aaa; }\
+.wsn {\
+  width: 38px; height: 38px;\
+  border-radius: 19px;\
+  background: var(--ac);\
+  color: #fff;\
+  border: none;\
+  cursor: pointer;\
+  display: flex;\
+  align-items: center;\
+  justify-content: center;\
+  transition: opacity 0.15s, transform 0.1s;\
+  flex-shrink: 0;\
+  outline: none;\
+}\
+.wsn:hover { opacity: 0.88; }\
+.wsn:active { transform: scale(0.93); }\
+\
+/* Mobile */\
+@media (max-width: 480px) {\
+  .ww { width: 100vw; height: 100vh; border-radius: 0; bottom: 0; right: 0; }\
+  .w { bottom: 16px; right: 16px; }\
+  .w.left { left: 16px; }\
+}\
+';
 }
-
-// ─── Start ───────────────────────────────────────────────────────────
-init();

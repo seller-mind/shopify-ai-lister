@@ -1,11 +1,11 @@
 /**
- * WISMO AI Conversation Engine v2
+ * WISMO AI Conversation Engine v2.1
  * 
- * Redesigned for speed and simplicity:
- * - Order status responses are instant (no AI call needed)
- * - AI only used for general/complex queries
- * - Better intent detection via AI
- * - Quick action buttons for common tasks
+ * Speed-optimized for "world's best WISMO chatbot":
+ * - Order status responses are INSTANT (0 AI calls)
+ * - Smart heuristic intent detection (no extra AI round-trip)
+ * - AI only for general conversational queries
+ * - Quick reply buttons for guided interaction
  */
 import { shopifyGraphQL } from '~/shopify.server';
 
@@ -46,131 +46,90 @@ interface ChatResponse {
   reply: string;
   intent: 'wismo' | 'general' | 'handoff';
   quickReplies?: string[];
-  orderData?: any;
 }
 
-// ─── Smart Intent Detection (AI-powered) ─────────────────────────────
+// ─── Intent Detection (fast heuristic, no AI call) ───────────────────
 
-export async function detectIntentAI(message: string): Promise<{ intent: 'wismo' | 'general' | 'handoff'; orderNumber?: string; email?: string }> {
-  const lowerMsg = message.toLowerCase().trim();
+/**
+ * Multi-layer intent detection — fast and smart:
+ * 1. Handoff keywords → instant
+ * 2. Order number / email detected → WISMO
+ * 3. WISMO keywords → WISMO  
+ * 4. Context from previous messages → WISMO (if we were just tracking orders)
+ * 5. Otherwise → general (AI handles)
+ */
+export function detectIntent(
+  message: string,
+  previousMessages?: { role: string; content: string }[]
+): { intent: 'wismo' | 'general' | 'handoff'; orderNumber?: string; email?: string } {
+  const lower = message.toLowerCase().trim();
   
-  // Fast path: obvious handoff keywords
-  const handoffKeywords = ['speak to human', 'talk to agent', 'real person', 'complaint', 'escalate', 'manager', '人工客服', '人工'];
-  for (const kw of handoffKeywords) {
-    if (lowerMsg.includes(kw)) return { intent: 'handoff' };
-  }
+  // 1. Handoff
+  const handoffWords = ['speak to human', 'talk to agent', 'real person', 'human agent', 'complaint', 'escalate', 'manager', '人工客服', '人工'];
+  if (handoffWords.some(w => lower.includes(w))) return { intent: 'handoff' };
 
-  // Fast path: extract order number if present
+  // 2. Extract order number / email
   const orderNumber = extractOrderNumber(message);
   const email = extractEmail(message);
+  if (orderNumber || email) return { intent: 'wismo', orderNumber, email };
 
-  // Quick keyword check for obvious WISMO intent
-  const wismoKeywords = ['order', 'track', 'ship', 'deliver', 'where is my', 'when will', 'package', '物流', '订单', '快递', '发货', '到哪'];
-  const isWismoLike = wismoKeywords.some(kw => lowerMsg.includes(kw));
+  // 3. WISMO keywords (broad but accurate)
+  const wismoWords = [
+    // English
+    'order', 'track', 'ship', 'deliver', 'where is my', 'when will', 'when\'s my',
+    'package', 'parcel', 'arrive', 'dispatch', 'transit', 'on the way',
+    'my purchase', 'bought', 'has it shipped', 'shipping status', 'delivery date',
+    'fulfillment', 'eta', 'tracking number', 'track my', 'order status',
+    // Chinese
+    '订单', '快递', '发货', '物流', '到哪', '配送', '到货', '包裹', '追踪',
+    // Spanish
+    'pedido', 'envío', 'entrega', 'rastrear', 'dónde está mi',
+    // French
+    'commande', 'livraison', 'suivi', 'colis',
+    // German
+    'bestellung', 'lieferung', 'sendung', 'versand',
+    // Japanese
+    '注文', '配送', '追跡', '届く',
+  ];
+  if (wismoWords.some(w => lower.includes(w))) return { intent: 'wismo' };
 
-  if (isWismoLike || orderNumber || email) {
-    return { intent: 'wismo', orderNumber, email };
-  }
-
-  // For ambiguous messages, use AI to classify (but keep it fast)
-  // Only for short messages that could be WISMO but aren't obvious
-  if (message.length < 100) {
-    try {
-      const classification = await classifyWithAI(message);
-      if (classification.intent === 'wismo') {
-        return { intent: 'wismo', orderNumber: classification.orderNumber, email: classification.email };
+  // 4. Context: if we were just tracking orders, treat follow-up as WISMO
+  if (previousMessages && previousMessages.length > 0) {
+    const lastBotMsg = [...previousMessages].reverse().find(m => m.role === 'assistant');
+    if (lastBotMsg) {
+      const botLower = lastBotMsg.content.toLowerCase();
+      if (botLower.includes('order') || botLower.includes('track') || botLower.includes('📦')) {
+        return { intent: 'wismo' };
       }
-      return classification;
-    } catch {
-      // If AI classification fails, default to general
-      return { intent: 'general' };
+    }
+  }
+
+  // 5. Short messages like "yes", "sure", "ok" after a WISMO context
+  const shortConfirmations = ['yes', 'yeah', 'sure', 'ok', 'yep', 'please', '对的', '是的', '好的'];
+  if (lower.length < 15 && shortConfirmations.some(w => lower === w)) {
+    if (previousMessages && previousMessages.length > 0) {
+      const lastBotMsg = [...previousMessages].reverse().find(m => m.role === 'assistant');
+      if (lastBotMsg && (lastBotMsg.content.toLowerCase().includes('order') || lastBotMsg.content.toLowerCase().includes('track'))) {
+        return { intent: 'wismo' };
+      }
     }
   }
 
   return { intent: 'general' };
-}
-
-async function classifyWithAI(message: string): Promise<{ intent: 'wismo' | 'general' | 'handoff'; orderNumber?: string; email?: string }> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return { intent: 'general' };
-
-  const response = await fetch('https://api.deepseek.com/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: `Classify this customer message for an e-commerce chatbot. Reply with ONLY a JSON object:
-- If about order status/tracking/shipping/delivery: {"intent":"wismo","orderNumber":"#1234 or null","email":"email or null"}
-- If asking to speak with human: {"intent":"handoff"}
-- Otherwise: {"intent":"general"}
-Extract order number (like #1001) or email if present. Be aggressive about WISMO - if there's ANY mention of purchases, orders, or deliveries, classify as wismo.`
-        },
-        { role: 'user', content: message }
-      ],
-      max_tokens: 80,
-      temperature: 0,
-    }),
-  });
-
-  if (!response.ok) return { intent: 'general' };
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content?.trim() || '';
-  
-  try {
-    // Parse JSON from response
-    const jsonMatch = content.match(/\{[^}]+\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        intent: parsed.intent === 'handoff' ? 'handoff' : parsed.intent === 'wismo' ? 'wismo' : 'general',
-        orderNumber: parsed.orderNumber || undefined,
-        email: parsed.email || undefined,
-      };
-    }
-  } catch { /* parse failed */ }
-
-  return { intent: 'general' };
-}
-
-// Legacy sync detection for backward compat
-export function detectIntent(message: string) {
-  const lowerMsg = message.toLowerCase().trim();
-  const handoffKeywords = ['speak to human', 'talk to agent', 'real person', 'complaint', 'escalate', 'manager', '人工客服'];
-  for (const kw of handoffKeywords) {
-    if (lowerMsg.includes(kw)) return { intent: 'handoff' as const, confidence: 0.9 };
-  }
-  const wismoKeywords = ['order', 'track', 'ship', 'deliver', 'where is my', 'when will', 'package', '物流', '订单', '快递', '发货'];
-  const isWismo = wismoKeywords.some(kw => lowerMsg.includes(kw));
-  if (isWismo) {
-    return { intent: 'wismo' as const, confidence: 0.85, entities: { orderNumber: extractOrderNumber(message), email: extractEmail(message) } };
-  }
-  return { intent: 'general' as const, confidence: 0.5 };
 }
 
 function extractOrderNumber(message: string): string | undefined {
-  const patterns = [
-    /#?(\d{4,6})/g,
-    /order\s*#?\s*(\d{4,6})/i,
-  ];
-  for (const pattern of patterns) {
-    const match = pattern.exec(message);
-    if (match) return match[1];
-  }
-  return undefined;
+  // #1234 or plain 4-6 digit number
+  const m = /#(\d{3,6})/.exec(message) || /order\s*#?\s*(\d{3,6})/i.exec(message);
+  return m ? m[1] : undefined;
 }
 
 function extractEmail(message: string): string | undefined {
-  const match = /[\w.-]+@[\w.-]+\.\w+/.exec(message);
-  return match ? match[0] : undefined;
+  const m = /[\w.-]+@[\w.-]+\.\w{2,}/.exec(message);
+  return m ? m[0] : undefined;
 }
 
-// ─── Demo Data ──────────────────────────────────────────────────────
+// ─── Demo Data (realistic) ───────────────────────────────────────────
 
 const DEMO_ORDERS: OrderInfo[] = [
   {
@@ -183,7 +142,7 @@ const DEMO_ORDERS: OrderInfo[] = [
     trackingUrl: 'https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899223100001',
     createdAt: '2026-06-03T10:30:00Z',
     estimatedDelivery: '2026-06-07T17:00:00Z',
-    lineItems: [{ title: 'Wireless Earbuds', quantity: 1 }],
+    lineItems: [{ title: 'Wireless Earbuds Pro', quantity: 1 }],
   },
   {
     orderNumber: '#1002',
@@ -195,7 +154,7 @@ const DEMO_ORDERS: OrderInfo[] = [
     trackingUrl: null,
     createdAt: '2026-06-05T08:15:00Z',
     estimatedDelivery: null,
-    lineItems: [{ title: 'Phone Case', quantity: 2 }],
+    lineItems: [{ title: 'Premium Phone Case', quantity: 2 }],
   },
 ];
 
@@ -221,66 +180,35 @@ export async function lookupOrderByNumber(
         orders(first: 1, query: $query) {
           edges {
             node {
-              id
-              name
-              displayFulfillmentStatus
-              displayFinancialStatus
-              createdAt
+              id name displayFulfillmentStatus displayFinancialStatus createdAt
               fulfillments(first: 5) {
-                edges {
-                  node {
-                    trackingCompany
-                    trackingNumber
-                    trackingUrl
-                    status
-                    estimatedDeliveryAt
-                    fulfillmentLineItems(first: 10) {
-                      edges {
-                        node {
-                          lineItem {
-                            title
-                            quantity
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+                edges { node { trackingCompany trackingNumber trackingUrl status estimatedDeliveryAt } }
               }
-              lineItems(first: 10) {
-                edges {
-                  node {
-                    title
-                    quantity
-                  }
-                }
-              }
+              lineItems(first: 10) { edges { node { title quantity } } }
             }
           }
         }
       }
     `, { query: `name:${name}` });
 
-    const edges = result?.data?.orders?.edges;
-    if (!edges || edges.length === 0) return null;
-
-    const order = edges[0].node;
-    const firstFulfillment = order.fulfillments?.edges?.[0]?.node;
+    const order = result?.data?.orders?.edges?.[0]?.node;
+    if (!order) return null;
+    const f = order.fulfillments?.edges?.[0]?.node;
 
     return {
       orderNumber: order.name,
-      status: formatOrderStatus(order.displayFulfillmentStatus),
-      financialStatus: formatFinancialStatus(order.displayFinancialStatus),
+      status: fmtStatus(order.displayFulfillmentStatus),
+      financialStatus: fmtFin(order.displayFinancialStatus),
       fulfillmentStatus: order.displayFulfillmentStatus,
-      trackingCompany: firstFulfillment?.trackingCompany || null,
-      trackingNumber: firstFulfillment?.trackingNumber || null,
-      trackingUrl: firstFulfillment?.trackingUrl || null,
+      trackingCompany: f?.trackingCompany || null,
+      trackingNumber: f?.trackingNumber || null,
+      trackingUrl: f?.trackingUrl || null,
       createdAt: order.createdAt,
-      estimatedDelivery: firstFulfillment?.estimatedDeliveryAt || null,
+      estimatedDelivery: f?.estimatedDeliveryAt || null,
       lineItems: order.lineItems?.edges?.map((e: any) => ({ title: e.node.title, quantity: e.node.quantity })) || [],
     };
-  } catch (error) {
-    console.error('[WISMO] Order lookup failed:', error);
+  } catch (e) {
+    console.error('[WISMO] Order lookup error:', e);
     return null;
   }
 }
@@ -296,239 +224,154 @@ export async function lookupOrdersByEmail(
         orders(first: 5, query: $query) {
           edges {
             node {
-              name
-              displayFulfillmentStatus
-              displayFinancialStatus
-              createdAt
-              fulfillments(first: 1) {
-                edges {
-                  node {
-                    trackingCompany
-                    trackingNumber
-                    trackingUrl
-                    estimatedDeliveryAt
-                  }
-                }
-              }
-              lineItems(first: 5) {
-                edges {
-                  node {
-                    title
-                    quantity
-                  }
-                }
-              }
+              name displayFulfillmentStatus displayFinancialStatus createdAt
+              fulfillments(first: 1) { edges { node { trackingCompany trackingNumber trackingUrl estimatedDeliveryAt } } }
+              lineItems(first: 5) { edges { node { title quantity } } }
             }
           }
         }
       }
     `, { query: `email:${email}` });
 
-    const edges = result?.data?.orders?.edges || [];
-    return edges.map((edge: any) => {
-      const order = edge.node;
-      const fulfillment = order.fulfillments?.edges?.[0]?.node;
+    return (result?.data?.orders?.edges || []).map((edge: any) => {
+      const o = edge.node, f = o.fulfillments?.edges?.[0]?.node;
       return {
-        orderNumber: order.name,
-        status: formatOrderStatus(order.displayFulfillmentStatus),
-        financialStatus: formatFinancialStatus(order.displayFinancialStatus),
-        fulfillmentStatus: order.displayFulfillmentStatus,
-        trackingCompany: fulfillment?.trackingCompany || null,
-        trackingNumber: fulfillment?.trackingNumber || null,
-        trackingUrl: fulfillment?.trackingUrl || null,
-        createdAt: order.createdAt,
-        estimatedDelivery: fulfillment?.estimatedDeliveryAt || null,
-        lineItems: order.lineItems?.edges?.map((e: any) => ({ title: e.node.title, quantity: e.node.quantity })) || [],
+        orderNumber: o.name, status: fmtStatus(o.displayFulfillmentStatus),
+        financialStatus: fmtFin(o.displayFinancialStatus), fulfillmentStatus: o.displayFulfillmentStatus,
+        trackingCompany: f?.trackingCompany || null, trackingNumber: f?.trackingNumber || null,
+        trackingUrl: f?.trackingUrl || null, createdAt: o.createdAt, estimatedDelivery: f?.estimatedDeliveryAt || null,
+        lineItems: o.lineItems?.edges?.map((e: any) => ({ title: e.node.title, quantity: e.node.quantity })) || [],
       };
     });
-  } catch (error) {
-    console.error('[WISMO] Order lookup by email failed:', error);
+  } catch (e) {
+    console.error('[WISMO] Email lookup error:', e);
     return [];
   }
 }
 
-// ─── Response Generation (Speed-Optimized) ───────────────────────────
+// ─── Response Generation ─────────────────────────────────────────────
 
 export async function generateResponse(
   userMessage: string,
   context: ChatContext,
   orderInfo?: OrderInfo | OrderInfo[]
 ): Promise<ChatResponse> {
-  const intent = await detectIntentAI(userMessage);
-  
-  // FAST PATH: WISMO with order info → instant formatted response (no AI call)
+  const intent = detectIntent(userMessage, context.previousMessages);
+
+  // ⚡ INSTANT: WISMO + order found → formatted response, zero AI calls
   if (intent.intent === 'wismo' && orderInfo) {
-    const reply = formatOrderResponse(orderInfo, context.settings);
     return {
-      reply,
+      reply: fmtOrderResponse(orderInfo, context.settings),
       intent: 'wismo',
       quickReplies: ['Track another order', 'Need more help'],
     };
   }
-  
-  // WISMO without order info → ask for details (still fast, no AI for simple ask)
+
+  // WISMO but no order info → ask for it (still instant, no AI)
   if (intent.intent === 'wismo' && !orderInfo) {
-    const brandName = context.settings.brandName || 'our store';
+    const brand = context.settings.brandName || 'our store';
     return {
-      reply: `I'd love to help you track your order from ${brandName}! Could you share your order number (like #1001) or the email you used? 📦`,
+      reply: `I'd love to help you track your order from **${brand}**! Just share your order number (like #1001) or the email you used when ordering. 📦`,
       intent: 'wismo',
-      quickReplies: ['I have my order number', 'I used my email'],
+      quickReplies: ['I have my order number', 'I used my email to order'],
     };
   }
-  
-  // Handoff → instant response
+
+  // Handoff → instant
   if (intent.intent === 'handoff') {
     return {
-      reply: `I'll connect you with a human agent right away. Please hold on for a moment. ⏳`,
+      reply: 'I\'ll connect you with a human agent right away. Please hold on for a moment. ⏳',
       intent: 'handoff',
     };
   }
-  
-  // General → use DeepSeek for conversational responses
-  const reply = await generateAIResponse(userMessage, context);
+
+  // General → DeepSeek (only case that calls AI)
+  const reply = await aiResponse(userMessage, context);
   return {
     reply,
     intent: 'general',
-    quickReplies: ['Track my order', 'Shipping policy', 'Talk to a human'],
+    quickReplies: ['📦 Track my order', '💬 Talk to a human'],
   };
 }
 
-function formatOrderResponse(orderInfo: OrderInfo | OrderInfo[], settings: WismoSettings): string {
-  if (Array.isArray(orderInfo)) {
-    if (orderInfo.length === 0) {
-      return "I couldn't find any orders matching that information. Could you double-check your order number or email? 🔍";
-    }
-    if (orderInfo.length === 1) return formatSingleOrder(orderInfo[0], settings);
-    
-    const brandName = settings.brandName || 'our store';
-    let reply = `I found **${orderInfo.length} orders** from ${brandName}:\n\n`;
-    orderInfo.forEach((order, i) => {
-      reply += formatSingleOrder(order, settings, i + 1) + '\n';
-    });
-    return reply;
-  }
-  return formatSingleOrder(orderInfo, settings);
+// ─── Order Formatting ────────────────────────────────────────────────
+
+function fmtOrderResponse(orders: OrderInfo | OrderInfo[], settings: WismoSettings): string {
+  if (!Array.isArray(orders)) return fmtOne(orders);
+  if (orders.length === 0) return "I couldn't find any orders matching that. Could you double-check your order number or email? 🔍";
+  if (orders.length === 1) return fmtOne(orders[0]);
+  const brand = settings.brandName || 'our store';
+  return `I found **${orders.length} orders** from ${brand}:\n\n` + orders.map((o, i) => fmtOne(o, i + 1)).join('\n');
 }
 
-function formatSingleOrder(order: OrderInfo, settings: WismoSettings, index?: number): string {
-  const prefix = index ? `**Order ${index}:** ` : '';
-  
-  let reply = `${prefix}📦 **${order.orderNumber}** — ${order.status}\n`;
-  
-  // Items
+function fmtOne(order: OrderInfo, idx?: number): string {
+  const prefix = idx ? `**${idx}.** ` : '';
+  let r = `${prefix}📦 **${order.orderNumber}** — ${order.status}\n`;
+
   if (order.lineItems?.length) {
-    const items = order.lineItems.map(i => `${i.title} × ${i.quantity}`).join(', ');
-    reply += `   Items: ${items}\n`;
+    r += `   Items: ${order.lineItems.map(i => `${i.title} ×${i.quantity}`).join(', ')}\n`;
   }
-  
-  // Tracking info
   if (order.trackingCompany && order.trackingNumber) {
-    reply += `   🚚 ${order.trackingCompany}: ${order.trackingNumber}\n`;
-    if (order.trackingUrl) {
-      reply += `   → [Track package](${order.trackingUrl})\n`;
-    }
+    r += `   🚚 ${order.trackingCompany}: ${order.trackingNumber}\n`;
+    if (order.trackingUrl) r += `   → [Track package](${order.trackingUrl})\n`;
   }
-  
-  // Estimated delivery
   if (order.estimatedDelivery) {
-    const date = new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
-      weekday: 'long', month: 'long', day: 'numeric',
-    });
-    reply += `   📅 Estimated: **${date}**\n`;
+    const d = new Date(order.estimatedDelivery).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    r += `   📅 Est. delivery: **${d}**\n`;
   }
-  
-  // Unfulfilled note
   if (order.fulfillmentStatus === 'UNFULFILLED') {
-    reply += `   ⏳ Your order is being prepared and will ship soon!\n`;
+    r += `   ⏳ Being prepared — we'll notify you once it ships!\n`;
   }
-  
-  return reply.trim();
+  return r.trim();
 }
 
-async function generateAIResponse(userMessage: string, context: ChatContext): Promise<string> {
-  const brandName = context.settings.brandName || 'our store';
-  const faqContext = context.settings.faqItems?.length
-    ? `\n\nStore FAQ (use when relevant):\n${context.settings.faqItems.map(f => `Q: ${f.question}\nA: ${f.answer}`).join('\n\n')}`
+// ─── AI Response (only for general queries) ──────────────────────────
+
+async function aiResponse(message: string, ctx: ChatContext): Promise<string> {
+  const brand = ctx.settings.brandName || 'our store';
+  const faq = ctx.settings.faqItems?.length
+    ? `\n\nStore FAQ (answer from this if relevant):\n${ctx.settings.faqItems.map(f => `Q: ${f.question}\nA: ${f.answer}`).join('\n\n')}`
     : '';
-  
-  const systemPrompt = `You are a friendly, concise customer service chatbot for ${brandName}. 
-
-Your main job: help customers track orders (WISMO). You can also answer general questions.
-
-Rules:
-- Be warm but BRIEF — 2-3 sentences max
-- If asked about orders, ask for order number or email
-- Use store FAQ when available
-- If you can't help, offer to connect with a human
-- Never make up order details, product info, or policies
-- Use emojis sparingly for warmth${faqContext}`;
 
   try {
-    return await callDeepSeek(systemPrompt, userMessage, context.previousMessages);
+    return await callDeepSeek(
+      `You are a friendly, concise customer service bot for ${brand}, a Shopify store. Your main job is order tracking. Rules: be warm but brief (2-3 sentences max). If asked about orders, ask for order number or email. Use store FAQ if available. If you can't help, offer to connect with a human. Never make up order or product details. Use emojis sparingly.${faq}`,
+      message,
+      ctx.previousMessages,
+    );
   } catch {
-    return `I'm having trouble right now. Would you like me to connect you with a human agent? 😊`;
+    return "I'm having trouble right now. Would you like me to connect you with a human agent? 😊";
   }
 }
 
 // ─── DeepSeek API ────────────────────────────────────────────────────
 
-async function callDeepSeek(
-  systemPrompt: string,
-  userMessage: string,
-  previousMessages: { role: string; content: string }[],
-): Promise<string> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) throw new Error('Missing DEEPSEEK_API_KEY');
+async function callDeepSeek(system: string, message: string, history: { role: string; content: string }[]): Promise<string> {
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) throw new Error('No API key');
 
   const messages = [
-    { role: 'system', content: systemPrompt },
-    ...previousMessages.slice(-6).map(m => ({
-      role: m.role === 'customer' ? 'user' : 'assistant',
-      content: m.content,
-    })),
-    { role: 'user', content: userMessage },
+    { role: 'system', content: system },
+    ...history.slice(-6).map(m => ({ role: m.role === 'customer' ? 'user' : 'assistant' as const, content: m.content })),
+    { role: 'user' as const, content: message },
   ];
 
-  const response = await fetch('https://api.deepseek.com/chat/completions', {
+  const res = await fetch('https://api.deepseek.com/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages,
-      max_tokens: 250,
-      temperature: 0.7,
-    }),
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+    body: JSON.stringify({ model: 'deepseek-chat', messages, max_tokens: 200, temperature: 0.7 }),
   });
 
-  if (!response.ok) throw new Error('AI service error');
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() || 'Sorry, I couldn\'t process that.';
+  if (!res.ok) throw new Error('API error');
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim() || "Sorry, I couldn't process that.";
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
-function formatOrderStatus(status: string): string {
-  const map: Record<string, string> = {
-    'FULFILLED': 'Shipped ✅',
-    'UNFULFILLED': 'Processing 📤',
-    'PARTIALLY_FULFILLED': 'Partially Shipped 📦',
-    'RESTOCKED': 'Returned ↩️',
-    'PENDING': 'Pending ⏳',
-  };
-  return map[status] || status;
+function fmtStatus(s: string): string {
+  return ({ FULFILLED: 'Shipped ✅', UNFULFILLED: 'Processing 📤', PARTIALLY_FULFILLED: 'Partially Shipped 📦', RESTOCKED: 'Returned ↩️', PENDING: 'Pending ⏳' })[s] || s;
 }
-
-function formatFinancialStatus(status: string): string {
-  const map: Record<string, string> = {
-    'PAID': 'Paid',
-    'PENDING': 'Payment Pending',
-    'REFUNDED': 'Refunded',
-    'PARTIALLY_REFUNDED': 'Partially Refunded',
-    'VOIDED': 'Cancelled',
-  };
-  return map[status] || status;
+function fmtFin(s: string): string {
+  return ({ PAID: 'Paid', PENDING: 'Payment Pending', REFUNDED: 'Refunded', PARTIALLY_REFUNDED: 'Partially Refunded', VOIDED: 'Cancelled' })[s] || s;
 }

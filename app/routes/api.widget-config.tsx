@@ -30,7 +30,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     enabled: true,
     widgetPosition: 'bottom-right',
     widgetColor: '#008060',
-    greeting: 'Hi! 👋 How can I help you today?',
+    greeting: 'Track your order in seconds',
     brandName: '',
   };
 
