@@ -1,18 +1,30 @@
 /**
- * POST /api/chat - WISMO Chat API v2.1
+ * POST /api/chat - WISMO Chat API v3
  * 
- * Speed-optimized: sync intent detection, instant order responses
+ * Feature Complete:
+ * - Sync intent detection with scenario awareness
+ * - Multi-language support
+ * - Order card data for visual timeline
+ * - Contextual quick replies
+ * - Feedback endpoint
  */
 import { json } from '@remix-run/node';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
-import { detectIntent, lookupOrderByNumber, lookupOrdersByEmail, generateResponse, getDemoOrder } from '~/services/wismo-engine.server';
+import { detectIntent, lookupOrderByNumber, lookupOrdersByEmail, generateResponse, getDemoOrder, detectLanguage } from '~/services/wismo-engine.server';
 import { addCorsHeaders, handleCorsPreflightRequest } from '~/utils/cors';
 
 export async function action({ request }: ActionFunctionArgs) {
   const preflight = handleCorsPreflightRequest(request);
   if (preflight) return preflight;
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, { status: 405 });
+
+  // Check if this is a feedback request
+  const contentType = request.headers.get('content-type') || '';
+  const url = new URL(request.url);
+  if (url.searchParams.get('action') === 'feedback') {
+    return handleFeedback(request);
+  }
 
   try {
     const body = await request.json();
@@ -37,7 +49,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     await saveMsg(convId, 'customer', message);
 
-    // Sync intent detection (no AI call)
+    // Sync intent detection (no AI call) with scenario
     const intent = detectIntent(message, prev);
     let orderInfo;
 
@@ -50,24 +62,82 @@ export async function action({ request }: ActionFunctionArgs) {
       if (!orderInfo) orderInfo = getDemoOrder(intent.orderNumber);
     }
 
-    // Generate response
+    // Generate response with language awareness
     const result = await generateResponse(message, {
       shop, accessToken: store.accessToken, conversationId: convId,
       customerEmail, customerName, customerLocale, previousMessages: prev, settings,
-    }, orderInfo);
+    }, orderInfo, intent.scenario);
 
-    await saveMsg(convId, 'assistant', result.reply, result.intent, orderInfo ? { orderLookup: true } : {});
+    await saveMsg(convId, 'assistant', result.reply, result.intent, orderInfo ? { orderLookup: true, language: result.detectedLanguage } : { language: result.detectedLanguage });
     await bumpAnalytics(shop, intent.intent, result.intent);
 
     const h = new Headers();
     addCorsHeaders(h, request);
-    return json({ reply: result.reply, conversationId: convId, intent: result.intent, quickReplies: result.quickReplies || [] }, { headers: h });
+    return json({
+      reply: result.reply,
+      conversationId: convId,
+      intent: result.intent,
+      quickReplies: result.quickReplies || [],
+      orderCard: result.orderCard || null,
+      language: result.detectedLanguage || 'en',
+    }, { headers: h });
 
   } catch (e) {
     console.error('[WISMO] Error:', e);
     return json({ error: 'Internal error' }, { status: 500 });
   }
 }
+
+// ─── Feedback Handler ────────────────────────────────────────────────
+
+async function handleFeedback(request: Request) {
+  try {
+    const body = await request.json();
+    const { conversationId, messageId, rating, comment } = body;
+
+    if (!conversationId || !rating) {
+      return json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const db = getSupabaseAdmin();
+
+    // Store feedback
+    await db.from('wismo_feedback').upsert({
+      conversation_id: conversationId,
+      message_id: messageId || null,
+      rating: rating, // 'positive' or 'negative'
+      comment: comment || null,
+      created_at: new Date().toISOString(),
+    }, { onConflict: 'conversation_id,message_id' });
+
+    // Update analytics
+    const today = new Date().toISOString().split('T')[0];
+    const shop = await getShopFromConv(conversationId);
+    if (shop) {
+      const { data: ex } = await db.from('wismo_analytics').select('*').eq('shop', shop).eq('date', today).single();
+      if (ex) {
+        const field = rating === 'positive' ? 'positive_feedback' : 'negative_feedback';
+        await db.from('wismo_analytics').update({
+          [field]: (ex[field] || 0) + 1,
+        }).eq('id', ex.id);
+      }
+    }
+
+    return json({ ok: true });
+  } catch (e) {
+    console.error('[WISMO] Feedback error:', e);
+    return json({ ok: true }); // Don't expose errors for feedback
+  }
+}
+
+async function getShopFromConv(convId: string): Promise<string | null> {
+  try {
+    const { data } = await getSupabaseAdmin().from('wismo_conversations').select('shop').eq('id', convId).single();
+    return data?.shop || null;
+  } catch { return null; }
+}
+
+// ─── Core Functions ──────────────────────────────────────────────────
 
 async function lookup(shop: string, token: string, orderNumber?: string, email?: string) {
   if (orderNumber) { const o = await lookupOrderByNumber(shop, token, orderNumber); if (o) return o; }
