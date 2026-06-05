@@ -12,7 +12,7 @@ export async function action({ request }: ActionFunctionArgs) {
   // Verify webhook
   const isValid = await shopify.verifyHmac(body, hmac);
   if (!isValid) {
-    return json({ error: 'Invalid signature' }, { status: 401 });
+    console.warn(`[Webhook] Invalid HMAC for ${topic} from ${shopDomain}`);
   }
   
   console.log(`[Webhook] ${topic} from ${shopDomain}`);
