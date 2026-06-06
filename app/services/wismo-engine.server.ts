@@ -365,8 +365,10 @@ export async function lookupOrderByNumber(
           edges {
             node {
               id name displayFulfillmentStatus displayFinancialStatus createdAt
-              fulfillments(first: 5) {
-                edges { node { trackingCompany trackingNumber trackingUrl status estimatedDeliveryAt } }
+              fulfillments {
+                trackingInfo { company number url }
+                status
+                estimatedDeliveryAt
               }
               lineItems(first: 10) { edges { node { title quantity image { url } } } }
             }
@@ -375,14 +377,21 @@ export async function lookupOrderByNumber(
       }
     `, { query: `name:${name}` });
 
+    // Check for GraphQL errors
+    if (result?.errors?.length) {
+      console.error('[WISMO] GraphQL errors in order lookup:', JSON.stringify(result.errors));
+      return null;
+    }
+
     const order = result?.data?.orders?.edges?.[0]?.node;
     if (!order) return null;
-    const f = order.fulfillments?.edges?.[0]?.node;
+    const f = order.fulfillments?.[0];
+    const ti = f?.trackingInfo?.[0];
 
     // Enhance tracking URL if not provided
-    let trackingUrl = f?.trackingUrl || null;
-    if (!trackingUrl && f?.trackingNumber && f?.trackingCompany) {
-      trackingUrl = getCarrierTrackingUrl(f.trackingCompany, f.trackingNumber) || null;
+    let trackingUrl = ti?.url || null;
+    if (!trackingUrl && ti?.number && ti?.company) {
+      trackingUrl = getCarrierTrackingUrl(ti.company, ti.number) || null;
     }
 
     return {
@@ -390,8 +399,8 @@ export async function lookupOrderByNumber(
       status: fmtStatus(order.displayFulfillmentStatus),
       financialStatus: fmtFin(order.displayFinancialStatus),
       fulfillmentStatus: order.displayFulfillmentStatus,
-      trackingCompany: f?.trackingCompany || null,
-      trackingNumber: f?.trackingNumber || null,
+      trackingCompany: ti?.company || null,
+      trackingNumber: ti?.number || null,
       trackingUrl,
       createdAt: order.createdAt,
       estimatedDelivery: f?.estimatedDeliveryAt || null,
@@ -415,7 +424,11 @@ export async function lookupOrdersByEmail(
           edges {
             node {
               name displayFulfillmentStatus displayFinancialStatus createdAt
-              fulfillments(first: 1) { edges { node { trackingCompany trackingNumber trackingUrl estimatedDeliveryAt } } }
+              fulfillments {
+                trackingInfo { company number url }
+                status
+                estimatedDeliveryAt
+              }
               lineItems(first: 5) { edges { node { title quantity image { url } } } }
             }
           }
@@ -423,16 +436,22 @@ export async function lookupOrdersByEmail(
       }
     `, { query: `email:${email}` });
 
+    // Check for GraphQL errors
+    if (result?.errors?.length) {
+      console.error('[WISMO] GraphQL errors in email lookup:', JSON.stringify(result.errors));
+      return [];
+    }
+
     return (result?.data?.orders?.edges || []).map((edge: any) => {
-      const o = edge.node, f = o.fulfillments?.edges?.[0]?.node;
-      let trackingUrl = f?.trackingUrl || null;
-      if (!trackingUrl && f?.trackingNumber && f?.trackingCompany) {
-        trackingUrl = getCarrierTrackingUrl(f.trackingCompany, f.trackingNumber) || null;
+      const o = edge.node, f = o.fulfillments?.[0], ti = f?.trackingInfo?.[0];
+      let trackingUrl = ti?.url || null;
+      if (!trackingUrl && ti?.number && ti?.company) {
+        trackingUrl = getCarrierTrackingUrl(ti.company, ti.number) || null;
       }
       return {
         orderNumber: o.name, status: fmtStatus(o.displayFulfillmentStatus),
         financialStatus: fmtFin(o.displayFinancialStatus), fulfillmentStatus: o.displayFulfillmentStatus,
-        trackingCompany: f?.trackingCompany || null, trackingNumber: f?.trackingNumber || null,
+        trackingCompany: ti?.company || null, trackingNumber: ti?.number || null,
         trackingUrl, createdAt: o.createdAt, estimatedDelivery: f?.estimatedDeliveryAt || null,
         lineItems: o.lineItems?.edges?.map((e: any) => ({ title: e.node.title, quantity: e.node.quantity, imageUrl: e.node.image?.url || null })) || [],
       };

@@ -11,7 +11,7 @@
 import { json } from '@remix-run/node';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
-import { detectIntent, lookupOrderByNumber, lookupOrdersByEmail, generateResponse, getDemoOrder, detectLanguage } from '~/services/wismo-engine.server';
+import { detectIntent, lookupOrderByNumber, lookupOrdersByEmail, generateResponse, detectLanguage } from '~/services/wismo-engine.server';
 import { addCorsHeaders, handleCorsPreflightRequest } from '~/utils/cors';
 
 // ─── Basic Rate Limiting (per-shop, in-memory) ─────────────────────
@@ -107,7 +107,8 @@ export async function action({ request }: ActionFunctionArgs) {
           ai_generated: false,
         }, { headers: h });
       }
-      if (!orderInfo) orderInfo = getDemoOrder(intent.orderNumber);
+      // If lookup returned nothing and we had an order number or email,
+      // let generateResponse handle the "not found" case with appropriate messaging
     }
 
     // Generate response — WISMO queries with order data are INSTANT (no AI call)
