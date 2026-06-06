@@ -82,16 +82,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.log('[auth/callback] ✅ Store upserted:', storeId);
   }
 
-  // Register webhooks after installation
-  try {
-    await registerWebhooks(shopDomain, result.accessToken);
-  } catch (error) {
-    console.error('[auth/callback] Failed to register webhooks:', error);
-  }
-
-  // Note: Widget injection is handled via Theme App Extension (App Embed)
-  // ScriptTag API is deprecated as of Aug 2025
-  // Merchants enable the widget in their theme editor after installing the app
+  // Webhooks are registered via shopify.app.toml (compliance_topics + topics)
+  // and deployed via `shopify app deploy`. No per-shop registration needed.
+  // App-level webhooks automatically apply to all installations.
 
   console.log('[auth/callback] OAuth complete! Redirecting to Shopify admin for:', shopDomain);
 
@@ -99,48 +92,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return redirect(`https://admin.shopify.com/store/${shopName}/apps/${API_KEY}`);
 }
 
-/**
- * Register webhooks with Shopify
- * 
- * Note: GDPR mandatory webhooks (customers/data_request, customers/redact, shop/redact)
- * cannot be registered via API. They must be configured in the Partners Dashboard under
- * App Setup → Mandatory webhooks, or in shopify.app.toml. Our webhook handlers exist
- * at /webhooks/customers_data_request, /webhooks/customers_redact, /webhooks/shop_redact.
- */
-async function registerWebhooks(shop: string, accessToken: string) {
-  const appUrl = process.env.SHOPIFY_APP_URL;
-  if (!appUrl) return;
-
-  // Register app/uninstalled via GraphQL (REST API doesn't support all topics)
-  try {
-    const resp = await fetch(`https://${shop}/admin/api/2026-04/graphql.json`, {
-      method: 'POST',
-      headers: {
-        'X-Shopify-Access-Token': accessToken,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: `mutation {
-          webhookSubscriptionCreate(
-            topic: APP_UNINSTALLED
-            webhookSubscription: { callbackUrl: "${appUrl}/webhooks/app_uninstalled", format: JSON }
-          ) { userErrors { field message } webhookSubscription { id topic } }
-        }`,
-      }),
-    });
-    const result = await resp.json();
-    const ws = result?.data?.webhookSubscriptionCreate;
-    if (ws?.userErrors?.length > 0) {
-      // "already taken" is fine - means webhook was registered before
-      if (!ws.userErrors[0].message.includes('already been taken')) {
-        console.error('[webhook] Failed to register APP_UNINSTALLED:', ws.userErrors);
-      } else {
-        console.log('[webhook] APP_UNINSTALLED already registered');
-      }
-    } else if (ws?.webhookSubscription) {
-      console.log('[webhook] Registered APP_UNINSTALLED');
-    }
-  } catch (error) {
-    console.error('[webhook] Error registering APP_UNINSTALLED:', error);
-  }
-}
+// Webhook registration handled by shopify.app.toml + `shopify app deploy`
+// All webhooks (app/uninstalled + GDPR compliance) are registered as app-level
+// webhooks and apply to all installations automatically.

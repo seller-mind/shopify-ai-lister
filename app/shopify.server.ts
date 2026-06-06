@@ -26,7 +26,13 @@ async function verifyHmac(body: string, hmacHeader: string): Promise<boolean> {
   const digest = Array.from(new Uint8Array(signature))
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
-  return digest === hmacHeader;
+  // Timing-safe comparison to prevent timing attacks
+  if (digest.length !== hmacHeader.length) return false;
+  let result = 0;
+  for (let i = 0; i < digest.length; i++) {
+    result |= digest.charCodeAt(i) ^ hmacHeader.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 /**

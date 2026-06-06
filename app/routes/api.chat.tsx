@@ -211,7 +211,12 @@ async function lookup(shop: string, token: string, orderNumber?: string, email?:
 async function getSettings(shop: string) {
   try {
     const { data } = await getSupabaseAdmin().from('wismo_settings').select('*').eq('shop', shop).single();
-    return data || { enabled: true, greeting: 'Track your order in seconds', brandName: '', autoReplyLanguage: 'auto', faqItems: [] };
+    if (!data) return { enabled: true, greeting: 'Track your order in seconds', brandName: '', autoReplyLanguage: 'auto', faqItems: [] };
+    // Extract return_policy from business_hours JSON (no standalone column)
+    return {
+      ...data,
+      returnPolicy: data.business_hours?.return_policy || '',
+    };
   } catch { return { enabled: true, greeting: 'Track your order in seconds', brandName: '', autoReplyLanguage: 'auto', faqItems: [] }; }
 }
 

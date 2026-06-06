@@ -17,12 +17,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
     settings = data;
   } catch { /* defaults */ }
 
+  // Extract return_policy from business_hours JSON
+  const settingsData = settings ? {
+    ...settings,
+    return_policy: settings.business_hours?.return_policy || '',
+  } : {
+    enabled: true, widget_position: 'bottom-right', widget_color: '#008060',
+    greeting: 'Track your order in seconds', brand_name: '', auto_reply_language: 'auto', faq_items: [],
+    return_policy: '',
+  };
+
   return json({
     shop: session.shop,
-    settings: settings || {
-      enabled: true, widget_position: 'bottom-right', widget_color: '#008060',
-      greeting: 'Track your order in seconds', brand_name: '', auto_reply_language: 'auto', faq_items: [],
-    },
+    settings: settingsData,
   });
 }
 
@@ -42,10 +49,15 @@ export async function action({ request }: ActionFunctionArgs) {
   const faqAnswers = fd.getAll('faq_answer') as string[];
   const faqItems = faqQuestions.map((q, i) => ({ question: q.trim(), answer: (faqAnswers[i] || '').trim() })).filter(item => item.question && item.answer);
 
+  // Merge return_policy into business_hours JSON (column doesn't exist as standalone)
+  const { data: existingSettings } = await getSupabaseAdmin().from('wismo_settings').select('business_hours').eq('shop', session.shop).single();
+  const businessHours = { ...(existingSettings?.business_hours || {}), return_policy: returnPolicy || null };
+
   try {
     const { error } = await getSupabaseAdmin().from('wismo_settings').upsert({
       shop: session.shop, enabled, widget_position: widgetPosition, widget_color: widgetColor,
-      greeting, brand_name: brandName, auto_reply_language: autoReplyLanguage, return_policy: returnPolicy, faq_items: faqItems,
+      greeting, brand_name: brandName, auto_reply_language: autoReplyLanguage, faq_items: faqItems,
+      business_hours: businessHours,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'shop' });
 
