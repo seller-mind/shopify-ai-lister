@@ -46,7 +46,7 @@ export async function checkSubscription(shop: string, accessToken: string): Prom
       body: JSON.stringify({
         query: `{
           currentAppInstallation {
-            subscription {
+            activeSubscriptions {
               name
               status
               test
@@ -57,7 +57,7 @@ export async function checkSubscription(shop: string, accessToken: string): Prom
     });
 
     const data = await response.json();
-    const subscription = data?.data?.currentAppInstallation?.subscription;
+    const subscription = data?.data?.currentAppInstallation?.activeSubscriptions?.[0];
 
     if (subscription?.status === 'ACTIVE') {
       const planName = subscription.name?.toUpperCase() || 'FREE';

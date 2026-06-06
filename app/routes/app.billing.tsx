@@ -42,9 +42,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   let currentPlan = 'FREE';
   try {
     const result = await admin.graphql(`{
-      currentAppInstallation { subscription { name status test } }
+      currentAppInstallation { activeSubscriptions { name status test } }
     }`);
-    const sub = result?.data?.currentAppInstallation?.subscription;
+    const sub = result?.data?.currentAppInstallation?.activeSubscriptions?.[0];
     if (sub?.status === 'ACTIVE') {
       const name = sub.name.toUpperCase();
       if (name.includes('BUSINESS')) currentPlan = 'BUSINESS';
@@ -79,9 +79,9 @@ export async function action({ request }: ActionFunctionArgs) {
   let isPlanChange = false;
   try {
     const result = await admin.graphql(`{
-      currentAppInstallation { subscription { name status } }
+      currentAppInstallation { activeSubscriptions { name status } }
     }`);
-    const sub = result?.data?.currentAppInstallation?.subscription;
+    const sub = result?.data?.currentAppInstallation?.activeSubscriptions?.[0];
     if (sub?.status === 'ACTIVE') isPlanChange = true;
   } catch { /* assume no existing sub */ }
 
