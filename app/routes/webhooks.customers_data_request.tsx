@@ -75,12 +75,14 @@ export async function action({ request }: ActionFunctionArgs) {
         console.log(`[GDPR]    - ${(messages || []).length} message(s)`);
         console.log(`[GDPR]    - ${(feedback || []).length} feedback item(s)`);
         
-        // Store the data request for fulfillment (PII redacted from metadata)
-        // In production, this triggers an email to the customer with their data
+        // Store the data request for fulfillment
+        // The data package is stored in metadata for retrieval within the 30-day fulfillment window.
+        // The cleanup script will scrub the data_package after 30 days.
+        // Merchants can request the data by contacting haimozhouqiu@outlook.com
         await supabase.from('wismo_messages').insert({
           conversation_id: convIds[0], // Use first conversation as reference
           role: 'system',
-          content: `GDPR data request received. Data package contains ${convs.length} conversations, ${(messages || []).length} messages, ${(feedback || []).length} feedback items. Will be provided within 30 days.`,
+          content: `GDPR data request received for customer at ${shopDomain}. Data package contains ${convs.length} conversations, ${(messages || []).length} messages, ${(feedback || []).length} feedback items. Will be provided within 30 days. Contact haimozhouqiu@outlook.com to request the data package.`,
           intent: 'gdpr_data_request',
           metadata: { 
             data_request: true,
@@ -88,7 +90,9 @@ export async function action({ request }: ActionFunctionArgs) {
             msg_count: (messages || []).length,
             fb_count: (feedback || []).length,
             requested_at: new Date().toISOString(),
-            // Full data package NOT stored in metadata to prevent PII persistence beyond retention
+            // Data package stored for 30-day GDPR fulfillment window
+            // Cleaned up by api.cleanup after 30 days
+            data_package: customerDataPackage,
           },
         }).catch(() => {
           // If insert fails (e.g., conversation was deleted), just log

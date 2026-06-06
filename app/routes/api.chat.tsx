@@ -104,6 +104,7 @@ export async function action({ request }: ActionFunctionArgs) {
           quickReplies: ['📦 Try another order #', '📧 Try my email', '💬 Talk to a human'],
           orderCard: null,
           language: lang || 'en',
+          ai_generated: false,
         }, { headers: h });
       }
       if (!orderInfo) orderInfo = getDemoOrder(intent.orderNumber);
@@ -127,6 +128,7 @@ export async function action({ request }: ActionFunctionArgs) {
       quickReplies: result.quickReplies || [],
       orderCard: result.orderCard || null,
       language: result.detectedLanguage || 'en',
+      ai_generated: result.intent === 'general',
     }, { headers: h });
 
   } catch (e) {

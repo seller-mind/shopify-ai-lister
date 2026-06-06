@@ -50,20 +50,23 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // 2. Scrub PII from GDPR data request metadata in messages
-    // Data request handlers store customer_email in wismo_messages.metadata;
-    // this must be anonymized before the 90-day retention period expires.
+    // GDPR Art.15 requires data request fulfillment within 30 days.
+    // After 30 days, the data_package in metadata is no longer needed and must be scrubbed.
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     const { data: gdprMessages } = await supabase
       .from('wismo_messages')
       .select('id, metadata')
       .eq('intent', 'gdpr_data_request')
-      .lt('created_at', ninetyDaysAgo.toISOString());
+      .lt('created_at', thirtyDaysAgo.toISOString());
 
     let metadataScrubbed = 0;
     if (gdprMessages && gdprMessages.length > 0) {
       for (const msg of gdprMessages) {
         const meta = msg.metadata;
-        if (meta && meta.customer_data_package) {
-          meta.customer_data_package = { redacted: true, reason: 'Data retention policy - 90 day PII cleanup' };
+        if (meta && meta.data_package) {
+          meta.data_package = { redacted: true, reason: 'GDPR data request fulfilled - 30 day PII cleanup' };
           await supabase
             .from('wismo_messages')
             .update({ metadata: meta })
