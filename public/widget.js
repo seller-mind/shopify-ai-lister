@@ -25,6 +25,8 @@ var SCRIPT = document.currentScript;
 var SRC = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src) : null;
 var SHOP = (SRC ? SRC.searchParams.get('shop') : '') || (document.getElementById('wismo-chat-root') || {}).dataset?.shop || '';
 var API = SRC ? SRC.origin : 'https://shopify-ai-lister-tau.vercel.app';
+var URL_COLOR = SRC ? SRC.searchParams.get('color') : null;
+var URL_POSITION = SRC ? SRC.searchParams.get('position') : null;
 var STORAGE_KEY = 'wismo_conv_' + SHOP;
 
 // ─── State ────────────────────────────────────────────────────────────
@@ -108,10 +110,13 @@ function removeShell() {
 
 function applyConfig(c) {
   var shadow = document.getElementById('wismo-host').shadowRoot;
-  if (c.color) {
-    shadow.querySelector('.w').style.setProperty('--ac', c.color);
+  // URL params override API config (from Theme Editor settings)
+  var effectiveColor = URL_COLOR || c.color;
+  var effectivePosition = URL_POSITION || c.position;
+  if (effectiveColor) {
+    shadow.querySelector('.w').style.setProperty('--ac', effectiveColor);
   }
-  if (c.position === 'bottom-left') {
+  if (effectivePosition === 'bottom-left') {
     shadow.querySelector('.w').classList.add('left');
   }
   var title = shadow.querySelector('.wt');

@@ -117,8 +117,21 @@ CREATE TABLE IF NOT EXISTS wismo_analytics (
   auto_resolved INTEGER DEFAULT 0,
   handoffs INTEGER DEFAULT 0,
   avg_response_ms INTEGER DEFAULT 0,
+  positive_feedback INTEGER DEFAULT 0,
+  negative_feedback INTEGER DEFAULT 0,
   updated_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE(shop, date)
+);
+
+-- Table: wismo_feedback (customer thumbs up/down)
+CREATE TABLE IF NOT EXISTS wismo_feedback (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  conversation_id UUID NOT NULL REFERENCES wismo_conversations(id) ON DELETE CASCADE,
+  message_id UUID,
+  rating TEXT NOT NULL CHECK (rating IN ('positive', 'negative')),
+  comment TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(conversation_id, message_id)
 );
 
 -- Indexes
@@ -132,10 +145,12 @@ ALTER TABLE wismo_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wismo_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wismo_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wismo_analytics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wismo_feedback ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Service role full access" ON wismo_settings FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access" ON wismo_conversations FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access" ON wismo_messages FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access" ON wismo_analytics FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Service role full access" ON wismo_settings FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "Service role full access" ON wismo_conversations FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "Service role full access" ON wismo_messages FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "Service role full access" ON wismo_analytics FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "Service role full access" ON wismo_feedback FOR ALL TO service_role USING (true) WITH CHECK (true);
   `.trim();
 }

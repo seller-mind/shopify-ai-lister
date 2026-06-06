@@ -3,7 +3,7 @@
  */
 
 /** 订阅计划类型 */
-export type PlanType = 'FREE' | 'STARTER' | 'PRO';
+export type PlanType = 'FREE' | 'STARTER' | 'PRO' | 'BUSINESS';
 
 /** 目标平台类型 */
 export type TargetPlatform = 'amazon' | 'shopify' | 'both';

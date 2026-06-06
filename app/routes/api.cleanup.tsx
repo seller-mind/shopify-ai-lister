@@ -13,7 +13,8 @@ import { json } from '@remix-run/node';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { getSupabaseAdmin } from '~/services/supabase.server';
 
-const CLEANUP_KEY = process.env.CLEANUP_SECRET || 'wismo-cleanup-2026';
+const CLEANUP_KEY = process.env.CLEANUP_SECRET;
+if (!CLEANUP_KEY) console.warn('[Cleanup] CLEANUP_SECRET env var not set — endpoint disabled');
 
 export async function action({ request }: ActionFunctionArgs) {
   // Verify authorization

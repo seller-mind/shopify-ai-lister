@@ -9,13 +9,16 @@
   data-shop="{{ shop.permanent_domain }}"
   data-locale="{{ request.locale.iso_code }}"
   data-currency="{{ cart.currency.iso_code }}"
-  data-widget-config='{"shop":"{{ shop.permanent_domain }}","locale":"{{ request.locale.iso_code }}"}'
+  data-widget-config='{"shop":"{{ shop.permanent_domain }}","locale":"{{ request.locale.iso_code }}","color":"{{ block.settings.primary_color }}","position":"{{ block.settings.widget_position }}","enabled":"{{ block.settings.enable_wismo_ai }}"}'
 ></div>
 
+{% if block.settings.enable_wismo_ai %}
 <script>
   (function() {
     var shopDomain = '{{ shop.permanent_domain }}';
-    var scriptSrc = 'https://shopify-ai-lister-tau.vercel.app/widget.js?shop=' + encodeURIComponent(shopDomain);
+    var widgetColor = '{{ block.settings.primary_color }}' || '#008060';
+    var widgetPosition = '{{ block.settings.widget_position }}' || 'bottom-right';
+    var scriptSrc = 'https://shopify-ai-lister-tau.vercel.app/widget.js?shop=' + encodeURIComponent(shopDomain) + '&color=' + encodeURIComponent(widgetColor) + '&position=' + encodeURIComponent(widgetPosition);
     
     // Preconnect to our server
     var preconnect = document.createElement('link');
@@ -31,6 +34,7 @@
     document.body.appendChild(script);
   })();
 </script>
+{% endif %}
 
 {% schema %}
 {
