@@ -22,14 +22,10 @@ redirect_urls = [
 [webhooks]
 api_version = "2026-04"
 
-[webhooks.privacy_compliance]
-customers_data_request = "https://shopify-ai-lister-tau.vercel.app/webhooks/customers_data_request"
-customers_redact = "https://shopify-ai-lister-tau.vercel.app/webhooks/customers_redact"
-shop_redact = "https://shopify-ai-lister-tau.vercel.app/webhooks/shop_redact"
-
 [[webhooks.subscriptions]]
 topics = ["app/uninstalled"]
-uri = "/webhooks/app_uninstalled"
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "/webhooks"
 
 # POS配置
 [pos]
