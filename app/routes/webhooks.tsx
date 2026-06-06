@@ -34,7 +34,7 @@ export async function action({ request }: ActionFunctionArgs) {
       case 'app/uninstalled':
         await handleAppUninstalled(shopDomain);
         break;
-      case 'app/purchases_update':
+      case 'app_subscriptions/update':
         await handlePurchasesUpdate(shopDomain, payload);
         break;
       case 'customers/data_request':
@@ -64,25 +64,28 @@ export async function loader() {
 // ─── Handlers ────────────────────────────────────────────────────────────
 
 async function handlePurchasesUpdate(shopDomain: string, payload: any) {
-  const planName = payload?.name?.toUpperCase() || 'FREE';
-  const status = payload?.status || 'unknown';
-  console.log(`[Webhook] Purchases update: shop=${shopDomain}, plan=${planName}, status=${status}`);
+  // app_subscriptions/update webhook payload format:
+  // { "app_subscription": { "admin_graphql_api_id": "...", "name": "Pro", "status": "ACTIVE", ... } }
+  const sub = payload?.app_subscription;
+  const planName = sub?.name?.toUpperCase() || 'FREE';
+  const status = sub?.status?.toUpperCase() || 'UNKNOWN';
+  console.log(`[Webhook] Subscriptions update: shop=${shopDomain}, plan=${planName}, status=${status}`);
 
   if (!shopDomain) return;
   const supabase = getSupabaseAdmin();
 
-  if (status === 'ACTIVE' || status === 'active') {
+  if (status === 'ACTIVE') {
     await supabase
       .from('stores')
       .update({ plan: planName, updated_at: new Date().toISOString() })
       .eq('shop', shopDomain);
     console.log(`[Webhook] Updated store ${shopDomain} plan to ${planName}`);
-  } else if (status === 'CANCELLED' || status === 'cancelled' || status === 'EXPIRED' || status === 'expired') {
+  } else if (status === 'CANCELLED' || status === 'EXPIRED' || status === 'DECLINED') {
     await supabase
       .from('stores')
       .update({ plan: 'FREE', updated_at: new Date().toISOString() })
       .eq('shop', shopDomain);
-    console.log(`[Webhook] Downgraded store ${shopDomain} to FREE`);
+    console.log(`[Webhook] Downgraded store ${shopDomain} to FREE (status: ${status})`);
   }
 }
 
