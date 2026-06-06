@@ -101,44 +101,46 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 /**
  * Register webhooks with Shopify
- * Includes mandatory GDPR webhooks for App Store compliance
+ * 
+ * Note: GDPR mandatory webhooks (customers/data_request, customers/redact, shop/redact)
+ * cannot be registered via API. They must be configured in the Partners Dashboard under
+ * App Setup → Mandatory webhooks, or in shopify.app.toml. Our webhook handlers exist
+ * at /webhooks/customers_data_request, /webhooks/customers_redact, /webhooks/shop_redact.
  */
 async function registerWebhooks(shop: string, accessToken: string) {
   const appUrl = process.env.SHOPIFY_APP_URL;
   if (!appUrl) return;
 
-  const webhooks = [
-    { topic: 'app/uninstalled', address: '/webhooks/app_uninstalled' },
-    // Mandatory GDPR webhooks for Shopify App Store
-    { topic: 'customers/data_request', address: '/webhooks/customers_data_request' },
-    { topic: 'customers/redact', address: '/webhooks/customers_redact' },
-    { topic: 'shop/redact', address: '/webhooks/shop_redact' },
-  ];
-
-  for (const webhook of webhooks) {
-    try {
-      const resp = await fetch(`https://${shop}/admin/api/2026-04/webhooks.json`, {
-        method: 'POST',
-        headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          webhook: {
-            topic: webhook.topic,
-            address: `${appUrl}${webhook.address}`,
-            format: 'json',
-          },
-        }),
-      });
-      const result = await resp.json();
-      if (!resp.ok) {
-        console.error(`[webhook] Failed to register ${webhook.topic}:`, result);
+  // Register app/uninstalled via GraphQL (REST API doesn't support all topics)
+  try {
+    const resp = await fetch(`https://${shop}/admin/api/2026-04/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `mutation {
+          webhookSubscriptionCreate(
+            topic: APP_UNINSTALLED
+            webhookSubscription: { callbackUrl: "${appUrl}/webhooks/app_uninstalled", format: JSON }
+          ) { userErrors { field message } webhookSubscription { id topic } }
+        }`,
+      }),
+    });
+    const result = await resp.json();
+    const ws = result?.data?.webhookSubscriptionCreate;
+    if (ws?.userErrors?.length > 0) {
+      // "already taken" is fine - means webhook was registered before
+      if (!ws.userErrors[0].message.includes('already been taken')) {
+        console.error('[webhook] Failed to register APP_UNINSTALLED:', ws.userErrors);
       } else {
-        console.log(`[webhook] Registered ${webhook.topic}`);
+        console.log('[webhook] APP_UNINSTALLED already registered');
       }
-    } catch (error) {
-      console.error(`[webhook] Error registering ${webhook.topic}:`, error);
+    } else if (ws?.webhookSubscription) {
+      console.log('[webhook] Registered APP_UNINSTALLED');
     }
+  } catch (error) {
+    console.error('[webhook] Error registering APP_UNINSTALLED:', error);
   }
 }
