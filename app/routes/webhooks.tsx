@@ -34,6 +34,9 @@ export async function action({ request }: ActionFunctionArgs) {
       case 'app/uninstalled':
         await handleAppUninstalled(shopDomain);
         break;
+      case 'app/purchases_update':
+        await handlePurchasesUpdate(shopDomain, payload);
+        break;
       case 'customers/data_request':
         await handleCustomersDataRequest(shopDomain, payload);
         break;
@@ -59,6 +62,29 @@ export async function loader() {
 }
 
 // ─── Handlers ────────────────────────────────────────────────────────────
+
+async function handlePurchasesUpdate(shopDomain: string, payload: any) {
+  const planName = payload?.name?.toUpperCase() || 'FREE';
+  const status = payload?.status || 'unknown';
+  console.log(`[Webhook] Purchases update: shop=${shopDomain}, plan=${planName}, status=${status}`);
+
+  if (!shopDomain) return;
+  const supabase = getSupabaseAdmin();
+
+  if (status === 'ACTIVE' || status === 'active') {
+    await supabase
+      .from('stores')
+      .update({ plan: planName, updated_at: new Date().toISOString() })
+      .eq('shop', shopDomain);
+    console.log(`[Webhook] Updated store ${shopDomain} plan to ${planName}`);
+  } else if (status === 'CANCELLED' || status === 'cancelled' || status === 'EXPIRED' || status === 'expired') {
+    await supabase
+      .from('stores')
+      .update({ plan: 'FREE', updated_at: new Date().toISOString() })
+      .eq('shop', shopDomain);
+    console.log(`[Webhook] Downgraded store ${shopDomain} to FREE`);
+  }
+}
 
 async function handleAppUninstalled(shopDomain: string) {
   if (!shopDomain) return;
