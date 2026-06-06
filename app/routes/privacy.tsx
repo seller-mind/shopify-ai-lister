@@ -166,7 +166,7 @@ export default function PrivacyPage() {
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
         <li style={{ marginBottom: '6px' }}><strong>EU Adequacy Decisions:</strong> Data stored in Supabase (Tokyo, Japan) benefits from the EU&apos;s adequacy decision for Japan (Commission Implementing Decision 2019/1919), ensuring equivalent data protection standards.</li>
         <li style={{ marginBottom: '6px' }}><strong>Data Privacy Framework (DPF):</strong> Vercel and Shopify are certified under the EU-U.S. Data Privacy Framework, providing adequate safeguards for U.S.-based processing.</li>
-        <li style={{ marginBottom: '6px' }}><strong>Standard Contractual Clauses (SCCs):</strong> For transfers to DeepSeek in China (which lacks an EU adequacy decision), we rely on the European Commission&apos;s Standard Contractual Clauses (Module 3: Processor to Processor), supplemented by encryption in transit (TLS 1.3) and at rest, data minimization (only non-WISMO chat messages are sent; order data never leaves our system), and pseudonymization of customer identifiers where feasible.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Standard Contractual Clauses (SCCs):</strong> For transfers to DeepSeek in China (which lacks an EU adequacy decision), we rely on the European Commission&apos;s Standard Contractual Clauses (Module 3: Processor to Processor) as the transfer mechanism, incorporated into our API service agreement with DeepSeek. This is supplemented by encryption in transit (TLS 1.3) and at rest, data minimization (only non-WISMO chat messages are sent; order data never leaves our system), and pseudonymization of customer identifiers where feasible. EU merchants may request a copy of the executed SCCs by contacting us.</li>
         <li style={{ marginBottom: '6px' }}><strong>Transfer Impact Assessment:</strong> We have assessed the legal framework of China and implemented supplementary measures (encryption, data minimization, limited retention) to ensure essentially equivalent protection of personal data.</li>
       </ul>
       <div style={{ background: '#fef2f2', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #fecaca' }}>
@@ -280,9 +280,9 @@ export default function PrivacyPage() {
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Data Breach Notification</h2>
       <p>In the event of a data breach affecting personal information, we will:</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
-        <li style={{ marginBottom: '6px' }}>Notify affected users within 72 hours, as required by GDPR Article 33</li>
-        <li style={{ marginBottom: '6px' }}>Notify the relevant supervisory authority if the breach poses a risk to individuals' rights</li>
+        <li style={{ marginBottom: '6px' }}><strong>As a Data Processor:</strong> Notify the affected merchant (Data Controller) without undue delay, and no later than 72 hours after becoming aware of the breach, as required by GDPR Article 33. The merchant is responsible for notifying the relevant supervisory authority and affected individuals where required.</li>
         <li style={{ marginBottom: '6px' }}>Take immediate steps to contain the breach and prevent further data loss</li>
+        <li style={{ marginBottom: '6px' }}>Provide the merchant with all information necessary to fulfill their notification obligations under GDPR Articles 33 and 34</li>
       </ul>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Geographic Restrictions</h2>

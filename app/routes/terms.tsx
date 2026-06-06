@@ -85,6 +85,9 @@ export default function TermsPage() {
         <li style={{ marginBottom: '6px' }}><strong>California Auto-Renewal Notice (AB 2511):</strong> Your subscription will automatically renew. You may cancel at any time. To cancel, go to your Shopify admin panel or contact us at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>.</li>
       </ul>
 
+      <h3 style={{ fontSize: '18px', marginTop: '24px', marginBottom: '12px', color: '#1a1a1a' }}>Free Trial</h3>
+      <p>Certain plans may include a free trial period (7 or 14 days, as indicated on the pricing page). During the trial period, you will have access to the plan&apos;s features at no charge. At the end of the trial period, your subscription will automatically convert to a paid subscription at the then-current price, billed through Shopify. To avoid being charged, you must cancel before the trial period ends. You may cancel at any time during the trial through your Shopify admin panel (Settings → Apps → WISMO AI → Cancel).</p>
+
       <h3 style={{ fontSize: '18px', marginTop: '24px', marginBottom: '12px', color: '#1a1a1a' }}>Refund Policy</h3>
       <p>We offer a <strong>7-day money-back guarantee</strong> for all paid subscriptions. If you are not satisfied with the service, contact us within 7 days of your purchase date at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a> for a full refund.</p>
 
@@ -139,7 +142,7 @@ export default function TermsPage() {
       <p>We may update these Terms from time to time. For material changes, we will notify you via email or through the Shopify App Store. Continued use of the App after changes constitutes acceptance of the modified Terms.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>15. Governing Law &amp; Dispute Resolution</h2>
-      <p>These Terms shall be governed by applicable laws. For EU consumers, the laws of your country of residence shall apply to the extent required by EU consumer protection law.</p>
+      <p>These Terms shall be governed by and construed in accordance with the laws of Singapore, without regard to its conflict of laws principles. For EU consumers, the mandatory consumer protection laws of your country of residence shall apply to the extent required by EU consumer protection law, and nothing in these Terms limits your rights under such mandatory provisions.</p>
       <p style={{ marginTop: '8px' }}>Any disputes arising out of or in connection with these Terms shall first be resolved through good-faith negotiation. If unresolved within 30 days, disputes shall be resolved through binding arbitration administered by the International Centre for Dispute Resolution (ICDR) under its International Arbitration Rules. The arbitration shall be conducted in English, and the seat of arbitration shall be Singapore. The arbitral tribunal shall consist of one arbitrator. Notwithstanding the foregoing, either party may seek injunctive or equitable relief in any court of competent jurisdiction.</p>
       <p style={{ marginTop: '8px' }}><strong>EU Consumers:</strong> Nothing in this section deprives you of the right to bring proceedings in your country of residence, nor does it prevent you from using the European Commission&apos;s Online Dispute Resolution platform: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>https://ec.europa.eu/consumers/odr</a>.</p>
 
