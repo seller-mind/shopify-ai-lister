@@ -75,14 +75,21 @@ export async function action({ request }: ActionFunctionArgs) {
         console.log(`[GDPR]    - ${(messages || []).length} message(s)`);
         console.log(`[GDPR]    - ${(feedback || []).length} feedback item(s)`);
         
-        // Store the data request for fulfillment
+        // Store the data request for fulfillment (PII redacted from metadata)
         // In production, this triggers an email to the customer with their data
         await supabase.from('wismo_messages').insert({
           conversation_id: convIds[0], // Use first conversation as reference
           role: 'system',
           content: `GDPR data request received. Data package contains ${convs.length} conversations, ${(messages || []).length} messages, ${(feedback || []).length} feedback items. Will be provided within 30 days.`,
           intent: 'gdpr_data_request',
-          metadata: { customer_data_package: customerDataPackage },
+          metadata: { 
+            data_request: true,
+            conv_count: convs.length,
+            msg_count: (messages || []).length,
+            fb_count: (feedback || []).length,
+            requested_at: new Date().toISOString(),
+            // Full data package NOT stored in metadata to prevent PII persistence beyond retention
+          },
         }).catch(() => {
           // If insert fails (e.g., conversation was deleted), just log
           console.log('[GDPR] Data request logged (could not insert system message)');

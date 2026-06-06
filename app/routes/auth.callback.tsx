@@ -21,7 +21,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     shop, 
     hasState: !!state,
     hasHmac: !!hmac,
-    fullURL: request.url
   });
 
   if (!code && shop) {

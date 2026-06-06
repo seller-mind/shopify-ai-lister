@@ -49,14 +49,39 @@ export async function action({ request }: ActionFunctionArgs) {
       results.pii_anonymized = oldConvIds.length;
     }
 
-    // 2. Delete conversations and messages older than 90 days (already anonymized)
+    // 2. Scrub PII from GDPR data request metadata in messages
+    // Data request handlers store customer_email in wismo_messages.metadata;
+    // this must be anonymized before the 90-day retention period expires.
+    const { data: gdprMessages } = await supabase
+      .from('wismo_messages')
+      .select('id, metadata')
+      .eq('intent', 'gdpr_data_request')
+      .lt('created_at', ninetyDaysAgo.toISOString());
+
+    let metadataScrubbed = 0;
+    if (gdprMessages && gdprMessages.length > 0) {
+      for (const msg of gdprMessages) {
+        const meta = msg.metadata;
+        if (meta && meta.customer_data_package) {
+          meta.customer_data_package = { redacted: true, reason: 'Data retention policy - 90 day PII cleanup' };
+          await supabase
+            .from('wismo_messages')
+            .update({ metadata: meta })
+            .eq('id', msg.id);
+          metadataScrubbed++;
+        }
+      }
+    }
+    results.metadata_scrubbed = metadataScrubbed;
+
+    // 3. Delete conversations and messages older than 90 days (already anonymized)
     const { count: deletedConvs } = await supabase
       .from('wismo_conversations')
       .delete({ count: 'exact' })
       .lt('last_message_at', ninetyDaysAgo.toISOString());
     results.conversations_deleted = deletedConvs || 0;
 
-    // 3. Delete analytics older than 12 months
+    // 4. Delete analytics older than 12 months
     const twelveMonthsAgo = new Date(now);
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
