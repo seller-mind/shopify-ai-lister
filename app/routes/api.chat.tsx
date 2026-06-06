@@ -68,11 +68,13 @@ export async function action({ request }: ActionFunctionArgs) {
 
     // Get/create conversation
     let convId = conversationId;
+    let isNewConv = false;
     let prev: { role: string; content: string }[] = [];
     if (convId) {
       prev = await getMessages(convId);
     } else {
       convId = await createConv(shop, customerEmail, customerName, customerLocale, message);
+      isNewConv = true;
     }
 
     await saveMsg(convId, 'customer', message);
@@ -94,7 +96,7 @@ export async function action({ request }: ActionFunctionArgs) {
           ? `Hmm, I couldn't find order **#${intent.orderNumber || '...'}**. Could you double-check the number? It usually looks like **#1001**. You can also try your email address. 🔍`
           : `I couldn't find that order. Could you double-check your order number? 🔍`;
         await saveMsg(convId, 'assistant', notFoundReply, 'wismo', { orderLookup: true, notFound: true });
-        await bumpAnalytics(shop, intent.intent, 'wismo');
+        await bumpAnalytics(shop, intent.intent, 'wismo', isNewConv);
         const h = new Headers();
         addCorsHeaders(h, request);
         return json({
@@ -118,7 +120,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }, orderInfo, intent.scenario);
 
     await saveMsg(convId, 'assistant', result.reply, result.intent, orderInfo ? { orderLookup: true, language: result.detectedLanguage } : { language: result.detectedLanguage });
-    await bumpAnalytics(shop, intent.intent, result.intent);
+    await bumpAnalytics(shop, intent.intent, result.intent, isNewConv);
 
     const h = new Headers();
     addCorsHeaders(h, request);
@@ -164,14 +166,26 @@ async function handleFeedback(request: Request) {
 
     const db = getSupabaseAdmin();
 
-    // Store feedback
-    await db.from('wismo_feedback').upsert({
-      conversation_id: conversationId,
-      message_id: messageId || null,
-      rating: rating, // 'positive' or 'negative'
-      comment: comment || null,
-      created_at: new Date().toISOString(),
-    }, { onConflict: 'conversation_id,message_id' });
+    // Store feedback — use insert instead of upsert to avoid NULL message_id
+    // conflicting with the unique constraint (NULL != NULL in PostgreSQL)
+    if (messageId) {
+      await db.from('wismo_feedback').upsert({
+        conversation_id: conversationId,
+        message_id: messageId,
+        rating: rating, // 'positive' or 'negative'
+        comment: comment || null,
+        created_at: new Date().toISOString(),
+      }, { onConflict: 'conversation_id,message_id' });
+    } else {
+      // No message_id — just insert (allow multiple feedback per conversation)
+      await db.from('wismo_feedback').insert({
+        conversation_id: conversationId,
+        message_id: null,
+        rating: rating,
+        comment: comment || null,
+        created_at: new Date().toISOString(),
+      });
+    }
 
     // Update analytics
     const today = new Date().toISOString().split('T')[0];
@@ -238,21 +252,24 @@ async function saveMsg(id: string, role: string, content: string, intent?: strin
   await db.from('wismo_conversations').update({ last_message_at: new Date().toISOString() }).eq('id', id);
 }
 
-async function bumpAnalytics(shop: string, detected: string, replied: string) {
+async function bumpAnalytics(shop: string, detected: string, replied: string, isNewConv: boolean = false) {
   try {
     const db = getSupabaseAdmin();
     const today = new Date().toISOString().split('T')[0];
     const { data: ex } = await db.from('wismo_analytics').select('*').eq('shop', shop).eq('date', today).single();
     if (ex) {
       await db.from('wismo_analytics').update({
-        total_conversations: ex.total_conversations + 1, total_messages: ex.total_messages + 2,
+        total_conversations: ex.total_conversations + (isNewConv ? 1 : 0),
+        total_messages: ex.total_messages + 2,
         wismo_queries: ex.wismo_queries + (detected === 'wismo' ? 1 : 0),
         auto_resolved: ex.auto_resolved + (replied !== 'handoff' ? 1 : 0),
         handoffs: ex.handoffs + (replied === 'handoff' ? 1 : 0),
       }).eq('id', ex.id);
     } else {
       await db.from('wismo_analytics').insert({
-        shop, date: today, total_conversations: 1, total_messages: 2,
+        shop, date: today,
+        total_conversations: isNewConv ? 1 : 0,
+        total_messages: 2,
         wismo_queries: detected === 'wismo' ? 1 : 0,
         auto_resolved: replied !== 'handoff' ? 1 : 0,
         handoffs: replied === 'handoff' ? 1 : 0,

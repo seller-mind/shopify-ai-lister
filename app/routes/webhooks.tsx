@@ -127,30 +127,27 @@ async function handleCustomersDataRequest(shopDomain: string, payload: any) {
         .select('rating, comment, created_at')
         .in('conversation_id', convIds);
 
-      const customerDataPackage = {
-        customer_email: customerEmail,
-        shop: shopDomain,
-        conversations: convs,
-        messages: messages || [],
-        feedback: feedback || [],
-        data_request_date: new Date().toISOString(),
-        retention_policy: 'Data is retained for 90 days from last activity, then anonymized.',
-      };
+      // SECURITY: Do NOT store the full data package (containing PII) in the database.
+      // Only log summary stats. The merchant must contact support to receive the data.
+      const convCount = convs.length;
+      const msgCount = (messages || []).length;
+      const fbCount = (feedback || []).length;
 
-      console.log(`[GDPR] 📦 Customer data package prepared for ${shopDomain}: ${convs.length} conversations, ${(messages || []).length} messages, ${(feedback || []).length} feedback`);
+      console.log(`[GDPR] 📦 Customer data package prepared for ${shopDomain}: ${convCount} conversations, ${msgCount} messages, ${fbCount} feedback`);
 
+      // Log the request with metadata summary only (no PII in metadata)
       await supabase.from('wismo_messages').insert({
         conversation_id: convIds[0],
         role: 'system',
-        content: `GDPR data request received for customer at ${shopDomain}. Data package contains ${convs.length} conversations, ${(messages || []).length} messages, ${(feedback || []).length} feedback items. Will be provided within 30 days. Contact haimozhouqiu@outlook.com to request the data package.`,
+        content: `GDPR data request received for customer at ${shopDomain}. Data package contains ${convCount} conversations, ${msgCount} messages, ${fbCount} feedback items. Will be provided within 30 days. Contact haimozhouqiu@outlook.com to request the data package.`,
         intent: 'gdpr_data_request',
         metadata: {
           data_request: true,
-          conv_count: convs.length,
-          msg_count: (messages || []).length,
-          fb_count: (feedback || []).length,
+          conv_count: convCount,
+          msg_count: msgCount,
+          fb_count: fbCount,
           requested_at: new Date().toISOString(),
-          data_package: customerDataPackage,
+          // Full data package NOT stored in DB for security — only in logs
         },
       }).catch(() => {
         console.log('[GDPR] Data request logged (could not insert system message)');
