@@ -4,6 +4,7 @@
   Merchants can enable/disable it from Theme Editor → App Embeds.
 {% endcomment %}
 
+{% if block.settings.enable_wismo_ai %}
 <div 
   id="wismo-chat-root" 
   data-shop="{{ shop.permanent_domain }}"
@@ -12,7 +13,6 @@
   data-widget-config='{"shop":"{{ shop.permanent_domain }}","locale":"{{ request.locale.iso_code }}","color":"{{ block.settings.primary_color }}","position":"{{ block.settings.widget_position }}","enabled":"{{ block.settings.enable_wismo_ai }}"}'
 ></div>
 
-{% if block.settings.enable_wismo_ai %}
 <script>
   (function() {
     var shopDomain = '{{ shop.permanent_domain }}';
