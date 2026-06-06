@@ -14,16 +14,6 @@ export default function PrivacyPage() {
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Controller</h2>
       <p>Haimo Tech (&quot;we&quot;, &quot;our&quot;, or &quot;the App&quot;) operates WISMO AI, an AI-powered order tracking chatbot for Shopify stores. For questions about this policy, contact us at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>.</p>
 
-      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>EU Representative (GDPR Article 27)</h2>
-      <p>As a controller not established in the European Union that processes personal data of EU data subjects, we have designated an EU Representative pursuant to Article 27 of the GDPR. EU data subjects and supervisory authorities may contact our EU Representative regarding GDPR matters:</p>
-      <div style={{ background: '#f0fdf4', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #bbf7d0' }}>
-        <p><strong>EU Representative:</strong> PrivacyBridge EU Representation Services B.V.<br />
-        <strong>Address:</strong> Keizersgracht 520, 1017 EK Amsterdam, Netherlands<br />
-        <strong>Email:</strong> <a href="mailto:eurep@privacybridge.eu" style={{ color: '#2563eb' }}>eurep@privacybridge.eu</a><br />
-        <strong>Scope:</strong> All matters related to the processing of personal data of EU data subjects by WISMO AI</p>
-      </div>
-      <p style={{ fontSize: '13px', color: '#666' }}>Note: Our EU Representative acts as a contact point for data subjects and supervisory authorities. They do not assume liability for our data processing activities (GDPR Article 27(4)).</p>
-
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Age Restriction</h2>
       <p>Our services are not intended for individuals under the age of 16 (or the applicable age of consent in your jurisdiction). We do not knowingly collect personal information from children. If you believe we have collected information from a child under the applicable age, please contact us immediately at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>, and we will take steps to delete such information.</p>
 
