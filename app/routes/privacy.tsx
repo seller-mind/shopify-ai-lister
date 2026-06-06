@@ -287,6 +287,11 @@ export default function PrivacyPage() {
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Geographic Restrictions</h2>
       <p>This App is not available to users in mainland China. By installing and using this App, you confirm that you are not a resident of or accessing the service from the People's Republic of China (excluding Hong Kong, Macau, and Taiwan). This App has not been registered with Chinese regulatory authorities under the Interim Measures for the Management of Generative Artificial Intelligence Services.</p>
+      <p style={{ marginTop: '12px', color: '#666', fontSize: '13px' }}>We implement IP-based geographic blocking (Vercel Geo-Location) to prevent access from mainland China IP addresses. Chinese users accessing this service through VPN or proxy do so at their own risk. We do not intentionally provide services to users located in mainland China, and our compliance with Chinese laws is limited to the extent required for offshore services only.</p>
+
+      <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Chinese AI Service Disclaimer</h2>
+      <p>This App uses DeepSeek's AI model (deepseek-chat), a generative AI service that has completed registration with Chinese regulatory authorities in accordance with the Interim Measures for the Management of Generative Artificial Intelligence Services. DeepSeek is a third-party AI service provider and is responsible for its own compliance with Chinese laws and regulations.</p>
+      <p style={{ marginTop: '12px', color: '#666', fontSize: '13px' }}>This App operates as an offshore service provider and does not offer services to users located in mainland China. Our use of DeepSeek's API is for the purpose of providing customer service automation to international Shopify merchants. We do not control DeepSeek's model training, data processing, or content generation policies. For information about DeepSeek's compliance practices, please refer to DeepSeek's privacy policy and terms of service.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Disclaimer</h2>
       <div style={{ background: '#fff7ed', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #fed7aa' }}>

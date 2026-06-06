@@ -31,7 +31,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const payload = JSON.parse(body);
     const customerEmail = payload.customer?.email;
     const customerId = payload.customer?.id;
-    console.log(`[GDPR] Customer data request: shop_id=${payload.shop_id}, customer_id=${customerId}, email=${customerEmail}`);
+    console.log(`[GDPR] Customer data request: shop_id=${payload.shop_id}, customer_id=${customerId}`);
 
     // Gather all data we hold for this customer
     if (shopDomain && customerEmail) {
@@ -70,7 +70,7 @@ export async function action({ request }: ActionFunctionArgs) {
           retention_policy: 'Data is retained for 90 days from last activity, then anonymized.',
         };
 
-        console.log(`[GDPR] 📦 Customer data package prepared for ${customerEmail} at ${shopDomain}:`);
+        console.log(`[GDPR] 📦 Customer data package prepared for customer at ${shopDomain}:`);
         console.log(`[GDPR]    - ${convs.length} conversation(s)`);
         console.log(`[GDPR]    - ${(messages || []).length} message(s)`);
         console.log(`[GDPR]    - ${(feedback || []).length} feedback item(s)`);
@@ -80,7 +80,7 @@ export async function action({ request }: ActionFunctionArgs) {
         await supabase.from('wismo_messages').insert({
           conversation_id: convIds[0], // Use first conversation as reference
           role: 'system',
-          content: `GDPR data request received for ${customerEmail}. Data package contains ${convs.length} conversations, ${(messages || []).length} messages, ${(feedback || []).length} feedback items. Will be provided within 30 days.`,
+          content: `GDPR data request received. Data package contains ${convs.length} conversations, ${(messages || []).length} messages, ${(feedback || []).length} feedback items. Will be provided within 30 days.`,
           intent: 'gdpr_data_request',
           metadata: { customer_data_package: customerDataPackage },
         }).catch(() => {
@@ -88,7 +88,7 @@ export async function action({ request }: ActionFunctionArgs) {
           console.log('[GDPR] Data request logged (could not insert system message)');
         });
       } else {
-        console.log(`[GDPR] No data found for customer ${customerEmail} at ${shopDomain}`);
+        console.log(`[GDPR] No data found for requested customer at ${shopDomain}`);
       }
     }
   } catch (e) {

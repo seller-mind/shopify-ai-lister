@@ -71,7 +71,9 @@ export default function TermsPage() {
       <div style={{ background: '#fef2f2', padding: '16px', borderRadius: '8px', margin: '16px 0', border: '1px solid #fecaca' }}>
         <p><strong>Important:</strong> This App is not available to users in mainland China, the Hong Kong Special Administrative Region, the Macau Special Administrative Region, or Taiwan. By installing and using this App, you represent and warrant that you are not located in, and do not reside in, any of these regions.</p>
         <p style={{ marginTop: '8px' }}>This App has not been registered or filed with Chinese regulatory authorities under the Interim Measures for the Management of Generative Artificial Intelligence Services and is not intended for use within mainland China.</p>
+        <p style={{ marginTop: '8px', color: '#666', fontSize: '13px' }}>We implement IP-based geographic blocking to prevent access from mainland China. Chinese users accessing this service through VPN or proxy do so at their own risk and in potential violation of Chinese law. We are not liable for any consequences arising from such unauthorized access.</p>
       </div>
+      <p style={{ marginTop: '12px' }}>This App uses DeepSeek (deepseek-chat), a generative AI model that has completed registration with Chinese regulatory authorities. DeepSeek is a third-party service provider and is solely responsible for its compliance with Chinese laws. We operate as an offshore service provider and do not offer services to users in mainland China. Our use of DeepSeek's API is for international customer service automation only.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>8. Billing, Refunds, and EU Consumer Rights</h2>
       <p>Usage of the App beyond the free tier is billed through Shopify's billing system. By subscribing:</p>
