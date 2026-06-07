@@ -65,6 +65,7 @@ interface OrderCard {
   estimatedDelivery?: string;
   timeline: TimelineStep[];
   daysAgo?: number;
+  deliveryCountdown?: string;
 }
 
 interface ChatResponse {
@@ -187,6 +188,14 @@ export function detectIntent(
   const delayWords = ['delay', 'late', 'taking long', 'overdue', 'behind schedule',
     '延迟', '迟了', '慢', 'retraso', 'retard', 'Verspätung', '遅延', '지연'];
   if (delayWords.some(w => lower.includes(w))) return { intent: 'wismo', scenario: 'delay' };
+
+  const addressWords = ['change address', 'update address', 'wrong address', 'new address', 'shipping address',
+    '改地址', '换地址', '地址错了', '変更住所', 'cambiar dirección', 'changer adresse', 'Adresse ändern'];
+  if (addressWords.some(w => lower.includes(w))) return { intent: 'wismo', scenario: 'address' };
+
+  const cancelWords = ['cancel order', 'cancel my order', 'stop order', 'cancel it',
+    '取消订单', '取消', 'キャンセル', 'cancelar pedido', 'annuler commande', 'stornieren'];
+  if (cancelWords.some(w => lower.includes(w))) return { intent: 'wismo', scenario: 'cancel' };
 
   // 4. WISMO keywords (broad but accurate, 6+ languages)
   const wismoWords = [
@@ -564,6 +573,35 @@ function buildOrderCard(order: OrderInfo): OrderCard {
   // Use smart estimated delivery if Shopify doesn't provide one
   const effectiveEstDelivery = order.estimatedDelivery || (calculateEstimatedDelivery(order)?.toISOString()) || null;
 
+  // Delivery countdown: human-readable relative time
+  let deliveryCountdown: string | undefined;
+  if (effectiveEstDelivery) {
+    const estDate = new Date(effectiveEstDelivery);
+    const now = new Date();
+    const diffMs = estDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / 86400000);
+
+    if (order.fulfillmentStatus === 'FULFILLED' || order.fulfillmentStatus === 'PARTIALLY_FULFILLED') {
+      if (diffDays <= 0) {
+        deliveryCountdown = 'Arriving today';
+      } else if (diffDays === 1) {
+        deliveryCountdown = 'Arrives tomorrow';
+      } else if (diffDays <= 7) {
+        deliveryCountdown = `Arrives in ${diffDays} days`;
+      } else {
+        deliveryCountdown = `Arrives in ${Math.ceil(diffDays / 7)} weeks`;
+      }
+    } else if (order.fulfillmentStatus === 'UNFULFILLED' || order.fulfillmentStatus === 'PENDING') {
+      if (diffDays <= 0) {
+        deliveryCountdown = 'Should ship soon';
+      } else if (diffDays <= 2) {
+        deliveryCountdown = 'Ships within 1-2 days';
+      } else {
+        deliveryCountdown = `Est. ship in ${diffDays} days`;
+      }
+    }
+  }
+
   return {
     orderNumber: order.orderNumber,
     status: order.fulfillmentStatus || 'UNKNOWN',
@@ -575,6 +613,8 @@ function buildOrderCard(order: OrderInfo): OrderCard {
     trackingUrl: order.trackingUrl || undefined,
     estimatedDelivery: effectiveEstDelivery
       ? new Date(effectiveEstDelivery).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+      : undefined,
+    deliveryCountdown,
       : undefined,
     timeline: buildTimeline(order),
     daysAgo,
@@ -629,6 +669,22 @@ export async function generateResponse(
         intent: 'wismo',
         quickReplies: ['Track my order', context.settings.returnPolicy ? 'Return policy' : 'Talk to a human'].filter(Boolean),
         detectedLanguage: lang,
+    }
+    if (scenario === 'address' || intent.scenario === 'address') {
+      return {
+        reply: t(lang, 'address_no_order'),
+        intent: 'wismo',
+        quickReplies: ['Track order', 'Talk to human'],
+        detectedLanguage: lang,
+      };
+    }
+    if (scenario === 'cancel' || intent.scenario === 'cancel') {
+      return {
+        reply: t(lang, 'cancel_no_order'),
+        intent: 'wismo',
+        quickReplies: ['Track order', 'Talk to human'],
+        detectedLanguage: lang,
+      };
       };
     }
 
@@ -703,6 +759,11 @@ function t(lang: string, key: string, ...args: string[]): string {
       lost_note: `\n\nI'd recommend contacting the carrier first. If they can't help, I can connect you with support.`,
       multiple_orders: `Found **{0}** orders:\n\n`,
       order_not_found: `Couldn't find that order. Check the number? Usually like **#1001**. Or try your email.`,
+      address_note: ,      cancel_note: ,
+      address_note: `\n\n**To change the shipping address**, please contact our support team — they can update it if the order has not shipped yet.`,
+      cancel_note: `\n\n**To cancel**, please contact our support team immediately — cancellation is only possible before shipping.`,
+      address_no_order: `I can help update a shipping address. Share your order number first.`,
+      cancel_no_order: `I can help with cancellation. Share your order number first.`,
     },
     zh: {
       ask_order_info: `请输入订单号（如#1001）或下单邮箱，我来查询。`,
@@ -710,6 +771,8 @@ function t(lang: string, key: string, ...args: string[]): string {
       customs_no_order: `海关清关通常需要3-7个工作日。请提供订单号，我帮您查看具体状态。`,
       lost_no_order: `很抱歉！请提供订单号，我帮您查看物流详情。`,
       return_no_order: `我可以帮您处理**{0}**的退货。请提供订单号，我来查看退货选项。`,
+      address_no_order: `我可以帮您修改收货地址。请先提供订单号。`,
+      cancel_no_order: `我可以帮您处理取消订单。请先提供订单号。`,
     },
     es: {
       ask_order_info: `Comparte tu número de pedido (como #1001) o tu correo y te ayudo.`,
@@ -717,6 +780,8 @@ function t(lang: string, key: string, ...args: string[]): string {
       customs_no_order: `El despacho de aduanas suele tardar 3-7 días hábiles. Comparte tu número de pedido y verifico el estado.`,
       lost_no_order: `Lamento eso. Comparte tu número de pedido y reviso el seguimiento.`,
       return_no_order: `Puedo ayudarte con devoluciones de **{0}**. Comparte tu número de pedido y reviso tus opciones.`,
+      address_no_order: `Puedo ayudarte a actualizar la dirección de envío. Comparte tu número de pedido.`,
+      cancel_no_order: `Puedo ayudarte con la cancelación. Comparte tu número de pedido.`,
     },
     fr: {
       ask_order_info: `Partagez votre numéro de commande (comme #1001) ou votre e-mail et je vous aide.`,
@@ -724,6 +789,8 @@ function t(lang: string, key: string, ...args: string[]): string {
       customs_no_order: `Le dédouanement prend généralement 3-7 jours ouvrables. Partagez votre numéro de commande pour vérifier.`,
       lost_no_order: `Désolé pour cela. Partagez votre numéro de commande et je vérifie le suivi.`,
       return_no_order: `Je peux vous aider avec les retours de **{0}**. Partagez votre numéro de commande.`,
+      address_no_order: `Je peux vous aider à modifier l'adresse de livraison. Partagez votre numéro de commande.`,
+      cancel_no_order: `Je peux vous aider avec l'annulation. Partagez votre numéro de commande.`,
     },
     de: {
       ask_order_info: `Teilen Sie Ihre Bestellnummer (wie #1001) oder E-Mail mit und ich helfe.`,
@@ -731,6 +798,8 @@ function t(lang: string, key: string, ...args: string[]): string {
       customs_no_order: `Die Zollabfertigung dauert meist 3-7 Werktage. Bestellnummer teilen und ich prüfe den Status.`,
       lost_no_order: `Das tut mir leid. Teilen Sie Ihre Bestellnummer und ich prüfe die Sendungsverfolgung.`,
       return_no_order: `Ich helfe bei Rücksendungen von **{0}**. Teilen Sie Ihre Bestellnummer.`,
+      address_no_order: `Ich kann bei Adressänderungen helfen. Teilen Sie Ihre Bestellnummer.`,
+      cancel_no_order: `Ich kann bei Stornierungen helfen. Teilen Sie Ihre Bestellnummer.`,
     },
     ja: {
       ask_order_info: `注文番号（#1001など）またはご注文時のメールアドレスをお知らせください。`,
@@ -738,6 +807,8 @@ function t(lang: string, key: string, ...args: string[]): string {
       customs_no_order: `通関手続きには3〜7営業日かかる場合があります。注文番号をお知らせいただければ、ステータスを確認します。`,
       lost_no_order: `申し訳ございません。注文番号をお知らせいただければ、追跡状況を確認いたします。`,
       return_no_order: `**{0}**の返品についてご案内いたします。注文番号をお知らせください。`,
+      address_no_order: `お届け先の変更についてご案内いたします。注文番号をお知らせください。`,
+      cancel_no_order: `キャンセルについてご案内いたします。注文番号をお知らせください。`,
     },
     ko: {
       ask_order_info: `주문 번호(예: #1001) 또는 주문 시 사용한 이메일을 알려주세요.`,
@@ -745,6 +816,8 @@ function t(lang: string, key: string, ...args: string[]): string {
       customs_no_order: `통관은 3~7영업일이 소요될 수 있습니다. 주문 번호를 알려주시면 상태를 확인해 드리겠습니다.`,
       lost_no_order: `죄송합니다. 주문 번호를 알려주시면 배송 추적을 확인해 드리겠습니다.`,
       return_no_order: `**{0}**의 반품을 도와드리겠습니다. 주문 번호를 알려주세요.`,
+      address_no_order: `배송지 변경을 도와드리겠습니다. 주문 번호를 알려주세요.`,
+      cancel_no_order: `주문 취소를 도와드리겠습니다. 주문 번호를 알려주세요.`,
     },
   };
 
@@ -799,6 +872,7 @@ function fmtOne(order: OrderInfo, settings: WismoSettings, lang: string, scenari
     r += t(lang, 'delay_note');
   }
   if (scenario === 'lost') r += t(lang, 'lost_note');
+  if (scenario === 'address') r += t(lang, 'address_note');  if (scenario === 'cancel') r += t(lang, 'cancel_note');
 
   return r.trim();
 }

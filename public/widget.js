@@ -1,5 +1,5 @@
 /**
- * WISMO AI - Storefront Chat Widget v7 (Premium)
+ * WISMO AI - Storefront Chat Widget v8 ("World's Best" Polish)
  * 
  * "The World's Best WISMO Chatbot" - Global Premium SaaS Polish
  * ====================================================
@@ -13,6 +13,15 @@
  * ✓ Dark Mode: smooth auto-detect with refined palette
  * ✓ Feedback: thumbs up/down with thank-you animation
  * ✓ Mobile-first: full-screen overlay, safe area, touch-optimized
+ * 
+ * v8 "World's Best" Polish:
+ * - Bubble tooltip with brand name
+ * - Sparkle animation on greeting icon
+ * - Delivery countdown & progress dates
+ * - Enhanced not-found experience
+ * - Skeleton loading states
+ * - Improved quick replies
+ * - Premium visual refinements
  */
 
 // ─── HTML Escaping (XSS Prevention) ────────────────────────────────────
@@ -105,6 +114,9 @@ function renderShell() {
   el.className = 'w' + (state.darkMode ? ' dark' : '');
   el.innerHTML = BUBBLE_HTML + WINDOW_HTML;
   shadow.appendChild(el);
+  
+  // Setup tooltip for bubble button
+  setupBubbleTooltip(shadow);
 }
 
 function removeShell() {
@@ -126,6 +138,45 @@ function applyConfig(c) {
   // Update header with brand name (or keep default "Order Tracking")
   var title = shadow.querySelector('.wt');
   if (title && c.brandName) title.textContent = c.brandName;
+  // Update tooltip with brand name
+  var tooltip = shadow.querySelector('.wb-tooltip');
+  if (tooltip) {
+    tooltip.textContent = c.brandName ? 'Track with ' + c.brandName : 'Track your order';
+  }
+}
+
+// ─── Bubble Tooltip Setup ──────────────────────────────────────────────
+function setupBubbleTooltip(shadow) {
+  var bubble = shadow.querySelector('.wb');
+  var tooltip = shadow.querySelector('.wb-tooltip');
+  if (!bubble || !tooltip) return;
+  
+  var tooltipTimeout;
+  var isMobile = window.matchMedia('(max-width: 480px)').matches;
+  
+  // Desktop: show on hover with delay
+  if (!isMobile) {
+    bubble.addEventListener('mouseenter', function() {
+      tooltipTimeout = setTimeout(function() {
+        tooltip.classList.add('wb-tooltip-show');
+      }, 300);
+    });
+    bubble.addEventListener('mouseleave', function() {
+      clearTimeout(tooltipTimeout);
+      tooltip.classList.remove('wb-tooltip-show');
+    });
+  } else {
+    // Mobile: show briefly on first appearance, then hide
+    var hasShownMobileTooltip = false;
+    bubble.addEventListener('click', function() {
+      if (hasShownMobileTooltip) return;
+      hasShownMobileTooltip = true;
+      tooltip.classList.add('wb-tooltip-show');
+      setTimeout(function() {
+        tooltip.classList.remove('wb-tooltip-show');
+      }, 1500);
+    });
+  }
 }
 
 // ─── HTML ─────────────────────────────────────────────────────────────
@@ -137,6 +188,7 @@ var BUBBLE_HTML = [
   '    <circle cx="5.5" cy="18.5" r="2.5"/>',
   '    <circle cx="18.5" cy="18.5" r="2.5"/>',
   '  </svg>',
+  '  <span class="wb-tooltip">Track your order</span>',
   '</button>',
 ].join('');
 
@@ -165,7 +217,7 @@ var WINDOW_HTML = [
   '    <input type="text" class="win" placeholder="Order # or question..." autocomplete="off" aria-label="Type your order number or question" />',
   '    <button class="wsn" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>',
   '  </div>',
-  '  <div class="wft">Powered by AI <span class='wft-divider'></span><a href="' + API + '/privacy" target="_blank" rel="noopener">Privacy</a></div>',
+  '  <div class="wft">Powered by AI <span class="wft-divider"></span><a href="' + API + '/privacy" target="_blank" rel="noopener" class="wft-privacy">Privacy</a></div>',
   '</div>',
 ].join('');
 
@@ -223,8 +275,9 @@ var WINDOW_HTML = [
       hideQR();
       addMsg('user', text);
       state.typing = true;
-      var typing = addTyping();
-
+      
+      // Show skeleton loading instead of typing dots
+      var skeleton = addSkeleton();
       // Mobile: scroll to bottom after user sends
       setTimeout(function() { msgs.scrollTop = msgs.scrollHeight; }, 50);
 
@@ -235,9 +288,13 @@ var WINDOW_HTML = [
       })
       .then(function(r) { return r.json(); })
       .then(function(d) {
-        typing.remove();
+        skeleton.remove();
         state.typing = false;
-        if (d.error) { addMsg('bot', 'Something went wrong. Please try again.'); return; }
+        if (d.error) { 
+          addMsg('bot', 'Something went wrong. Please try again.'); 
+          showQR(['Try again', 'Talk to a human']);
+          return; 
+        }
         state.convId = d.conversationId;
         saveConv();
         if (d.language) state.lang = d.language;
@@ -250,18 +307,22 @@ var WINDOW_HTML = [
 
         if (d.orderCard) {
           addOrderCard(d.orderCard);
+        } else if (d.notFound) {
+          showNotFoundCard();
         } else {
           addMsg('bot', d.reply);
         }
 
+        // Smart quick replies based on context
         if (d.quickReplies && d.quickReplies.length) {
           setTimeout(function() { showQR(d.quickReplies); }, 150);
         }
       })
       .catch(function() {
-        typing.remove();
+        skeleton.remove();
         state.typing = false;
         addMsg('bot', 'Connection error. Please try again.');
+        showQR(['Try again', 'Talk to a human']);
       });
     };
 
@@ -291,18 +352,20 @@ var WINDOW_HTML = [
     // ─── Greeting with inline order input ──────────────────
     function showGreeting() {
       var greetingText = state.config && state.config.greeting ? state.config.greeting : 'Track your order';
+      var brandName = state.config && state.config.brandName ? state.config.brandName : '';
 
       // SINGLE card: greeting text embedded in the input card — zero extra steps
       var card = document.createElement('div');
       card.className = 'mm m-bot';
       var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
       card.innerHTML = avatar + '<div class="mc"><div class="oi-card">' +
-        '<div class="oi-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px;color:var(--ac)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(greetingText) + '</div>' +
+        '<div class="oi-label"><svg class="oi-pin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/><path class="oi-sparkle-1" d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>' + esc(greetingText) + '</div>' +
         '<div class="oi-row">' +
         '<input type="text" class="oi-input" placeholder="#1001 or email" autocomplete="off" />' +
-        '<button class="oi-btn">Track</button>' +
+        '<button class="oi-btn">Track <span class="oi-arrow">→</span></button>' +
         '</div>' +
-        '<div class="oi-hint">Order number or email address</div>' +
+        '<div class="oi-hint">We\'ll find it instantly</div>' +
+        '<div class="oi-example">e.g. #1001 or you@email.com</div>' +
         '</div></div>';
       msgs.appendChild(card);
       msgs.scrollTop = msgs.scrollHeight;
@@ -330,9 +393,9 @@ var WINDOW_HTML = [
         if (e.key === 'Enter') { e.preventDefault(); trackOrder(); }
       });
 
-      // Quick reply — simple secondary option
+      // Quick reply — natural phrasing
       setTimeout(function() {
-        showQR(['Ask a question']);
+        showQR(['I have a question']);
       }, 300);
     }
 
@@ -379,6 +442,72 @@ var WINDOW_HTML = [
       }
     }
 
+    // ─── Skeleton Loading ────────────────────────────────────
+    function addSkeleton() {
+      var d = document.createElement('div');
+      d.className = 'mm m-bot skeleton-card';
+      d.innerHTML = '<div class="ma-skel"></div><div class="mc-skel"><div class="skel-order"></div><div class="skel-progress"></div><div class="skel-track"></div></div>';
+      msgs.appendChild(d);
+      msgs.scrollTop = msgs.scrollHeight;
+      return d;
+    }
+
+    // ─── Not Found Card ─────────────────────────────────────
+    function showNotFoundCard() {
+      var msgId = 'msg-' + (++state.lastMsgId);
+      var d = document.createElement('div');
+      d.className = 'mm m-bot';
+      d.dataset.msgId = msgId;
+
+      var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
+      
+      var cardHtml = '<div class="nf-card">';
+      cardHtml += '<div class="nf-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6"/></svg></div>';
+      cardHtml += '<div class="nf-title">Order not found</div>';
+      cardHtml += '<ul class="nf-tips">';
+      cardHtml += '<li>Check your order number</li>';
+      cardHtml += '<li>Try your email instead</li>';
+      cardHtml += '<li>Look for confirmation email</li>';
+      cardHtml += '</ul>';
+      cardHtml += '<div class="nf-retry">';
+      cardHtml += '<input type="text" class="nf-input" placeholder="Try again..." autocomplete="off" />';
+      cardHtml += '<button class="nf-btn">Go</button>';
+      cardHtml += '</div>';
+      cardHtml += '</div>';
+
+      d.innerHTML = avatar + '<div class="mc">' + cardHtml;
+
+      var timeEl = document.createElement('div');
+      timeEl.className = 'mts';
+      timeEl.textContent = formatTime(new Date());
+      d.querySelector('.mc').appendChild(timeEl);
+
+      msgs.appendChild(d);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      // Wire retry functionality
+      var nfInput = d.querySelector('.nf-input');
+      var nfBtn = d.querySelector('.nf-btn');
+      
+      var retry = function() {
+        var val = nfInput.value.trim();
+        if (!val) return;
+        d.style.opacity = '0';
+        d.style.transform = 'translateY(10px)';
+        setTimeout(function() { d.remove(); send(val); }, 200);
+      };
+      
+      nfBtn.addEventListener('click', retry);
+      nfInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); retry(); }
+      });
+      
+      setTimeout(function() { nfInput.focus(); }, 100);
+      
+      // Quick replies for not found
+      showQR(['Try my email', 'Check order # again', 'Talk to a human']);
+    }
+
     // ─── Order Card ──────────────────────────────────────────
     function addOrderCard(card) {
       var msgId = 'msg-' + (++state.lastMsgId);
@@ -387,26 +516,26 @@ var WINDOW_HTML = [
       d.dataset.msgId = msgId;
 
       var statusColor = getStatusColor(card.status);
-      var statusIcon = getStatusIcon(card.status);
+      var isActive = ['PROCESSING', 'PARTIALLY_FULFILLED', 'FULFILLED'].indexOf(card.status) > -1;
 
       var cardHtml = '<div class="oc">';
       // Header
       cardHtml += '<div class="oc-h">';
       cardHtml += '<div class="oc-ord"><span class="oc-num">' + esc(card.orderNumber) + '</span></div>';
-      cardHtml += '<span class="oc-status" style="background:' + statusColor.bg + ';color:' + statusColor.fg + '">' + esc(card.statusLabel) + '</span>';
+      cardHtml += '<span class="oc-status' + (isActive ? ' oc-status-pulse' : '') + '" style="background:' + statusColor.bg + ';color:' + statusColor.fg + '">' + esc(card.statusLabel) + '</span>';
       cardHtml += '</div>';
 
       // Items with optional images
       if (card.items && card.items.length) {
         cardHtml += '<div class="oc-items">';
         card.items.forEach(function(item, idx) {
-          var img = card.itemImages && card.itemImages[idx] ? '<img src="' + escAttr(card.itemImages[idx]) + '" class="oc-item-img" />' : '';
+          var img = card.itemImages && card.itemImages[idx] ? '<img src="' + escAttr(card.itemImages[idx]) + '" class="oc-item-img" />' : '<div class="oc-item-placeholder"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg></div>';
           cardHtml += '<span class="oc-item">' + img + esc(item) + '</span>';
         });
         cardHtml += '</div>';
       }
 
-      // Horizontal Progress Bar - v3.0
+      // Horizontal Progress Bar with dates
       if (card.timeline && card.timeline.length) {
         cardHtml += '<div class="oc-progress">';
         
@@ -419,10 +548,19 @@ var WINDOW_HTML = [
         stages.forEach(function(stage, idx) {
           var isDone = card.timeline.some(function(t) { return t.completed && (t.label.toLowerCase().includes(stage.key) || t.status === stage.key); });
           var isActive = card.timeline.some(function(t) { return t.current && (t.label.toLowerCase().includes(stage.key) || t.status === stage.key); });
+          var stageDate = null;
+          card.timeline.forEach(function(t) {
+            if (t.label.toLowerCase().includes(stage.key) || t.status === stage.key) {
+              stageDate = t.date || t.timestamp;
+            }
+          });
           var cls = 'op-stage' + (isDone ? ' done' : '') + (isActive ? ' active' : '');
           cardHtml += '<div class="' + cls + '">';
           cardHtml += '<div class="op-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + stage.icon + '</svg></div>';
           cardHtml += '<div class="op-label">' + stage.label + '</div>';
+          if (stageDate) {
+            cardHtml += '<div class="op-date">' + formatDate(stageDate) + '</div>';
+          }
           if (idx < stages.length - 1) cardHtml += '<div class="op-line' + (isDone ? ' done' : '') + '"></div>';
           cardHtml += '</div>';
         });
@@ -440,9 +578,10 @@ var WINDOW_HTML = [
         cardHtml += '</div>';
       }
 
-      // Estimated delivery
+      // Delivery Countdown
       if (card.estimatedDelivery) {
-        cardHtml += '<div class="oc-eta">Est. delivery: <b>' + esc(card.estimatedDelivery) + '</b></div>';
+        var countdownText = getDeliveryCountdown(card.estimatedDelivery);
+        cardHtml += '<div class="oc-countdown">' + countdownText + '</div>';
       }
 
       cardHtml += '</div>';
@@ -469,6 +608,9 @@ var WINDOW_HTML = [
 
       msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
+
+      // Smart quick replies after finding order
+      showQR(['Track another order', 'When will it arrive?', 'Need more help']);
 
       setTimeout(function() {
         var fbEl = d.querySelector('.fb');
@@ -497,16 +639,6 @@ var WINDOW_HTML = [
       }).catch(function() {});
     }
 
-    function addTyping() {
-      var d = document.createElement('div');
-      d.className = 'mm m-bot typing';
-      var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
-      d.innerHTML = avatar + '<div class="mc"><div class="dots"><i></i><i></i><i></i></div></div>';
-      msgs.appendChild(d);
-      msgs.scrollTop = msgs.scrollHeight;
-      return d;
-    }
-
     function showQR(items) {
       qr.innerHTML = '';
       items.forEach(function(t, i) {
@@ -533,6 +665,43 @@ function formatTime(d) {
   return h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  try {
+    var d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[d.getMonth()] + ' ' + d.getDate();
+  } catch(e) {
+    return '';
+  }
+}
+
+function getDeliveryCountdown(estDelivery) {
+  if (!estDelivery) return '';
+  try {
+    var d = new Date(estDelivery);
+    if (isNaN(d.getTime())) return 'Est. delivery: ' + estDelivery;
+    
+    var now = new Date();
+    var diff = d.getTime() - now.getTime();
+    var days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    
+    if (diff < 0) {
+      var pastDays = Math.abs(days);
+      if (pastDays === 0) return 'Delivered today!';
+      if (pastDays === 1) return 'Delivered yesterday';
+      return 'Delivered ' + pastDays + ' days ago';
+    } else {
+      if (days === 0) return 'Arriving today!';
+      if (days === 1) return 'Arrives tomorrow';
+      return 'Arrives in ' + days + ' days';
+    }
+  } catch(e) {
+    return 'Est. delivery: ' + estDelivery;
+  }
+}
+
 function getStatusColor(status) {
   switch (status) {
     case 'FULFILLED': return { bg: '#dcfce7', fg: '#166534' };
@@ -540,18 +709,8 @@ function getStatusColor(status) {
     case 'PARTIALLY_FULFILLED': return { bg: '#ffedd5', fg: '#9a3412' };
     case 'RESTOCKED': return { bg: '#fce4ec', fg: '#c62828' };
     case 'PENDING': return { bg: '#fef9c3', fg: '#854d0e' };
+    case 'PROCESSING': return { bg: '#e0e7ff', fg: '#3730a3' };
     default: return { bg: '#f1f2f3', fg: '#6d7175' };
-  }
-}
-
-function getStatusIcon(status) {
-  switch (status) {
-    case 'FULFILLED': return '';
-    case 'UNFULFILLED': return '';
-    case 'PARTIALLY_FULFILLED': return '';
-    case 'RESTOCKED': return '';
-    case 'PENDING': return '';
-    default: return '';
   }
 }
 
@@ -618,8 +777,8 @@ function CSS() {
 .w.dark .oc-h { border-color: var(--border-color); }
 .w.dark .oc-track { border-color: var(--border-color); }
 .w.dark .oc-carrier { color: var(--text-secondary); }
-.w.dark .oc-eta { color: var(--text-secondary); }
-.w.dark .oc-eta b { color: var(--text-primary); }
+.w.dark .oc-countdown { color: var(--text-secondary); }
+.w.dark .oc-countdown b { color: var(--text-primary); }
 .w.dark .tl-label { color: var(--text-primary); }
 .w.dark .tl-date { color: var(--text-tertiary); }
 .w.dark .tl-line { background: #38383a; }
@@ -630,24 +789,40 @@ function CSS() {
 .w.dark .oi-input { background: #2c2c2e; border-color: #38383a; color: var(--text-primary); }
 .w.dark .oi-input::placeholder { color: var(--text-tertiary); }
 .w.dark .oi-hint { color: var(--text-tertiary); }
+.w.dark .oi-example { color: var(--text-tertiary); }
 .w.dark .fb button { color: var(--text-tertiary); }
 .w.dark .mts { color: var(--text-tertiary); }
+.w.dark .skeleton-card { background: var(--bg-card); }
+.w.dark .skel-order, .w.dark .skel-progress, .w.dark .skel-track { background: #2c2c2e; }
+.w.dark .ma-skel { background: #2c2c2e; }
+.w.dark .nf-card { background: var(--bg-card); border-color: #38383a; }
+.w.dark .nf-icon { background: rgba(0,128,96,0.15); color: var(--ac); }
+.w.dark .nf-title { color: var(--text-primary); }
+.w.dark .nf-tips li { color: var(--text-secondary); }
+.w.dark .nf-input { background: #2c2c2e; border-color: #38383a; color: var(--text-primary); }
+.w.dark .nf-input::placeholder { color: var(--text-tertiary); }
+.w.dark .oc-item-placeholder { background: #2c2c2e; color: #555; }
 
 .w.left { right: auto; left: 24px; }
 
-/* ─── Bubble ────────────────────────────────────── */
+/* ─── Bubble with Tooltip ────────────────────────────────────── */
 .wb {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: var(--ac);
+  background: linear-gradient(145deg, var(--ac) 0%, #006b4d 100%);
   color: #fff;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,128,96,0.15), 0 8px 24px rgba(0,128,96,0.25), 0 16px 40px rgba(0,128,96,0.15);
+  box-shadow: 
+    0 2px 8px rgba(0,128,96,0.15), 
+    0 8px 24px rgba(0,128,96,0.25), 
+    0 16px 40px rgba(0,128,96,0.15),
+    inset 0 1px 2px rgba(255,255,255,0.25),
+    inset 0 -1px 2px rgba(0,0,0,0.1);
   transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
   outline: none;
   animation: bubbleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
@@ -676,20 +851,68 @@ function CSS() {
   100% { transform: scale(1.5); opacity: 0; }
 }
 
-@keyframes bubbleIn {
-  from { opacity: 0; transform: scale(0.6) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-
-
 .wb:hover {
   transform: scale(1.04) !important;
-  box-shadow: 0 4px 12px rgba(0,128,96,0.2), 0 12px 32px rgba(0,128,96,0.35), 0 20px 48px rgba(0,128,96,0.2);
+  box-shadow: 
+    0 4px 12px rgba(0,128,96,0.2), 
+    0 12px 32px rgba(0,128,96,0.35), 
+    0 20px 48px rgba(0,128,96,0.2),
+    inset 0 1px 3px rgba(255,255,255,0.3),
+    inset 0 -1px 2px rgba(0,0,0,0.15);
   animation: none;
 }
 .wb:hover::before { display: none; }
 .wb:active { transform: scale(0.96) !important; }
+
+/* Bubble Tooltip */
+.wb-tooltip {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1a1a1a;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.wb-tooltip::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-left-color: #1a1a1a;
+}
+
+.wb-tooltip-show {
+  opacity: 1;
+  transform: translateY(-50%) translateX(-4px);
+}
+
+/* Left positioned bubble tooltip */
+.w.left .wb-tooltip {
+  right: auto;
+  left: calc(100% + 12px);
+}
+.w.left .wb-tooltip::after {
+  right: auto;
+  left: -6px;
+  border: 6px solid transparent;
+  border-right-color: #1a1a1a;
+}
+.w.left .wb-tooltip-show {
+  transform: translateY(-50%) translateX(4px);
+}
 
 /* ─── Window ────────────────────────────────────── */
 .ww {
@@ -714,7 +937,7 @@ function CSS() {
   to { opacity: 0; transform: translateY(8px) scale(0.98); }
 }
 
-/* ─── Header ────────────────────────────────────── */
+/* ─── Header with Noise Texture ────────────────────────────────────── */
 .wh {
   background: linear-gradient(135deg, #00785c 0%, #00996b 100%);
   color: #fff;
@@ -726,6 +949,16 @@ function CSS() {
   backdrop-filter: blur(20px);
   position: relative;
   overflow: hidden;
+}
+
+/* Noise texture overlay */
+.wh::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
 }
 
 /* Bottom gradient fade border */
@@ -853,20 +1086,52 @@ function CSS() {
 .mts { font-size: 10px; color: var(--text-tertiary); margin-top: 6px; padding: 0 2px; }
 .m-user .mts { text-align: right; }
 
-/* Typing indicator - 3 bouncing dots with stagger */
-.dots { display: flex; gap: 5px; padding: 6px 0; }
-.dots i {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #b0b0b0;
-  animation: dotBounce 1.0s ease-in-out infinite;
+/* ─── Skeleton Loading ─────────────────────────────── */
+.skeleton-card .ma-skel {
+  width: 30px; height: 30px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: skelShimmer 1.5s infinite;
+  flex-shrink: 0;
 }
-.dots i:nth-child(1) { animation-delay: 0s; }
-.dots i:nth-child(2) { animation-delay: 0.15s; }
-.dots i:nth-child(3) { animation-delay: 0.3s; }
+.mc-skel {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+}
+.skel-order {
+  height: 24px;
+  width: 60%;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: skelShimmer 1.5s infinite;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+.skel-progress {
+  height: 60px;
+  width: 100%;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: skelShimmer 1.5s infinite 0.1s;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.skel-track {
+  height: 32px;
+  width: 80%;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: skelShimmer 1.5s infinite 0.2s;
+  border-radius: 6px;
+}
 
-@keyframes dotBounce {
-  0%, 60%, 100% { transform: translateY(0) scale(0.85); opacity: 0.4; }
-  30% { transform: translateY(-6px) scale(1); opacity: 1; }
+@keyframes skelShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* ─── Inline Order Input Card ─────────────────────── */
@@ -904,7 +1169,7 @@ function CSS() {
   align-items: center;
 }
 
-/* Pin icon bounce animation */
+/* Pin icon with sparkle animation */
 .oi-pin-icon {
   vertical-align: -3px;
   margin-right: 6px;
@@ -916,6 +1181,18 @@ function CSS() {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
 }
+
+/* Sparkle accents on pin */
+.oi-sparkle-1 {
+  animation: sparkle 2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
 .oi-row { display: flex; gap: 8px; }
 .oi-input {
   flex: 1;
@@ -934,14 +1211,21 @@ function CSS() {
   border-color: var(--ac);
   box-shadow: 0 0 0 3px var(--ac-glow), inset 0 1px 2px rgba(0,0,0,0.05);
   background: var(--bg-card);
+  animation: inputBorderGlow 1.5s ease-in-out infinite;
 }
+
+@keyframes inputBorderGlow {
+  0%, 100% { box-shadow: 0 0 0 3px var(--ac-glow), inset 0 1px 2px rgba(0,0,0,0.05); }
+  50% { box-shadow: 0 0 0 4px var(--ac-glow-strong), inset 0 1px 2px rgba(0,0,0,0.05); }
+}
+
 .oi-input::placeholder { color: var(--text-tertiary); font-weight: 500; }
 .oi-btn {
   background: var(--ac);
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 0 24px;
+  padding: 0 20px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -952,21 +1236,110 @@ function CSS() {
   min-height: 46px;
   display: flex;
   align-items: center;
+  gap: 4px;
   letter-spacing: -0.01em;
+}
+.oi-arrow {
+  font-size: 14px;
+  transition: transform 0.15s ease;
+}
+.oi-btn:hover .oi-arrow {
+  transform: translateX(2px);
 }
 .oi-btn:hover { opacity: 0.92; box-shadow: 0 4px 12px rgba(0,128,96,0.35), inset 0 1px 0 rgba(255,255,255,0.2); transform: scale(1.02); }
 .oi-btn:active { transform: scale(0.96); box-shadow: 0 1px 4px rgba(0,128,96,0.2); }
-.oi-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 10px; }
+.oi-hint { font-size: 12px; color: var(--text-secondary); margin-top: 10px; font-weight: 500; }
+.oi-example { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; font-style: italic; }
+
+/* ─── Not Found Card ─────────────────────────────── */
+.nf-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  animation: cardSlide 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+.nf-icon {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: rgba(0,128,96,0.1);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 12px;
+  color: var(--ac);
+}
+.nf-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+.nf-tips {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  text-align: left;
+}
+.nf-tips li {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 6px 0;
+  padding-left: 20px;
+  position: relative;
+}
+.nf-tips li::before {
+  content: "•";
+  position: absolute;
+  left: 8px;
+  color: var(--ac);
+}
+.nf-retry {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.nf-input {
+  flex: 1;
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.nf-input:focus {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 3px var(--ac-glow);
+}
+.nf-input::placeholder { color: var(--text-tertiary); }
+.nf-btn {
+  background: var(--ac);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0,128,96,0.2);
+}
+.nf-btn:hover { opacity: 0.9; transform: scale(1.02); }
+.nf-btn:active { transform: scale(0.98); }
 
 /* ─── Order Card v3 (Horizontal Progress) ─────────── */
 .oc {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-left: 4px solid var(--ac);
+  border-left: 5px solid var(--ac);
   border-radius: var(--radius);
   padding: 18px 20px;
   margin-bottom: 6px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), 0 0 0 1px rgba(0,128,96,0.05);
 }
 .oc-h {
   display: flex;
@@ -979,13 +1352,22 @@ function CSS() {
 .oc-ord { display: flex; align-items: center; gap: 8px; }
 .oc-num { font-weight: 800; font-size: 18px; color: var(--text-primary); letter-spacing: -0.02em; }
 .oc-status {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 20px;
+  padding: 7px 16px;
+  border-radius: 22px;
   letter-spacing: 0.02em;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
+.oc-status-pulse {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  50% { box-shadow: 0 1px 6px rgba(0,0,0,0.12), 0 0 0 3px rgba(0,128,96,0.1); }
+}
+
 .oc-items { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .oc-item {
   font-size: 12px;
@@ -999,8 +1381,17 @@ function CSS() {
   gap: 8px;
 }
 .oc-item-img { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+.oc-item-placeholder {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  background: var(--bg-msg);
+  border: 1px solid var(--border-light);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
 
-/* Horizontal Progress Bar - v3.0 */
+/* Horizontal Progress Bar - v3.0 with dates */
 .oc-progress {
   display: flex;
   align-items: center;
@@ -1037,6 +1428,7 @@ function CSS() {
 .op-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.01em; text-align: center; }
 .op-stage.done .op-label { color: var(--text-secondary); }
 .op-stage.active .op-label { color: var(--ac); font-weight: 700; }
+.op-date { font-size: 10px; color: var(--text-tertiary); text-align: center; margin-top: 2px; }
 .op-line { position: absolute; top: 14px; left: 50%; width: calc(100% + 8px); height: 2px; background: #e5e7eb; z-index: 0; }
 .op-line.done { background: linear-gradient(90deg, var(--ac), rgba(0,128,96,0.4)); }
 .tl-step {
@@ -1099,8 +1491,17 @@ function CSS() {
 }
 .oc-track-btn:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,128,96,0.3); }
 .oc-track-btn:active { transform: scale(0.97); }
-.oc-eta { font-size: 14px; color: var(--text-secondary); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-light); }
-.oc-eta b { color: var(--text-primary); font-weight: 800; font-size: 15px; }
+
+/* Delivery Countdown */
+.oc-countdown {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-light);
+  font-weight: 600;
+}
+.oc-countdown b { color: var(--text-primary); font-weight: 800; font-size: 16px; }
 
 /* ─── Feedback ────────────────────────────────────── */
 .fb { display: flex; gap: 2px; margin-top: 8px; transition: opacity 0.4s; }
@@ -1167,7 +1568,7 @@ function CSS() {
   background: var(--ac);
   color: #fff;
   transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 4px 12px rgba(0,128,96,0.3);
+  box-shadow: 0 4px 12px rgba(0,128,96,0.3), 0 8px 20px rgba(0,0,0,0.08);
   border-color: var(--ac);
 }
 .qb:active { transform: scale(0.96); }
@@ -1198,8 +1599,14 @@ function CSS() {
 .wft-divider { width: 1px; height: 12px; background: #e5e7eb; }
 .w.dark .wft { background: #0f0f11; color: #555; }
 .w.dark .wft-divider { background: #2c2c2e; }
-.wft a { color: var(--ac); text-decoration: none; font-weight: 500; }
-.wft a:hover { text-decoration: underline; }
+.wft a { color: var(--ac); text-decoration: none; font-weight: 600; transition: color 0.15s; }
+.wft a:hover { color: #006b4d; text-decoration: underline; }
+.wft-privacy { 
+  padding: 2px 8px; 
+  background: rgba(0,128,96,0.08); 
+  border-radius: 4px; 
+}
+.w.dark .wft-privacy { background: rgba(0,128,96,0.15); }
 .win {
   flex: 1;
   border: 1.5px solid var(--border-color);
@@ -1217,6 +1624,7 @@ function CSS() {
   border-color: var(--ac);
   box-shadow: 0 0 0 3px var(--ac-glow), inset 0 1px 2px rgba(0,0,0,0.05);
   background: var(--bg-card);
+  animation: inputBorderGlow 1.5s ease-in-out infinite;
 }
 .win::placeholder { color: var(--text-tertiary); }
 .wsn {
@@ -1242,19 +1650,62 @@ function CSS() {
   .ww { width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; bottom: 0; right: 0; }
   .w { bottom: 16px; right: 16px; }
   .w.left { left: 16px; }
-  .wh { padding: 14px 16px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
-  .wi { padding: 10px 14px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
-  .wb { width: 54px; height: 54px; border-radius: 27px; }
+  .wh { 
+    padding: 14px 16px; 
+    padding-top: calc(14px + env(safe-area-inset-top, 0px)); 
+  }
+  .wi { 
+    padding: 10px 14px; 
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); 
+  }
+  
+  /* Mobile bubble: smaller but larger touch target */
+  .wb { 
+    width: 54px; 
+    height: 54px; 
+    padding: 12px; 
+    box-sizing: border-box;
+  }
   .wb svg { width: 24px; height: 24px; }
+  
+  /* Mobile tooltip adjustments */
+  .wb-tooltip {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  
+  /* Mobile greeting card: full width */
+  .oi-card { 
+    padding: 14px 16px; 
+    border-radius: 0;
+    margin: 0 -18px;
+    border-left: none;
+    border-right: none;
+  }
+  
   .oi-btn { padding: 0 16px; }
-  .oi-card { padding: 12px 14px; }
   .mc { max-width: calc(100% - 52px); }
   .mm { max-width: 95%; }
   .wm { padding: 12px 14px; }
   .wq { padding: 0 14px 10px; }
   .oc { padding: 14px 16px; }
+  
   /* Mobile: prevent bounce scroll on iOS */
   .wm { -webkit-overflow-scrolling: auto; overscroll-behavior: contain; }
+  
+  /* Mobile quick replies: slightly larger touch targets */
+  .qb { padding: 10px 16px; font-size: 13px; }
+  
+  /* Mobile not found card: full width */
+  .nf-card {
+    border-radius: 0;
+    margin: 0 -18px;
+    border-left: none;
+    border-right: none;
+  }
+  
+  /* Mobile skeleton */
+  .mc-skel { border-radius: 0; margin: 0 -18px; border-left: none; border-right: none; }
 }
 ';
 } // end __wismo_loaded guard

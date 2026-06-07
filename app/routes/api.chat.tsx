@@ -166,6 +166,7 @@ export async function action({ request }: ActionFunctionArgs) {
       intent: result.intent,
       quickReplies: result.quickReplies || [],
       orderCard: result.orderCard || null,
+      orderCards: result.orderCards || null,
       language: result.detectedLanguage || 'en',
       ai_generated: result.intent === 'general',
     }, { headers: h });
