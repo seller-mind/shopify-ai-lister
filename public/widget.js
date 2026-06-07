@@ -79,6 +79,8 @@ try {
 // ─── Boot ─────────────────────────────────────────────────────────────
 (function boot() {
   renderShell();
+  // Render bubble IMMEDIATELY — don't wait for API (instant perceived speed)
+  // Then async load config and apply
   fetch(API + '/api/widget-config?shop=' + encodeURIComponent(SHOP))
     .then(function(r) { return r.json(); })
     .then(function(c) {
@@ -121,6 +123,7 @@ function applyConfig(c) {
   if (effectivePosition === 'bottom-left') {
     shadow.querySelector('.w').classList.add('left');
   }
+  // Update header with brand name (or keep default "Order Tracking")
   var title = shadow.querySelector('.wt');
   if (title && c.brandName) title.textContent = c.brandName;
 }
@@ -150,8 +153,8 @@ var WINDOW_HTML = [
   '        </svg>',
   '      </div>',
   '      <div>',
-  '        <div class="wt">WISMO AI</div>',
-  '        <div class="ws"><span class="wdot"></span> AI Assistant</div>',
+  '        <div class="wt">Order Tracking</div>',
+  '        <div class="ws"><span class="wdot"></span> Online</div>',
   '      </div>',
   '    </div>',
   '    <button class="wx" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>',
@@ -162,7 +165,7 @@ var WINDOW_HTML = [
   '    <input type="text" class="win" placeholder="Order # or question..." autocomplete="off" aria-label="Type your order number or question" />',
   '    <button class="wsn" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>',
   '  </div>',
-  '  <div class="wft">AI-powered · <a href="' + API + '/privacy" target="_blank" rel="noopener">Privacy</a></div>',
+  '  <div class="wft">Powered by AI · <a href="' + API + '/privacy" target="_blank" rel="noopener">Privacy</a></div>',
   '</div>',
 ].join('');
 
@@ -222,6 +225,9 @@ var WINDOW_HTML = [
       state.typing = true;
       var typing = addTyping();
 
+      // Mobile: scroll to bottom after user sends
+      setTimeout(function() { msgs.scrollTop = msgs.scrollHeight; }, 50);
+
       fetch(API + '/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -276,22 +282,19 @@ var WINDOW_HTML = [
 
     // ─── Greeting with inline order input ──────────────────
     function showGreeting() {
-      var greetingText = state.config && state.config.greeting ? state.config.greeting : 'Track your order in seconds';
+      var greetingText = state.config && state.config.greeting ? state.config.greeting : 'Track your order';
 
-      // Clean greeting — ONE focused message, then the action card
-      addMsg('bot', esc(greetingText));
-
-      // Inline order input card — the CORE action, front and center
+      // SINGLE card: greeting text embedded in the input card — zero extra steps
       var card = document.createElement('div');
       card.className = 'mm m-bot';
       var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
       card.innerHTML = avatar + '<div class="mc"><div class="oi-card">' +
-        '<div class="oi-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px;color:var(--ac)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Enter your order number</div>' +
+        '<div class="oi-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px;color:var(--ac)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(greetingText) + '</div>' +
         '<div class="oi-row">' +
         '<input type="text" class="oi-input" placeholder="#1001 or email" autocomplete="off" />' +
         '<button class="oi-btn">Track</button>' +
         '</div>' +
-        '<div class="oi-hint">or use your email address</div>' +
+        '<div class="oi-hint">Order number or email address</div>' +
         '</div></div>';
       msgs.appendChild(card);
       msgs.scrollTop = msgs.scrollHeight;
@@ -1110,6 +1113,9 @@ function CSS() {
   .mm { max-width: 95%; }
   .wm { padding: 12px 14px; }
   .wq { padding: 0 14px 10px; }
+  .oc { padding: 14px 16px; }
+  /* Mobile: prevent bounce scroll on iOS */
+  .wm { -webkit-overflow-scrolling: auto; overscroll-behavior: contain; }
 }
 ';
 } // end __wismo_loaded guard

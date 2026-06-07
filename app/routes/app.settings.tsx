@@ -200,26 +200,26 @@ export default function Settings() {
           <div className="form-group">
             <label>Response Language</label>
             <select name="auto_reply_language" defaultValue={settings.auto_reply_language}>
-              <option value="auto">🌐 Auto-detect (recommended)</option>
-              <option value="en">🇺🇸 English</option>
-              <option value="zh">🇨🇳 中文</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="fr">🇫🇷 Français</option>
-              <option value="de">🇩🇪 Deutsch</option>
-              <option value="ja">🇯🇵 日本語</option>
-              <option value="ko">🇰🇷 한국어</option>
-              <option value="pt">🇧🇷 Português</option>
-              <option value="it">🇮🇹 Italiano</option>
-              <option value="nl">🇳🇱 Nederlands</option>
-              <option value="ru">🇷🇺 Русский</option>
-              <option value="ar">🇸🇦 العربية</option>
-              <option value="th">🇹🇭 ไทย</option>
-              <option value="vi">🇻🇳 Tiếng Việt</option>
-              <option value="id">🇮🇩 Bahasa Indonesia</option>
-              <option value="tr">🇹🇷 Türkçe</option>
-              <option value="pl">🇵🇱 Polski</option>
-              <option value="sv">🇸🇪 Svenska</option>
-              <option value="hi">🇮🇳 हिन्दी</option>
+              <option value="auto">Auto-detect (recommended)</option>
+              <option value="en">English</option>
+              <option value="zh">中文</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="ja">日本語</option>
+              <option value="ko">한국어</option>
+              <option value="pt">Português</option>
+              <option value="it">Italiano</option>
+              <option value="nl">Nederlands</option>
+              <option value="ru">Русский</option>
+              <option value="ar">العربية</option>
+              <option value="th">ไทย</option>
+              <option value="vi">Tiếng Việt</option>
+              <option value="id">Bahasa Indonesia</option>
+              <option value="tr">Türkçe</option>
+              <option value="pl">Polski</option>
+              <option value="sv">Svenska</option>
+              <option value="hi">हिन्दी</option>
             </select>
             <p className="hint">Auto-detect means the AI will respond in the customer's language (20+ languages supported)</p>
           </div>
@@ -241,7 +241,7 @@ export default function Settings() {
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', marginBottom: '8px' }}>
                 <input type="text" name="faq_question" defaultValue={item.question} placeholder="Question" style={{ padding: '10px 12px', border: '1px solid #e1e3e5', borderRadius: '10px', fontSize: '14px' }} />
                 <input type="text" name="faq_answer" defaultValue={item.answer} placeholder="Answer" style={{ padding: '10px 12px', border: '1px solid #e1e3e5', borderRadius: '10px', fontSize: '14px' }} />
-                <button type="button" className="btn" style={{ padding: '8px 12px', color: '#dc2626' }} onClick={(e) => { (e.currentTarget.closest('div') as HTMLElement)?.remove(); }}>✕</button>
+                <button type="button" className="btn" style={{ padding: '8px 12px', color: '#dc2626' }} onClick={(e) => { (e.currentTarget.closest('div') as HTMLElement)?.remove(); }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
               </div>
             ))}
           </div>
@@ -305,7 +305,7 @@ function AddFaqButton() {
     if (!list) return;
     const div = document.createElement('div');
     div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px';
-    div.innerHTML = '<input type="text" name="faq_question" placeholder="Question" style="padding:10px 12px;border:1px solid #e1e3e5;border-radius:10px;font-size:14px" /><input type="text" name="faq_answer" placeholder="Answer" style="padding:10px 12px;border:1px solid #e1e3e5;border-radius:10px;font-size:14px" /><button type="button" class="btn" style="padding:8px 12px;color:#dc2626">✕</button>';
+    div.innerHTML = '<input type="text" name="faq_question" placeholder="Question" style="padding:10px 12px;border:1px solid #e1e3e5;border-radius:10px;font-size:14px" /><input type="text" name="faq_answer" placeholder="Answer" style="padding:10px 12px;border:1px solid #e1e3e5;border-radius:10px;font-size:14px" /><button type="button" class="btn" style="padding:8px 12px;color:#dc2626"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
     div.querySelector('button')?.addEventListener('click', () => div.remove());
     list.appendChild(div);
     // Focus the new question input

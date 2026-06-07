@@ -585,7 +585,7 @@ export async function generateResponse(
       reply: t(lang, 'ask_order_info', brand),
       intent: 'wismo',
       quickReplies: lang === 'en'
-        ? [' I have my order #', 'My email', 'Talk to a human']
+        ? ['I have my order #', 'My email', 'Talk to a human']
         : ['Track order', 'Talk to human'],
       detectedLanguage: lang,
     };
@@ -619,7 +619,7 @@ function getContextualQuickReplies(orders: OrderInfo | OrderInfo[], scenario?: s
   const order = Array.isArray(orders) ? orders[0] : orders;
 
   if (scenario === 'lost' || scenario === 'return') {
-    return ['Talk to a human', ' Track another order'];
+    return ['Talk to a human', 'Track another order'];
   }
 
   if (order.fulfillmentStatus === 'UNFULFILLED') {
