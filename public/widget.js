@@ -549,7 +549,7 @@ function CSS() {
   --ac-dark: #006649;
   --ac-glow: rgba(0,128,96,0.1);
   --radius: 14px;
-  --shadow: 0 12px 48px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.05);
+  --shadow: 0 16px 56px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
   --bg-msg: #f4f5f7;
   --bg-card: #ffffff;
   --bg-input: #f8f9fa;
@@ -624,7 +624,7 @@ function CSS() {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 24px rgba(0,128,96,0.4), 0 2px 8px rgba(0,128,96,0.2), 0 0 0 1px rgba(0,128,96,0.1);
+  box-shadow: 0 4px 20px rgba(0,128,96,0.3), 0 2px 8px rgba(0,128,96,0.15);
   transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
   outline: none;
   animation: bubbleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
@@ -639,7 +639,7 @@ function CSS() {
 
 .wb:hover {
   transform: scale(1.08) !important;
-  box-shadow: 0 8px 32px rgba(0,128,96,0.5), 0 4px 12px rgba(0,128,96,0.25);
+  box-shadow: 0 6px 28px rgba(0,128,96,0.4), 0 2px 10px rgba(0,128,96,0.2);
   animation: none;
 }
 
@@ -660,17 +660,17 @@ function CSS() {
 .ww-in { animation: winIn 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
 .ww-out { animation: winOut 0.25s cubic-bezier(0.4,0,1,1) forwards; }
 @keyframes winIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes winOut {
   from { opacity: 1; transform: translateY(0) scale(1); }
-  to { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 0; transform: translateY(8px) scale(0.98); }
 }
 
 /* ─── Header ────────────────────────────────────── */
 .wh {
-  background: linear-gradient(135deg, #008060 0%, #00a878 100%);
+  background: linear-gradient(135deg, #00785c 0%, #00996b 100%);
   color: #fff;
   padding: 16px 20px;
   display: flex;
@@ -732,8 +732,8 @@ function CSS() {
 }
 
 @keyframes msgIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .m-user { margin-left: auto; flex-direction: row-reverse; }
 
@@ -777,10 +777,9 @@ function CSS() {
 /* Typing indicator - 3 bouncing dots with stagger */
 .dots { display: flex; gap: 5px; padding: 6px 0; }
 .dots i {
-  width: 8px; height: 8px; border-radius: 50%;
+  width: 7px; height: 7px; border-radius: 50%;
   background: #b0b0b0;
-  animation: dotBounce 1.3s ease-in-out infinite;
-  box-shadow: 0 0 0 2px rgba(176,176,176,0.1);
+  animation: dotBounce 1.4s ease-in-out infinite;
 }
 .dots i:nth-child(1) { animation-delay: 0s; }
 .dots i:nth-child(2) { animation-delay: 0.18s; }
@@ -856,10 +855,11 @@ function CSS() {
 .oc {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
+  border-left: 3px solid var(--ac);
   border-radius: 14px;
   padding: 16px 18px;
   margin-bottom: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 .oc-h {
   display: flex;
@@ -915,14 +915,14 @@ function CSS() {
   flex-shrink: 0;
 }
 .tl-dot {
-  width: 12px; height: 12px;
+  width: 13px; height: 13px;
   border-radius: 50%;
   background: #d1d5db;
   border: 2.5px solid #e5e7eb;
   flex-shrink: 0;
   z-index: 1;
   transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
-  box-shadow: 0 0 0 3px rgba(209,213,219,0.15);
+  box-shadow: 0 0 0 3px rgba(209,213,219,0.1);
 }
 .tl-step.done .tl-dot { background: var(--ac); border-color: var(--ac); box-shadow: 0 0 0 3px rgba(0,128,96,0.12); }
 .tl-step.active .tl-dot {
