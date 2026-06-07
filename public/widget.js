@@ -92,6 +92,7 @@ try {
 
 // ─── Boot ─────────────────────────────────────────────────────────────
 (function boot() {
+  if (!SHOP) { removeShell(); return; } // No shop = no widget
   renderShell();
   // Render bubble IMMEDIATELY — don't wait for API (instant perceived speed)
   // Then async load config and apply

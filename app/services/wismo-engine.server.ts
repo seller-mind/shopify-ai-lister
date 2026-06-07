@@ -238,7 +238,7 @@ export function detectIntent(
     const lastBotMsg = [...previousMessages].reverse().find(m => m.role === 'assistant');
     if (lastBotMsg) {
       const botLower = lastBotMsg.content.toLowerCase();
-      if (botLower.includes('order') || botLower.includes('track') || botLower.includes('') ||
+      if (botLower.includes('order') || botLower.includes('track') || botLower.includes('deliver') ||
           botLower.includes('pedido') || botLower.includes('commande') || botLower.includes('bestellung')) {
         return { intent: 'wismo' };
       }
@@ -793,7 +793,7 @@ function t(lang: string, key: string, ...args: string[]): string {
     },
     de: {
       ask_order_info: `Teilen Sie Ihre Bestellnummer (wie #1001) oder E-Mail mit und ich helfe.`,
-      handoff: `Verbinde Sie mit einem Mitarbeiter. Einen Moment bitte.`,
+      handoff: `Ich informiere das Shop-Team, dass Sie Hilfe benötigen. Für eine schnelle Antwort kontaktieren Sie den Shop direkt über die Website oder antworten Sie auf die Bestellbestätigung.`,
       customs_no_order: `Die Zollabfertigung dauert meist 3-7 Werktage. Bestellnummer teilen und ich prüfe den Status.`,
       lost_no_order: `Das tut mir leid. Teilen Sie Ihre Bestellnummer und ich prüfe die Sendungsverfolgung.`,
       return_no_order: `Ich helfe bei Rücksendungen von **{0}**. Teilen Sie Ihre Bestellnummer.`,
@@ -811,7 +811,7 @@ function t(lang: string, key: string, ...args: string[]): string {
     },
     ko: {
       ask_order_info: `주문 번호(예: #1001) 또는 주문 시 사용한 이메일을 알려주세요.`,
-      handoff: `상담원을 연결해 드리겠습니다. 잠시만 기다려 주세요.`,
+      handoff: `매장 팀에 도움이 필요하다고 알려드리겠습니다. 빠른 응답을 위해 매장 웹사이트를 통해 직접 연락하시거나 주문 확인 이메일에 답장해 주세요.`,
       customs_no_order: `통관은 3~7영업일이 소요될 수 있습니다. 주문 번호를 알려주시면 상태를 확인해 드리겠습니다.`,
       lost_no_order: `죄송합니다. 주문 번호를 알려주시면 배송 추적을 확인해 드리겠습니다.`,
       return_no_order: `**{0}**의 반품을 도와드리겠습니다. 주문 번호를 알려주세요.`,

@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS wismo_settings (
   enabled BOOLEAN DEFAULT true,
   widget_position TEXT DEFAULT 'bottom-right' CHECK (widget_position IN ('bottom-right', 'bottom-left')),
   widget_color TEXT DEFAULT '#008060',
-  greeting TEXT DEFAULT 'Hi! 👋 How can I help you today?',
+  greeting TEXT DEFAULT 'Track your order in seconds',
   brand_name TEXT,
   auto_reply_language TEXT DEFAULT 'auto',
   faq_items JSONB DEFAULT '[]',
