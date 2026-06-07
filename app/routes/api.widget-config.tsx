@@ -23,6 +23,28 @@ function checkRateLimit(shop: string): boolean {
   return entry.count <= RATE_LIMIT_MAX;
 }
 
+
+
+// ─── Plan Limits ────────────────────────────────────────────────────
+const PLAN_LIMITS: Record<string, number> = { FREE: 10, STARTER: 50, PRO: 500, BUSINESS: Infinity };
+
+async function getPlanStatus(shop: string, plan: string): Promise<{ planLimited: boolean; conversationsUsed: number; conversationsLimit: number }> {
+  const limit = PLAN_LIMITS[plan.toUpperCase()] ?? PLAN_LIMITS.FREE;
+  if (limit === Infinity) return { planLimited: false, conversationsUsed: 0, conversationsLimit: limit };
+
+  try {
+    const db = getSupabaseAdmin();
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const { count } = await db.from('wismo_conversations').select('*', { count: 'exact', head: true }).eq('shop', shop).gte('created_at', startOfMonth.toISOString());
+    const used = count || 0;
+    return { planLimited: used >= limit, conversationsUsed: used, conversationsLimit: limit };
+  } catch {
+    return { planLimited: false, conversationsUsed: 0, conversationsLimit: limit };
+  }
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   // Handle CORS preflight
   const preflight = handleCorsPreflightRequest(request);
@@ -92,6 +114,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const responseHeaders = new Headers();
   addCorsHeaders(responseHeaders, request);
 
+  // Check plan status for widget
+  const planStatus = await getPlanStatus(shop, store.plan || 'FREE');
+
   return json({
     enabled: true,
     position: settings.widgetPosition,
@@ -100,5 +125,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     brandName: settings.brandName,
     apiEndpoint: `${process.env.SHOPIFY_APP_URL || 'https://shopify-ai-lister-tau.vercel.app'}/api/chat`,
     shop,
+    plan: store.plan || 'FREE',
+    planLimited: planStatus.planLimited,
+    conversationsUsed: planStatus.conversationsUsed,
+    conversationsLimit: planStatus.conversationsLimit,
   }, { headers: responseHeaders });
 }

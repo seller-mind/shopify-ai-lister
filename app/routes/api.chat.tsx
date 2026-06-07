@@ -54,6 +54,12 @@ export async function action({ request }: ActionFunctionArgs) {
       return json({ error: 'Missing shop or message' }, { status: 400, headers: h });
     }
 
+    // Truncate excessively long messages (prevent API abuse and cost spikes)
+    const MAX_MESSAGE_LENGTH = 1000;
+    const processedMessage = message.length > MAX_MESSAGE_LENGTH
+      ? message.substring(0, MAX_MESSAGE_LENGTH)
+      : message;
+
     // Validate shop domain format (prevent API abuse)
     if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
       const h = new Headers(); addCorsHeaders(h, request);
@@ -103,14 +109,14 @@ export async function action({ request }: ActionFunctionArgs) {
     if (convId) {
       prev = await getMessages(convId);
     } else {
-      convId = await createConv(shop, customerEmail, customerName, customerLocale, message);
+      convId = await createConv(shop, customerEmail, customerName, customerLocale, processedMessage);
       isNewConv = true;
     }
 
-    await saveMsg(convId, 'customer', message);
+    await saveMsg(convId, 'customer', processedMessage);
 
     // Sync intent detection (no AI call) with scenario
-    const intent = detectIntent(message, prev);
+    const intent = detectIntent(processedMessage, prev);
     let orderInfo;
 
     if (intent.intent === 'wismo') {
@@ -121,7 +127,7 @@ export async function action({ request }: ActionFunctionArgs) {
       );
       if (!orderInfo && (intent.orderNumber || intent.email)) {
         // Order looked up but not found — return helpful message instantly
-        const lang = detectLanguage(message, customerLocale);
+        const lang = detectLanguage(processedMessage, customerLocale);
         const notFoundReply = lang === 'en'
           ? `Hmm, I couldn't find order **#${intent.orderNumber || '...'}**. Could you double-check the number? It usually looks like **#1001**. You can also try your email address. 🔍`
           : `I couldn't find that order. Could you double-check your order number? 🔍`;
@@ -144,7 +150,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Generate response — WISMO queries with order data are INSTANT (no AI call)
-    const result = await generateResponse(message, {
+    const result = await generateResponse(processedMessage, {
       shop, accessToken: store.accessToken, conversationId: convId,
       customerEmail, customerName, customerLocale, previousMessages: prev, settings,
     }, orderInfo, intent.scenario);

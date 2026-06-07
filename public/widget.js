@@ -85,6 +85,7 @@ try {
       if (!c || !c.enabled) { removeShell(); return; }
       state.config = c;
       state.loading = false;
+      state.planLimited = c.planLimited || false;
       applyConfig(c);
     })
     .catch(function() { removeShell(); });
@@ -123,6 +124,11 @@ function applyConfig(c) {
   }
   var title = shadow.querySelector('.wt');
   if (title && c.brandName) title.textContent = c.brandName;
+  // Show plan-limited notice if applicable
+  if (c.planLimited) {
+    var badge = shadow.querySelector('.wb');
+    if (badge) badge.style.opacity = '0.6';
+  }
 }
 
 // ─── HTML ─────────────────────────────────────────────────────────────
