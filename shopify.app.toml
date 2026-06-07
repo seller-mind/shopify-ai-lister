@@ -10,7 +10,7 @@ embedded = true
 
 # 访问权限范围
 [access_scopes]
-scopes = "read_products,read_orders,read_fulfillments,read_themes,write_themes"
+scopes = "read_products,read_orders,write_orders,read_fulfillments,read_themes,write_themes"
 
 # OAuth回调URL
 [auth]
