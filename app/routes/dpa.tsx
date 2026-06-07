@@ -83,7 +83,7 @@ export default function DpaPage() {
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>4. Security Measures (Annex B)</h2>
       <ol style={{ marginBottom: '12px', paddingLeft: '24px' }}>
-        <li style={{ marginBottom: '6px' }}><strong>Encryption in Transit:</strong> All data transmitted uses TLS 1.3</li>
+        <li style={{ marginBottom: '6px' }}><strong>Encryption in Transit:</strong> All data transmitted uses TLS 1.2+</li>
         <li style={{ marginBottom: '6px' }}><strong>Encryption at Rest:</strong> Database storage uses AES-256 encryption</li>
         <li style={{ marginBottom: '6px' }}><strong>Access Control:</strong> Service role keys stored as environment variables, never exposed in client-side code</li>
         <li style={{ marginBottom: '6px' }}><strong>Data Minimisation:</strong> WISMO queries process zero AI calls; only non-WISMO chat messages are sent to DeepSeek AI; order data is fetched in real-time and not stored</li>
