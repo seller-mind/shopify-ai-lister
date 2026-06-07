@@ -94,7 +94,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     color: settings.widgetColor,
     greeting: settings.greeting,
     brandName: settings.brandName,
-    apiEndpoint: `https://shopify-ai-lister-tau.vercel.app/api/chat`,
+    apiEndpoint: `${process.env.SHOPIFY_APP_URL || 'https://shopify-ai-lister-tau.vercel.app'}/api/chat`,
     shop,
   }, { headers: responseHeaders });
 }

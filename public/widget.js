@@ -236,6 +236,12 @@ var WINDOW_HTML = [
         saveConv();
         if (d.language) state.lang = d.language;
 
+        // Plan limit reached — show upgrade notice
+        if (d.planLimited) {
+          addMsg('bot', d.reply || 'This service is temporarily unavailable. The store owner needs to upgrade their plan.');
+          return;
+        }
+
         if (d.orderCard) {
           addOrderCard(d.orderCard);
         } else {

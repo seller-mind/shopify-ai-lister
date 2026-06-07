@@ -66,6 +66,23 @@ export async function action({ request }: ActionFunctionArgs) {
     const settings = await getSettings(shop);
     if (!settings?.enabled) return json({ error: 'WISMO disabled' }, { status: 403 });
 
+    // Plan limit check — enforce monthly conversation limits
+    const planLimit = await checkPlanLimit(shop, store.plan || 'FREE');
+    if (!planLimit.allowed) {
+      const h = new Headers();
+      addCorsHeaders(h, request);
+      return json({
+        reply: planLimit.message,
+        conversationId: null,
+        intent: 'general',
+        quickReplies: [],
+        orderCard: null,
+        language: 'en',
+        ai_generated: false,
+        planLimited: true,
+      }, { headers: h });
+    }
+
     // Get/create conversation
     let convId = conversationId;
     let isNewConv = false;
@@ -276,4 +293,30 @@ async function bumpAnalytics(shop: string, detected: string, replied: string, is
       });
     }
   } catch (e) { console.error('[WISMO] Analytics error:', e); }
+}
+
+// ─── Plan Limit Check ──────────────────────────────────────────────
+const PLAN_LIMITS: Record<string, number> = { FREE: 10, STARTER: 50, PRO: 500, BUSINESS: Infinity };
+
+async function checkPlanLimit(shop: string, plan: string): Promise<{ allowed: boolean; message?: string }> {
+  const limit = PLAN_LIMITS[plan.toUpperCase()] ?? PLAN_LIMITS.FREE;
+  if (limit === Infinity) return { allowed: true };
+
+  try {
+    const db = getSupabaseAdmin();
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const { count } = await db.from('wismo_conversations').select('*', { count: 'exact', head: true }).eq('shop', shop).gte('created_at', startOfMonth.toISOString());
+    if ((count || 0) >= limit) {
+      return {
+        allowed: false,
+        message: `You've reached your monthly limit of ${limit} conversations on the ${plan} plan. Upgrade at your WISMO AI dashboard to continue providing order tracking to your customers.`,
+      };
+    }
+    return { allowed: true };
+  } catch {
+    // If check fails, allow the request (fail open)
+    return { allowed: true };
+  }
 }
