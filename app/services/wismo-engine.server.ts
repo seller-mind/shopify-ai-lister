@@ -253,15 +253,18 @@ export function detectIntent(
 }
 
 function extractOrderNumber(message: string): string | undefined {
-  // 1. #1001, #ABC-123, # 1001 (alphanumeric order names supported)
-  let m = /#\s*([A-Za-z]{0,5}-?\d{3,10})/.exec(message);
+  // 1. #1001, #ABC-123, # 1001, #ABC123 (alphanumeric order names supported)
+  let m = /#\s*([A-Za-z]{0,5}-?[A-Za-z0-9]{3,12})/.exec(message);
   if (m) return m[1];
-  // 2. order #1001, order 1001, order#ABC-123, order number 1001
-  m = /order\s*(?:#|number|#\s*)?\s*([A-Za-z]{0,5}-?\d{3,10})/i.exec(message);
+  // 2. order #1001, order 1001, order#ABC-123, order number 1001, order no. 1001
+  m = /order\s*(?:#|number|no\.?|#\s*)?\s*([A-Za-z]{0,5}-?[A-Za-z0-9]{3,12})/i.exec(message);
   if (m) return m[1];
   // 3. "1001" as standalone number when context suggests order (3-10 digits, preceded by space/start)
   m = /(?:^|\s)(\d{3,10})(?:\s|$|[.,!?])/.exec(message);
   if (m && message.toLowerCase().match(/order|track|find|where|ship|deliver|#/i)) return m[1];
+  // 4. UK/JP style: letters+numbers without # (e.g., "MY12345", "AB-789")
+  m = /(?:^|\s)([A-Z]{2,4}-?\d{4,8})(?:\s|$|[.,!?])/i.exec(message);
+  if (m && message.toLowerCase().match(/order|track|find|where|ship|deliver/i)) return m[1];
   return undefined;
 }
 
@@ -479,24 +482,32 @@ function buildTimeline(order: OrderInfo): TimelineStep[] {
   const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const daysAgo = Math.floor((Date.now() - created.getTime()) / 86400000);
 
+  // Smart estimated delivery: when Shopify doesn't provide one, calculate based on order age
+  const estDelivery = order.estimatedDelivery ? new Date(order.estimatedDelivery) : calculateEstimatedDelivery(order);
+  const estDeliveryFmt = estDelivery ? fmt(estDelivery) : '';
+  const isPastDue = estDelivery ? estDelivery < new Date() : false;
+
   const steps: TimelineStep[] = [
     { label: 'Order placed', date: fmt(created), completed: true },
   ];
 
   if (order.fulfillmentStatus === 'UNFULFILLED' || order.fulfillmentStatus === 'PENDING') {
     steps.push({ label: 'Preparing', date: daysAgo >= 1 ? 'In progress' : 'Today', completed: false, current: true });
-    steps.push({ label: 'Shipped', date: '', completed: false });
-    steps.push({ label: 'Delivered', date: '', completed: false });
+    if (estDeliveryFmt) {
+      steps.push({ label: 'Shipped', date: '', completed: false });
+      steps.push({ label: 'Delivered', date: `Est. ${estDeliveryFmt}`, completed: false });
+    } else {
+      steps.push({ label: 'Shipped', date: '', completed: false });
+      steps.push({ label: 'Delivered', date: '', completed: false });
+    }
   } else if (order.fulfillmentStatus === 'FULFILLED' || order.fulfillmentStatus === 'PARTIALLY_FULFILLED') {
     steps.push({ label: 'Preparing', date: '', completed: true });
-    steps.push({ label: 'Shipped', date: '', completed: true, current: !order.estimatedDelivery });
-    if (order.estimatedDelivery) {
-      const est = new Date(order.estimatedDelivery);
-      const isPast = est < new Date();
-      steps.push({ label: 'In transit', date: isPast ? 'Arriving soon' : `Est. ${fmt(est)}`, completed: false, current: true });
-      steps.push({ label: 'Delivered', date: fmt(est), completed: false });
+    if (estDelivery) {
+      steps.push({ label: 'Shipped', date: '', completed: true });
+      steps.push({ label: 'In transit', date: isPastDue ? 'Arriving soon' : `Est. ${estDeliveryFmt}`, completed: false, current: true });
+      steps.push({ label: 'Delivered', date: estDeliveryFmt, completed: false });
     } else {
-      steps.push({ label: 'In transit', date: '', completed: false, current: true });
+      steps.push({ label: 'Shipped', date: '', completed: true, current: true });
       steps.push({ label: 'Delivered', date: '', completed: false });
     }
   } else if (order.fulfillmentStatus === 'RESTOCKED') {
@@ -508,9 +519,50 @@ function buildTimeline(order: OrderInfo): TimelineStep[] {
   return steps;
 }
 
+/**
+ * Smart estimated delivery calculation
+ * When Shopify doesn't provide estimatedDeliveryAt, calculate based on:
+ * - Order creation date
+ * - Carrier type (domestic vs international)
+ * - Business days only
+ */
+function calculateEstimatedDelivery(order: OrderInfo): Date | null {
+  const created = new Date(order.createdAt);
+  const carrier = (order.trackingCompany || '').toLowerCase();
+
+  // Determine shipping duration based on carrier
+  let businessDays = 7; // default: 7 business days
+  if (/usps|ups|fedex|dhl|canada post|royal mail|auspost|australia post|posti|bpost|postnl|swiss post|gls|dpd|hermes|evri|correos|laposte|poste italiane/i.test(carrier)) {
+    businessDays = 5; // major domestic carriers: 5 business days
+  } else if (/yanwen|yunexpress|4px|cainiao|ems|china post|sf express|correios/i.test(carrier)) {
+    businessDays = 15; // international cross-border: 15 business days
+  } else if (/dhl express|ups express|fedex express|aramex/i.test(carrier)) {
+    businessDays = 3; // express: 3 business days
+  }
+
+  // Add 1-2 days for preparation if order is unfulfilled
+  if (order.fulfillmentStatus === 'UNFULFILLED' || order.fulfillmentStatus === 'PENDING') {
+    businessDays += 2;
+  }
+
+  // Calculate business days from order date
+  const est = new Date(created);
+  let added = 0;
+  while (added < businessDays) {
+    est.setDate(est.getDate() + 1);
+    const day = est.getDay();
+    if (day !== 0 && day !== 6) added++; // skip weekends
+  }
+
+  return est;
+}
+
 function buildOrderCard(order: OrderInfo): OrderCard {
   const created = new Date(order.createdAt);
   const daysAgo = Math.floor((Date.now() - created.getTime()) / 86400000);
+
+  // Use smart estimated delivery if Shopify doesn't provide one
+  const effectiveEstDelivery = order.estimatedDelivery || (calculateEstimatedDelivery(order)?.toISOString()) || null;
 
   return {
     orderNumber: order.orderNumber,
@@ -521,8 +573,8 @@ function buildOrderCard(order: OrderInfo): OrderCard {
     trackingCompany: order.trackingCompany || undefined,
     trackingNumber: order.trackingNumber || undefined,
     trackingUrl: order.trackingUrl || undefined,
-    estimatedDelivery: order.estimatedDelivery
-      ? new Date(order.estimatedDelivery).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+    estimatedDelivery: effectiveEstDelivery
+      ? new Date(effectiveEstDelivery).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
       : undefined,
     timeline: buildTimeline(order),
     daysAgo,
@@ -766,20 +818,20 @@ async function aiResponse(message: string, ctx: ChatContext, lang: string): Prom
 
   try {
     return await callDeepSeek(
-      `You are a friendly, helpful customer service bot for ${brand}, a Shopify store. Your main job is order tracking and customer support.
+      `You are a helpful customer service bot for ${brand}, a Shopify store. You handle order tracking and customer support.
 
 RULES:
-- Be warm but EXTREMELY concise (1-2 sentences max, no filler words, every word must earn its place)
-- ALWAYS respond in ${langName}, matching the customer's language
-- If asked about orders, ask for order number or email
-- Use store FAQ if available — answer from it directly
-- If asked about returns/refunds, use the return policy if available
-- For shipping delays, be empathetic but brief: suggest next step (check tracking / contact carrier / connect support)
-- For lost packages, express concern briefly and offer one clear next step
-- If you can't help, offer to connect with a human agent
-- Never make up order or product details
-- No emojis unless the customer uses them first
-- Write like a premium brand: confident, clear, helpful — never wordy${faq}${returnPolicyNote}`,
+- Be EXTREMELY concise — 1-2 sentences max. No filler. Every word earns its place.
+- ALWAYS respond in ${langName}.
+- If asked about orders, ask for order number or email.
+- Use store FAQ if available — answer from it directly.
+- If asked about returns/refunds, use the return policy if available.
+- For shipping delays: be empathetic in 3 words, then suggest ONE clear next step.
+- For lost packages: express concern briefly, offer ONE next step.
+- If you can't help, offer to connect with a human agent.
+- Never make up order or product details.
+- No emojis unless the customer uses them first.
+- Write like a premium brand: confident, clear, helpful, never wordy.${faq}${returnPolicyNote}`,
       message,
       ctx.previousMessages,
     );
