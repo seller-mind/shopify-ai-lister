@@ -17,10 +17,11 @@ const CLEANUP_KEY = process.env.CLEANUP_SECRET;
 if (!CLEANUP_KEY) console.warn('[Cleanup] CLEANUP_SECRET env var not set — endpoint disabled');
 
 export async function action({ request }: ActionFunctionArgs) {
-  // Verify authorization
+  // Verify authorization: either cleanup secret key or Vercel cron job
   const url = new URL(request.url);
   const key = url.searchParams.get('key');
-  if (key !== CLEANUP_KEY) {
+  const isVercelCron = request.headers.get('x-vercel-cron') === 'true';
+  if (key !== CLEANUP_KEY && !isVercelCron) {
     return json({ error: 'Unauthorized' }, { status: 403 });
   }
 

@@ -9,7 +9,7 @@ export default function TermsPage() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', lineHeight: '1.6', color: '#1a1a1a' }}>
       <h1 style={{ fontSize: '28px', marginBottom: '8px' }}>Terms of Service</h1>
-      <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Effective: June 6, 2026</p>
+      <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Effective: June 7, 2026</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>1. Acceptance of Terms</h2>
       <p>By installing and using WISMO AI (&quot;the App&quot;), you agree to these Terms of Service. If you do not agree, please uninstall the App immediately.</p>
@@ -42,7 +42,7 @@ export default function TermsPage() {
         <li style={{ marginBottom: '6px' }}>We do not guarantee the accuracy, completeness, or suitability of AI-generated content</li>
         <li style={{ marginBottom: '6px' }}>You are responsible for ensuring your use of the App complies with applicable consumer protection and data protection laws</li>
         <li style={{ marginBottom: '6px' }}>We are not responsible for any outcomes resulting from the use of AI-generated content</li>
-        <li style={{ marginBottom: '6px' }}>Your customers are informed that they are interacting with an AI system, in compliance with the EU AI Act</li>
+        <li style={{ marginBottom: '6px' }}>Your customers are informed that they are interacting with an AI system (widget header shows &quot;AI-powered&quot;), in compliance with the EU AI Act Article 50</li>
       </ul>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>5. Data Processing Responsibilities</h2>
@@ -53,7 +53,7 @@ export default function TermsPage() {
         <li style={{ marginBottom: '6px' }}>You must have a lawful basis for processing your customers' data (e.g., legitimate interest for order tracking, consent for marketing)</li>
         <li style={{ marginBottom: '6px' }}>You must inform your customers about the AI chatbot's data processing through your own privacy policy</li>
         <li style={{ marginBottom: '6px' }}>We process data in accordance with our Privacy Policy and these Terms</li>
-        <li style={{ marginBottom: '6px' }}>A Data Processing Agreement (DPA) is available upon request for EU merchants</li>
+        <li style={{ marginBottom: '6px' }}>A Data Processing Agreement (DPA) is available at <a href="/dpa" style={{ color: '#2563eb' }}>wismo.ai/dpa</a> or upon request for a signed copy</li>
       </ul>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>6. Usage Restrictions</h2>
@@ -161,7 +161,7 @@ export default function TermsPage() {
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>20. Contact</h2>
       <p>Questions about these Terms? Contact: <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a></p>
-      <p style={{ marginTop: '8px' }}>For Data Processing Agreement requests, please email with &quot;DPA Request&quot; in the subject line.</p>
+      <p style={{ marginTop: '8px' }}>For Data Processing Agreement requests, visit <a href="/dpa" style={{ color: '#2563eb' }}>wismo.ai/dpa</a> or email with &quot;DPA Request&quot; in the subject line.</p>
     </div>
   );
 }

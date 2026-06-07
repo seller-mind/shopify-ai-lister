@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', lineHeight: '1.6', color: '#1a1a1a' }}>
       <h1 style={{ fontSize: '28px', marginBottom: '8px' }}>Privacy Policy for WISMO AI</h1>
-      <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Last updated: June 6, 2026</p>
+      <p style={{ color: '#666', fontSize: '14px', marginBottom: '32px' }}>Last updated: June 7, 2026</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Controller</h2>
       <p>Haimo Tech (&quot;we&quot;, &quot;our&quot;, or &quot;the App&quot;) operates WISMO AI, an AI-powered order tracking chatbot for Shopify stores. For questions about this policy, contact us at <a href="mailto:haimozhouqiu@outlook.com" style={{ color: '#2563eb' }}>haimozhouqiu@outlook.com</a>.</p>
@@ -205,7 +205,7 @@ export default function PrivacyPage() {
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>Data Retention</h2>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
         <li style={{ marginBottom: '6px' }}><strong>Access tokens:</strong> Stored until you uninstall the App. Automatically deleted upon uninstallation via Shopify webhook.</li>
-        <li style={{ marginBottom: '6px' }}><strong>Conversations & messages:</strong> Stored in Supabase (Tokyo) for conversation continuity and analytics. Retained for up to <strong>90 days</strong> from the last message, after which they are automatically purged. Deleted immediately when the App is uninstalled.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Conversations & messages:</strong> Stored in Supabase (Tokyo) for conversation continuity and analytics. Retained for up to <strong>90 days</strong> from the last message, after which they are automatically purged via a daily automated cleanup process. Deleted immediately when the App is uninstalled.</li>
         <li style={{ marginBottom: '6px' }}><strong>Customer PII in conversations</strong> (email, name): Anonymized after <strong>90 days</strong> of inactivity. Deleted upon customer request or App uninstallation.</li>
         <li style={{ marginBottom: '6px' }}><strong>Order data:</strong> Fetched in real-time from Shopify API. <strong>Not stored</strong> by our App after the response is sent.</li>
         <li style={{ marginBottom: '6px' }}><strong>Chat messages sent to DeepSeek:</strong> Processed in real-time. According to DeepSeek&apos;s stated data policies, chat messages are <strong>not retained</strong> after generating the response. However, we cannot independently verify DeepSeek&apos;s internal data practices and recommend merchants review DeepSeek&apos;s privacy policy at <a href="https://www.deepseek.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>deepseek.com/privacy</a> for the most current information.</li>
@@ -221,7 +221,7 @@ export default function PrivacyPage() {
         <li style={{ marginBottom: '6px' }}><strong>Right to erasure:</strong> Uninstalling the App triggers automatic deletion of all your data.</li>
         <li style={{ marginBottom: '6px' }}><strong>Right to data portability:</strong> Request your data in a machine-readable format.</li>
         <li style={{ marginBottom: '6px' }}><strong>Right to object:</strong> Object to processing of your personal data.</li>
-        <li style={{ marginBottom: '6px' }}><strong>Data Processing Agreement:</strong> Available upon request for EU merchants who require a DPA.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Data Processing Agreement:</strong> Available at <a href="/dpa" style={{ color: '#2563eb' }}>wismo.ai/dpa</a> or upon request for EU merchants who require a signed copy.</li>
       </ul>
 
       <h3 style={{ fontSize: '18px', marginTop: '24px', marginBottom: '12px', color: '#1a1a1a' }}>For End Customers (Data Subjects)</h3>
@@ -266,12 +266,12 @@ export default function PrivacyPage() {
         <li style={{ marginBottom: '6px' }}>Automatically approve or deny customer claims, refunds, or returns</li>
         <li style={{ marginBottom: '6px' }}>Produce effects that significantly affect individuals&apos; rights or freedoms</li>
       </ul>
-      <p>All refund, return, and claim decisions remain with the merchant. Customers can always request to speak with a human agent by using the &quot;Talk to a human&quot; option in the chat widget.</p>
+      <p>All refund, return, and claim decisions remain with the merchant. Customers can always request human assistance by using the persistent &quot;Talk to a human&quot; option in the chat widget footer, which notifies the store team and directs the customer to contact the store directly.</p>
 
       <h2 style={{ fontSize: '20px', marginTop: '32px', marginBottom: '12px', color: '#2563eb' }}>EU AI Act Compliance</h2>
       <p>In accordance with the EU Artificial Intelligence Act (Regulation 2024/1689):</p>
       <ul style={{ marginBottom: '12px', paddingLeft: '24px' }}>
-        <li style={{ marginBottom: '6px' }}><strong>Transparency (Art. 50):</strong> All users interacting with the WISMO AI chat widget are informed that they are communicating with an AI system. The widget header displays &quot;AI-powered&quot; and includes a disclaimer in the chat interface.</li>
+        <li style={{ marginBottom: '6px' }}><strong>Transparency (Art. 50):</strong> All users interacting with the WISMO AI chat widget are informed that they are communicating with an AI system. The widget header displays &quot;AI-powered · Online&quot; to clearly indicate AI operation, and the footer provides a persistent &quot;Talk to a human&quot; option for human escalation at any time.</li>
         <li style={{ marginBottom: '6px' }}><strong>Human Oversight:</strong> Merchants can review all automated responses and configure the widget. Customers can request to speak with a human agent at any time.</li>
         <li style={{ marginBottom: '6px' }}><strong>No Automated Decisions with Legal Effects:</strong> The App does not make decisions that produce legal effects for users.</li>
         <li style={{ marginBottom: '6px' }}><strong>Accuracy:</strong> We implement quality measures, but cannot guarantee the accuracy of AI-generated content. Merchants are responsible for reviewing automated responses.</li>

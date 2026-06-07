@@ -211,7 +211,7 @@ var WINDOW_HTML = [
   '      </div>',
   '      <div>',
   '        <div class="wt">Order Tracking</div>',
-  '        <div class="ws"><span class="wdot"></span> Online</div>',
+  '        <div class="ws"><span class="wdot"></span> AI-powered · Online</div>',
   '      </div>',
   '    </div>',
   '    <button class="wx" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>',
@@ -222,7 +222,7 @@ var WINDOW_HTML = [
   '    <input type="text" class="win" placeholder="Type order number or question..." autocomplete="off" aria-label="Type your order number or question" />',
   '    <button class="wsn" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>',
   '  </div>',
-  '  <div class="wft"><a href="' + API + '/privacy" target="_blank" rel="noopener" class="wft-privacy">Privacy</a></div>',
+  '  <div class="wft"><a href="' + API + '/privacy" target="_blank" rel="noopener" class="wft-privacy">Privacy</a> · <span class="wft-human" style="cursor:pointer">Talk to a human</span></div>',
   '</div>',
 ].join('');
 
@@ -269,6 +269,8 @@ var WINDOW_HTML = [
         bubble.style.display = 'flex';
       }, 250);
     });
+    var humanBtn = shadow.querySelector('.wft-human');
+    if (humanBtn) humanBtn.addEventListener('click', function() { send('I need to talk to a human'); });
 
     // ─── Send ──────────────────────────────────────────────
     var send = function(text) {
@@ -381,7 +383,7 @@ var WINDOW_HTML = [
         '<input type="text" class="oi-input" placeholder="#1001 or email" autocomplete="off" />' +
         '<button class="oi-btn">Track <span class="oi-arrow">→</span></button>' +
         '</div>' +
-        '<div class="oi-hint">We\'ll find it instantly</div>' +
+        '<div class="oi-hint">AI-powered assistant · We'll find it instantly</div>' +
         '<div class="oi-example">e.g. #1001 or you@email.com</div>' +
         '</div></div>';
       msgs.appendChild(card);

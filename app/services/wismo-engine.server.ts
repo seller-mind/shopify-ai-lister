@@ -747,7 +747,7 @@ function t(lang: string, key: string, ...args: string[]): string {
   const templates: Record<string, Record<string, string>> = {
     en: {
       ask_order_info: `Enter your order number (e.g. **#1001**) or the email you used.`,
-      handoff: `Connecting you with a human agent. One moment.`,
+      handoff: `I'll let the store team know you need help. For the fastest response, please contact the store directly through their website or reply to your order confirmation email.`,
       customs_no_order: `Customs usually takes 3-7 business days. Share your order number and I'll check.`,
       lost_no_order: `Sorry to hear that. Share your order number and I'll check tracking right away.`,
       return_no_order: `I can help with returns for **{0}**. Share your order number.`,
@@ -766,7 +766,7 @@ function t(lang: string, key: string, ...args: string[]): string {
     },
     zh: {
       ask_order_info: `请输入订单号（如#1001）或下单邮箱，我来查询。`,
-      handoff: `正在转接人工客服，请稍候。`,
+      handoff: `已通知店铺团队您需要帮助。如需最快回复，请通过店铺网站或订单确认邮件直接联系。`,
       customs_no_order: `海关清关通常需要3-7个工作日。请提供订单号，我帮您查看具体状态。`,
       lost_no_order: `很抱歉！请提供订单号，我帮您查看物流详情。`,
       return_no_order: `我可以帮您处理**{0}**的退货。请提供订单号，我来查看退货选项。`,
@@ -775,7 +775,7 @@ function t(lang: string, key: string, ...args: string[]): string {
     },
     es: {
       ask_order_info: `Comparte tu número de pedido (como #1001) o tu correo y te ayudo.`,
-      handoff: `Conectándote con un agente humano. Un momento por favor.`,
+      handoff: `Avisaré al equipo de la tienda que necesitas ayuda. Para una respuesta más rápida, contacta la tienda directamente por su web o responde al email de confirmación.`,
       customs_no_order: `El despacho de aduanas suele tardar 3-7 días hábiles. Comparte tu número de pedido y verifico el estado.`,
       lost_no_order: `Lamento eso. Comparte tu número de pedido y reviso el seguimiento.`,
       return_no_order: `Puedo ayudarte con devoluciones de **{0}**. Comparte tu número de pedido y reviso tus opciones.`,
@@ -784,7 +784,7 @@ function t(lang: string, key: string, ...args: string[]): string {
     },
     fr: {
       ask_order_info: `Partagez votre numéro de commande (comme #1001) ou votre e-mail et je vous aide.`,
-      handoff: `Connexion avec un agent humain en cours. Un instant svp.`,
+      handoff: `J'informe l'équipe de la boutique que vous avez besoin d'aide. Pour une réponse rapide, contactez la boutique directement via leur site ou répondez à l'email de confirmation.`,
       customs_no_order: `Le dédouanement prend généralement 3-7 jours ouvrables. Partagez votre numéro de commande pour vérifier.`,
       lost_no_order: `Désolé pour cela. Partagez votre numéro de commande et je vérifie le suivi.`,
       return_no_order: `Je peux vous aider avec les retours de **{0}**. Partagez votre numéro de commande.`,

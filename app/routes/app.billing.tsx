@@ -202,6 +202,14 @@ export default function Billing() {
         </p>
       </div>
 
+      {/* Refund & EU Withdrawal Notice */}
+      <div className="card" style={{ marginTop: '12px', padding: '12px 16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+        <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+          <strong>Refund policy:</strong> 7-day money-back guarantee on all paid plans. Contact haimozhouqiu@outlook.com for a full refund within 7 days of purchase.
+          EU merchants: You have the right to withdraw within 14 days without giving any reason (see our <a href="/terms" style={{ color: '#2563eb' }}>Terms of Service</a>).
+        </p>
+      </div>
+
       {/* Plan Change Notice */}
       {currentPlan !== 'FREE' && (
         <div className="card" style={{ marginTop: '24px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>

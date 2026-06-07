@@ -85,6 +85,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     widgetColor: '#008060',
     greeting: 'Track your order in seconds',
     brandName: '',
+    faqItems: [] as { question: string; answer: string }[],
   };
 
   try {
@@ -100,8 +101,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
         enabled: data.enabled ?? true,
         widgetPosition: data.widget_position ?? 'bottom-right',
         widgetColor: data.widget_color ?? '#008060',
-        greeting: data.greeting ?? 'Hi! 👋 How can I help you today?',
+        greeting: data.greeting ?? 'Track your order in seconds',
         brandName: data.brand_name ?? '',
+        faqItems: data.faq_items || [],
       };
     }
   } catch { /* use defaults */ }
@@ -123,6 +125,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     color: settings.widgetColor,
     greeting: settings.greeting,
     brandName: settings.brandName,
+    faqItems: settings.faqItems || [],
     apiEndpoint: `${process.env.SHOPIFY_APP_URL || 'https://shopify-ai-lister-tau.vercel.app'}/api/chat`,
     shop,
     plan: store.plan || 'FREE',

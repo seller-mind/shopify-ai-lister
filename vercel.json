@@ -1,7 +1,20 @@
 {
   "routes": [
-    { "handle": "error" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/" }
+    {
+      "handle": "error"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cleanup",
+      "schedule": "0 3 * * *"
+    }
   ]
 }

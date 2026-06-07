@@ -248,6 +248,20 @@ export default function Settings() {
           <AddFaqButton />
         </div>
 
+        {/* Compliance Notice */}
+        <div style={{ marginTop: '32px', padding: '16px', background: '#eff6ff', borderRadius: '12px', border: '1px solid #bfdbfe' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <strong style={{ fontSize: '14px', color: '#1e40af' }}>Legal Compliance Notice</strong>
+          </div>
+          <ul style={{ fontSize: '13px', color: '#1e40af', lineHeight: '1.6', paddingLeft: '20px', margin: '0' }}>
+            <li>You are the <strong>Data Controller</strong> for your customers' data processed through this chatbot. We act as your Data Processor.</li>
+            <li>Your privacy policy must disclose the use of this AI chatbot. We display &quot;AI-powered&quot; in the widget header.</li>
+            <li>For EU merchants: Our <a href="/dpa" target="_blank" style={{ color: '#2563eb' }}>DPA</a> is available. GDPR webhooks (data request, redaction) are fully supported.</li>
+            <li>Customer conversations are retained for 90 days and automatically purged. All data is deleted upon uninstallation.</li>
+          </ul>
+        </div>
+
         {/* Save Button */}
         <div className="btn-save-wrap">
           <button type="submit" className={`btn btn-primary ${showSuccess ? 'btn-save-success' : ''}`} disabled={isSaving} style={{ width: '100%', padding: '14px', fontSize: '15px', borderRadius: '12px' }}>

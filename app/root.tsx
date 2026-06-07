@@ -92,7 +92,7 @@ export default function App() {
           </main>
         </div>
         <div className="footer-note">
-          WISMO AI — AI-powered order tracking for Shopify stores · <a href="/privacy" style={{ color: '#888' }}>Privacy</a> · <a href="/terms" style={{ color: '#888' }}>Terms</a> · <a href="/dmca" style={{ color: '#888' }}>DMCA</a>
+          WISMO AI — AI-powered order tracking for Shopify stores · <a href="/privacy" style={{ color: '#888' }}>Privacy</a> · <a href="/terms" style={{ color: '#888' }}>Terms</a> · <a href="/dpa" style={{ color: '#888' }}>DPA</a> · <a href="/dmca" style={{ color: '#888' }}>DMCA</a>
         </div>
         <ScrollRestoration />
         <Scripts />
