@@ -73,6 +73,7 @@ interface ChatResponse {
   intent: 'wismo' | 'general' | 'handoff';
   quickReplies?: string[];
   orderCard?: OrderCard;
+  orderCards?: OrderCard[];
   detectedLanguage?: string;
 }
 
@@ -615,7 +616,6 @@ function buildOrderCard(order: OrderInfo): OrderCard {
       ? new Date(effectiveEstDelivery).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
       : undefined,
     deliveryCountdown,
-      : undefined,
     timeline: buildTimeline(order),
     daysAgo,
   };
@@ -759,7 +759,6 @@ function t(lang: string, key: string, ...args: string[]): string {
       lost_note: `\n\nI'd recommend contacting the carrier first. If they can't help, I can connect you with support.`,
       multiple_orders: `Found **{0}** orders:\n\n`,
       order_not_found: `Couldn't find that order. Check the number? Usually like **#1001**. Or try your email.`,
-      address_note: ,      cancel_note: ,
       address_note: `\n\n**To change the shipping address**, please contact our support team — they can update it if the order has not shipped yet.`,
       cancel_note: `\n\n**To cancel**, please contact our support team immediately — cancellation is only possible before shipping.`,
       address_no_order: `I can help update a shipping address. Share your order number first.`,
