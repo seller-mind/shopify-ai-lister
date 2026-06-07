@@ -131,14 +131,18 @@ export default function Settings() {
               </div>
               <div className="mini-widget-body">
                 <div className="mini-widget-card">
-                  <div style={{ marginBottom: '8px' }}>{greeting || 'Track your order in seconds'}</div>
-                  <input 
-                    type="text" 
-                    placeholder="Enter order #" 
-                    className="mini-widget-greeting" 
-                    style={{ width: '100%', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none' }}
-                    disabled
-                  />
+                  <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>{greeting || 'Track your order in seconds'}</div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <input 
+                      type="text" 
+                      placeholder="#1001 or email" 
+                      className="mini-widget-greeting" 
+                      style={{ flex: 1, border: '1.5px solid #e5e7eb', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', outline: 'none' }}
+                      disabled
+                    />
+                    <div style={{ background: widgetColor, color: '#fff', borderRadius: '8px', padding: '8px 14px', fontSize: '12px', fontWeight: 700, whiteSpace: 'nowrap' }}>Track</div>
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>Order number or email address</div>
                 </div>
               </div>
             </div>
