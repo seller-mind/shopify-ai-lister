@@ -7,7 +7,8 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
 import { getSupabaseAdmin } from '~/services/supabase.server';
 import { getMigrationSQL } from '~/services/wismo-migration.server';
 
-const MIGRATION_KEY = 'wismo_migrate_2026';
+const MIGRATION_KEY = process.env.MIGRATION_SECRET;
+if (!MIGRATION_KEY) console.warn('[Migration] MIGRATION_SECRET env var not set — endpoint disabled');
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);

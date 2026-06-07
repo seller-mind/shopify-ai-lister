@@ -101,7 +101,7 @@ const LANG_WORDS: Record<string, string[]> = {
   es: ['donde', 'pedido', 'envío', 'entrega', 'rastrear', 'paquete', 'cuando', 'hola', 'gracias', 'ayuda'],
   fr: ['commande', 'livraison', 'suivi', 'colis', 'bonjour', 'merci', 'où', 'quand', 'aide'],
   de: ['bestellung', 'lieferung', 'sendung', 'versand', 'wo', 'wann', 'hallo', 'danke', 'hilfe'],
-  it: ['ordine', 'consegna', 'spedizione', 'dove', 'quando', 'ciao', 'grazie', 'aiuto'],
+  it: ['ordine', 'consegna', 'spedizione', 'dove', 'dov', 'quando', 'ciao', 'grazie', 'aiuto', 'mio'],
   pt: ['pedido', 'entrega', 'rastreamento', 'pacote', 'onde', 'quando', 'olá', 'obrigado'],
   nl: ['bestelling', 'levering', 'zending', 'waar', 'wanneer', 'hallo', 'bedankt'],
   pl: ['zamówienie', 'dostawa', 'przesyłka', 'gdzie', 'kiedy', 'cześć', 'pomoc'],
@@ -157,7 +157,7 @@ export function detectIntent(
 
   // 1. Handoff
   const handoffWords = [
-    'speak to human', 'talk to human', 'talk to agent', 'talk to a human', 'real person', 'human agent', 'complain', 'complaint', 'escalate', 'manager', 'contact support', 'customer service',
+    'speak to human', 'talk to human', 'talk to a human', 'talk to agent', 'talk to a human agent', 'real person', 'human agent', 'complain', 'complaint', 'escalate', 'manager', 'contact support', 'customer service',
     '人工客服', '人工', '转人工', '联系客服',
     'agente humano', 'parler à un agent', 'mit mensch sprechen',
     '대리자', 'オペレーター', 'agente real', 'opérateur',
