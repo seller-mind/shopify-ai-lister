@@ -136,7 +136,7 @@ async function handleCustomersDataRequest(shopDomain: string, payload: any) {
       console.log(`[GDPR] 📦 Customer data package prepared for ${shopDomain}: ${convCount} conversations, ${msgCount} messages, ${fbCount} feedback`);
 
       // Log the request with metadata summary only (no PII in metadata)
-      await supabase.from('wismo_messages').insert({
+      Promise.resolve(supabase.from('wismo_messages').insert({
         conversation_id: convIds[0],
         role: 'system',
         content: `GDPR data request received for customer at ${shopDomain}. Data package contains ${convCount} conversations, ${msgCount} messages, ${fbCount} feedback items. Will be provided within 30 days. Contact haimozhouqiu@outlook.com to request the data package.`,
@@ -149,7 +149,7 @@ async function handleCustomersDataRequest(shopDomain: string, payload: any) {
           requested_at: new Date().toISOString(),
           // Full data package NOT stored in DB for security — only in logs
         },
-      }).then(() => {
+      })).then(() => {
         console.log('[GDPR] Data request logged as system message');
       }).catch(() => {
         console.log('[GDPR] Data request logged (could not insert system message)');

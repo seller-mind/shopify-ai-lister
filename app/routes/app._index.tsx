@@ -12,6 +12,19 @@ import { useEffect, useRef, useState } from 'react';
 // Required scopes — must match shopify.app.toml
 const REQUIRED_SCOPES = SCOPES.split(',').map(s => s.trim()).sort();
 
+// Unified loader return type
+type DashboardData = {
+  shop: string | null;
+  status: 'ok' | 'need_reauth' | 'need_auth' | 'unauthenticated';
+  missingScopes?: string[];
+  oauthUrl?: string;
+  shopDomain?: string;
+  settings: { enabled: boolean; widget_color: string; widget_position: string; greeting: string };
+  analytics: { totalConversations: number; totalWismo: number; totalAutoResolved: number; totalHandoffs: number; resolutionRate: number; timeSavedMin: number; daily: any[] };
+  recentConversations: any[];
+  hasData: boolean;
+};
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const shop = url.searchParams.get('shop');
@@ -30,13 +43,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
       .single();
 
     if (sessionData?.scope) {
-      const currentScopes = sessionData.scope.split(',').map(s => s.trim()).sort();
-      const missingScopes = REQUIRED_SCOPES.filter(s => !currentScopes.includes(s));
+      const currentScopes = sessionData.scope.split(',').map((s: string) => s.trim()).sort();
+      const missingScopes = REQUIRED_SCOPES.filter((s: string) => !currentScopes.includes(s));
       if (missingScopes.length > 0) {
         console.log(`[Dashboard] Missing scopes: ${missingScopes.join(', ')} — redirecting to re-auth`);
         const state = crypto.randomUUID();
         const oauthUrl = getAuthUrl(session.shop, state);
-        return json({
+        return json<DashboardData>({
           shop: session.shop,
           status: 'need_reauth',
           missingScopes,
@@ -82,7 +95,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // Calculate time saved: avg 3 min per auto-resolved conversation
     const timeSavedMin = totalAutoResolved * 3;
 
-    return json({
+    return json<DashboardData>({
       shop: session.shop,
       status: 'ok',
       settings: settings || { enabled: true, widget_color: '#008060', widget_position: 'bottom-right', greeting: 'Track your order in seconds' },
@@ -95,9 +108,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       const shopDomain = shop.replace(/https?:\/\//, '').split('/')[0];
       const state = crypto.randomUUID();
       const oauthUrl = getAuthUrl(shopDomain, state);
-      return json({ shop: null, status: 'need_auth', shopDomain, oauthUrl });
+      return json<DashboardData>({ shop: null, status: 'need_auth' as const, shopDomain, oauthUrl, settings: { enabled: true, widget_color: '#008060', widget_position: 'bottom-right', greeting: '' }, analytics: { totalConversations: 0, totalWismo: 0, totalAutoResolved: 0, totalHandoffs: 0, resolutionRate: 0, timeSavedMin: 0, daily: [] }, recentConversations: [], hasData: false });
     }
-    return json({ shop: null, status: 'unauthenticated' });
+    return json<DashboardData>({ shop: null, status: 'unauthenticated' as const, settings: { enabled: true, widget_color: '#008060', widget_position: 'bottom-right', greeting: '' }, analytics: { totalConversations: 0, totalWismo: 0, totalAutoResolved: 0, totalHandoffs: 0, resolutionRate: 0, timeSavedMin: 0, daily: [] }, recentConversations: [], hasData: false });
   }
 }
 
@@ -173,8 +186,8 @@ export default function Dashboard() {
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round"><path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
           </div>
           <h1>Update Required</h1>
-          <p>WISMO AI needs additional permissions to work properly. Missing scopes: <strong>{(data as any).missingScopes?.join(', ')}</strong></p>
-          <a href={(data as any).oauthUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-lg">
+          <p>WISMO AI needs additional permissions to work properly. Missing scopes: <strong>{data.missingScopes?.join(', ')}</strong></p>
+          <a href={data.oauthUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-lg">
             Re-authorize App
           </a>
           <p className="onboarding-hint">After authorization, refresh this page.</p>
