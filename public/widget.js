@@ -288,7 +288,7 @@ var WINDOW_HTML = [
       card.innerHTML = avatar + '<div class="mc"><div class="oi-card">' +
         '<div class="oi-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px;color:var(--ac)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Enter your order number</div>' +
         '<div class="oi-row">' +
-        '<input type="text" class="oi-input" placeholder="#1001" autocomplete="off" />' +
+        '<input type="text" class="oi-input" placeholder="#1001 or email" autocomplete="off" />' +
         '<button class="oi-btn">Track</button>' +
         '</div>' +
         '<div class="oi-hint">or use your email address</div>' +
