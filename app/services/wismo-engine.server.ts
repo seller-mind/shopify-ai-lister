@@ -637,7 +637,7 @@ export async function generateResponse(
     const card = Array.isArray(orderInfo) ? orderInfo.map(buildOrderCard) : buildOrderCard(orderInfo);
     const reply = fmtOrderResponse(orderInfo, context.settings, lang, scenario || intent.scenario);
     const quickReplies = getContextualQuickReplies(orderInfo, scenario || intent.scenario, lang);
-    return { reply, intent: 'wismo', quickReplies, orderCard: Array.isArray(card) ? card[0] : card, detectedLanguage: lang };
+    return { reply, intent: 'wismo', quickReplies, orderCard: Array.isArray(card) ? card[0] : card, orderCards: Array.isArray(card) ? card : undefined, detectedLanguage: lang };
   }
 
   // WISMO but no order info → ask for it (still instant, no AI)
@@ -669,6 +669,7 @@ export async function generateResponse(
         intent: 'wismo',
         quickReplies: ['Track my order', context.settings.returnPolicy ? 'Return policy' : 'Talk to a human'].filter(Boolean),
         detectedLanguage: lang,
+      };
     }
     if (scenario === 'address' || intent.scenario === 'address') {
       return {
@@ -684,7 +685,6 @@ export async function generateResponse(
         intent: 'wismo',
         quickReplies: ['Track order', 'Talk to human'],
         detectedLanguage: lang,
-      };
       };
     }
 

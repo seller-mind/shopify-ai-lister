@@ -1,27 +1,32 @@
 /**
- * WISMO AI - Storefront Chat Widget v8 ("World's Best" Polish)
+ * WISMO AI - Storefront Chat Widget v9 (Global Premium SaaS)
  * 
- * "The World's Best WISMO Chatbot" - Global Premium SaaS Polish
+ * "Simple. Practical. Beautiful." - Apple/Stripe/Intercom level quality
  * ====================================================
- * ✓ ONE-STEP Tracking: inline order input in greeting card — no extra clicks
+ * ✓ ONE-STEP Tracking: inline order input in greeting card
  * ✓ Conversation Memory: persists across page loads via localStorage
  * ✓ Product Images: thumbnails in order card from Shopify
  * ✓ Premium Design: Apple-level polish, color-coded status, bot avatar
- * ✓ Instant Speed: greeting renders before API, 0ms order responses
+ * ✓ Instant Speed: greeting renders before API, animated loading messages
  * ✓ Zero Learning Curve: order input is the FIRST thing you see
  * ✓ Multi-language: auto-detect + respond in customer's language (20+)
  * ✓ Dark Mode: smooth auto-detect with refined palette
  * ✓ Feedback: thumbs up/down with thank-you animation
  * ✓ Mobile-first: full-screen overlay, safe area, touch-optimized
+ * ✓ FAQ Integration: configurable quick replies from store settings
+ * ✓ Multiple Orders: renders all order cards when returned
  * 
- * v8 "World's Best" Polish:
- * - Bubble tooltip with brand name
- * - Sparkle animation on greeting icon
- * - Delivery countdown & progress dates
- * - Enhanced not-found experience
- * - Skeleton loading states
- * - Improved quick replies
- * - Premium visual refinements
+ * v9 "Global Premium SaaS":
+ * - Animated contextual loading messages (feels faster, more human)
+ * - Ultra-minimal header (cleaner gradient, no noise texture)
+ * - Ultra-minimal footer (just separator + Privacy)
+ * - Refined bubble animation (smoother pulse)
+ * - Enhanced order card (better hierarchy, hover effects, dividers)
+ * - Refined not-found card (elegant, better icon)
+ * - Better quick replies (larger, more prominent)
+ * - Smart greeting quick replies with FAQ integration
+ * - Multiple order cards support
+ * - Not-found card now functional (API fixed)
  */
 
 // ─── HTML Escaping (XSS Prevention) ────────────────────────────────────
@@ -214,10 +219,10 @@ var WINDOW_HTML = [
   '  <div class="wm" role="log" aria-live="polite" aria-label="Chat messages"></div>',
   '  <div class="wq" style="display:none"></div>',
   '  <div class="wi">',
-  '    <input type="text" class="win" placeholder="Order # or question..." autocomplete="off" aria-label="Type your order number or question" />',
+  '    <input type="text" class="win" placeholder="Type order number or question..." autocomplete="off" aria-label="Type your order number or question" />',
   '    <button class="wsn" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>',
   '  </div>',
-  '  <div class="wft">Powered by AI <span class="wft-divider"></span><a href="' + API + '/privacy" target="_blank" rel="noopener" class="wft-privacy">Privacy</a></div>',
+  '  <div class="wft"><a href="' + API + '/privacy" target="_blank" rel="noopener" class="wft-privacy">Privacy</a></div>',
   '</div>',
 ].join('');
 
@@ -276,8 +281,8 @@ var WINDOW_HTML = [
       addMsg('user', text);
       state.typing = true;
       
-      // Show skeleton loading instead of typing dots
-      var skeleton = addSkeleton();
+      // Show animated contextual loading message
+      var loadingEl = showLoadingMessage();
       // Mobile: scroll to bottom after user sends
       setTimeout(function() { msgs.scrollTop = msgs.scrollHeight; }, 50);
 
@@ -288,7 +293,7 @@ var WINDOW_HTML = [
       })
       .then(function(r) { return r.json(); })
       .then(function(d) {
-        skeleton.remove();
+        loadingEl.remove();
         state.typing = false;
         if (d.error) { 
           addMsg('bot', 'Something went wrong. Please try again.'); 
@@ -305,7 +310,12 @@ var WINDOW_HTML = [
           return;
         }
 
-        if (d.orderCard) {
+        // Handle multiple order cards (NEW in v9)
+        if (d.orderCards && d.orderCards.length) {
+          d.orderCards.forEach(function(card) {
+            addOrderCard(card);
+          });
+        } else if (d.orderCard) {
           addOrderCard(d.orderCard);
         } else if (d.notFound) {
           showNotFoundCard();
@@ -319,7 +329,7 @@ var WINDOW_HTML = [
         }
       })
       .catch(function() {
-        skeleton.remove();
+        loadingEl.remove();
         state.typing = false;
         addMsg('bot', 'Connection error. Please try again.');
         showQR(['Try again', 'Talk to a human']);
@@ -352,14 +362,21 @@ var WINDOW_HTML = [
     // ─── Greeting with inline order input ──────────────────
     function showGreeting() {
       var greetingText = state.config && state.config.greeting ? state.config.greeting : 'Track your order';
-      var brandName = state.config && state.config.brandName ? state.config.brandName : '';
+      var faqItems = state.config && state.config.faqItems ? state.config.faqItems.slice(0, 2) : [];
+
+      // Build greeting quick replies: "Where is my order?" first, FAQ items, "I have a question" last
+      var qrItems = ['Where is my order?'];
+      faqItems.forEach(function(item) {
+        qrItems.push(item);
+      });
+      qrItems.push('I have a question');
 
       // SINGLE card: greeting text embedded in the input card — zero extra steps
       var card = document.createElement('div');
       card.className = 'mm m-bot';
       var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
       card.innerHTML = avatar + '<div class="mc"><div class="oi-card">' +
-        '<div class="oi-label"><svg class="oi-pin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/><path class="oi-sparkle-1" d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>' + esc(greetingText) + '</div>' +
+        '<div class="oi-label"><svg class="oi-pin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(greetingText) + '</div>' +
         '<div class="oi-row">' +
         '<input type="text" class="oi-input" placeholder="#1001 or email" autocomplete="off" />' +
         '<button class="oi-btn">Track <span class="oi-arrow">→</span></button>' +
@@ -393,9 +410,9 @@ var WINDOW_HTML = [
         if (e.key === 'Enter') { e.preventDefault(); trackOrder(); }
       });
 
-      // Quick reply — natural phrasing
+      // Smart greeting quick replies
       setTimeout(function() {
-        showQR(['I have a question']);
+        showQR(qrItems);
       }, 300);
     }
 
@@ -442,13 +459,51 @@ var WINDOW_HTML = [
       }
     }
 
-    // ─── Skeleton Loading ────────────────────────────────────
-    function addSkeleton() {
+    // ─── Animated Contextual Loading Messages (v9) ─────────────
+    var loadingMessages = [
+      { text: 'Looking up your order...', delay: 0 },
+      { text: 'Checking delivery status...', delay: 1000 },
+      { text: 'Almost there...', delay: 2000 }
+    ];
+    var loadingTimers = [];
+    
+    function showLoadingMessage() {
       var d = document.createElement('div');
-      d.className = 'mm m-bot skeleton-card';
-      d.innerHTML = '<div class="ma-skel"></div><div class="mc-skel"><div class="skel-order"></div><div class="skel-progress"></div><div class="skel-track"></div></div>';
+      d.className = 'mm m-bot loading-msg';
+      var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
+      d.innerHTML = avatar + '<div class="mc"><div class="loading-dots"><span class="loading-text"></span><span class="dot-anim"><span></span><span></span><span></span></span></div></div>';
       msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
+
+      var textEl = d.querySelector('.loading-text');
+      var currentIdx = 0;
+
+      // Show first message immediately
+      textEl.textContent = loadingMessages[0].text;
+
+      // Set up timed message changes
+      loadingTimers = [];
+      for (var i = 1; i < loadingMessages.length; i++) {
+        (function(idx) {
+          var timer = setTimeout(function() {
+            textEl.style.opacity = '0';
+            textEl.style.transform = 'translateY(-4px)';
+            setTimeout(function() {
+              textEl.textContent = loadingMessages[idx].text;
+              textEl.style.opacity = '1';
+              textEl.style.transform = 'translateY(0)';
+            }, 150);
+          }, loadingMessages[idx].delay);
+          loadingTimers.push(timer);
+        })(i);
+      }
+
+      // Cleanup timers when removed
+      d.cleanup = function() {
+        loadingTimers.forEach(function(t) { clearTimeout(t); });
+        loadingTimers = [];
+      };
+
       return d;
     }
 
@@ -462,16 +517,16 @@ var WINDOW_HTML = [
       var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
       
       var cardHtml = '<div class="nf-card">';
-      cardHtml += '<div class="nf-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6"/></svg></div>';
+      cardHtml += '<div class="nf-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>';
       cardHtml += '<div class="nf-title">Order not found</div>';
       cardHtml += '<ul class="nf-tips">';
-      cardHtml += '<li>Check your order number</li>';
-      cardHtml += '<li>Try your email instead</li>';
-      cardHtml += '<li>Look for confirmation email</li>';
+      cardHtml += '<li>Double-check your order number</li>';
+      cardHtml += '<li>Try using your email address</li>';
+      cardHtml += '<li>Check your confirmation email</li>';
       cardHtml += '</ul>';
       cardHtml += '<div class="nf-retry">';
       cardHtml += '<input type="text" class="nf-input" placeholder="Try again..." autocomplete="off" />';
-      cardHtml += '<button class="nf-btn">Go</button>';
+      cardHtml += '<button class="nf-btn">Search</button>';
       cardHtml += '</div>';
       cardHtml += '</div>';
 
@@ -505,7 +560,7 @@ var WINDOW_HTML = [
       setTimeout(function() { nfInput.focus(); }, 100);
       
       // Quick replies for not found
-      showQR(['Try my email', 'Check order # again', 'Talk to a human']);
+      showQR(['Try my email', 'Contact support']);
     }
 
     // ─── Order Card ──────────────────────────────────────────
@@ -547,14 +602,14 @@ var WINDOW_HTML = [
         
         stages.forEach(function(stage, idx) {
           var isDone = card.timeline.some(function(t) { return t.completed && (t.label.toLowerCase().includes(stage.key) || t.status === stage.key); });
-          var isActive = card.timeline.some(function(t) { return t.current && (t.label.toLowerCase().includes(stage.key) || t.status === stage.key); });
+          var isAct = card.timeline.some(function(t) { return t.current && (t.label.toLowerCase().includes(stage.key) || t.status === stage.key); });
           var stageDate = null;
           card.timeline.forEach(function(t) {
             if (t.label.toLowerCase().includes(stage.key) || t.status === stage.key) {
               stageDate = t.date || t.timestamp;
             }
           });
-          var cls = 'op-stage' + (isDone ? ' done' : '') + (isActive ? ' active' : '');
+          var cls = 'op-stage' + (isDone ? ' done' : '') + (isAct ? ' active' : '');
           cardHtml += '<div class="' + cls + '">';
           cardHtml += '<div class="op-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + stage.icon + '</svg></div>';
           cardHtml += '<div class="op-label">' + stage.label + '</div>';
@@ -573,12 +628,12 @@ var WINDOW_HTML = [
         cardHtml += '<div class="oc-track">';
         cardHtml += '<div class="oc-carrier">' + esc(card.trackingCompany) + ' · ' + esc(card.trackingNumber) + '</div>';
         if (card.trackingUrl) {
-          cardHtml += '<a href="' + safeHref(card.trackingUrl) + '" target="_blank" rel="noopener" class="oc-track-btn">Track Package →</a>';
+          cardHtml += '<a href="' + safeHref(card.trackingUrl) + '" target="_blank" rel="noopener" class="oc-track-btn">Track <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>';
         }
         cardHtml += '</div>';
       }
 
-      // Delivery Countdown
+      // Delivery Countdown (v9: better formatting with <b> tags)
       if (card.estimatedDelivery) {
         var countdownText = getDeliveryCountdown(card.estimatedDelivery);
         cardHtml += '<div class="oc-countdown">' + countdownText + '</div>';
@@ -691,11 +746,11 @@ function getDeliveryCountdown(estDelivery) {
       var pastDays = Math.abs(days);
       if (pastDays === 0) return 'Delivered today!';
       if (pastDays === 1) return 'Delivered yesterday';
-      return 'Delivered ' + pastDays + ' days ago';
+      return 'Delivered <b>' + pastDays + '</b> days ago';
     } else {
       if (days === 0) return 'Arriving today!';
       if (days === 1) return 'Arrives tomorrow';
-      return 'Arrives in ' + days + ' days';
+      return 'Arrives in <b>' + days + '</b> days';
     }
   } catch(e) {
     return 'Est. delivery: ' + estDelivery;
@@ -745,6 +800,8 @@ function CSS() {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* ─── Dark Mode ────────────────────────────────────── */
@@ -802,10 +859,12 @@ function CSS() {
 .w.dark .nf-input { background: #2c2c2e; border-color: #38383a; color: var(--text-primary); }
 .w.dark .nf-input::placeholder { color: var(--text-tertiary); }
 .w.dark .oc-item-placeholder { background: #2c2c2e; color: #555; }
+.w.dark .loading-dots { color: var(--text-secondary); }
+.w.dark .loading-text { color: var(--text-secondary); }
 
 .w.left { right: auto; left: 24px; }
 
-/* ─── Bubble with Tooltip ────────────────────────────────────── */
+/* ─── Bubble with Refined Animation (v9) ──────────────────────────── */
 .wb {
   width: 64px;
   height: 64px;
@@ -834,7 +893,7 @@ function CSS() {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* Pulse ring animation */
+/* Refined smoother pulse animation (v9) */
 .wb::before {
   content: "";
   position: absolute;
@@ -843,12 +902,13 @@ function CSS() {
   border-radius: 50%;
   border: 2px solid var(--ac);
   opacity: 0;
-  animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulseRingV9 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
 }
 
-@keyframes pulseRing {
-  0% { transform: scale(1); opacity: 0.6; }
-  100% { transform: scale(1.5); opacity: 0; }
+@keyframes pulseRingV9 {
+  0% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.35); opacity: 0.2; }
+  100% { transform: scale(1); opacity: 0; }
 }
 
 .wb:hover {
@@ -937,47 +997,34 @@ function CSS() {
   to { opacity: 0; transform: translateY(8px) scale(0.98); }
 }
 
-/* ─── Header with Noise Texture ────────────────────────────────────── */
+/* ─── Header - v9 Ultra Minimal ──────────────────────────────────── */
 .wh {
-  background: linear-gradient(135deg, #00785c 0%, #00996b 100%);
+  background: linear-gradient(135deg, #006b4d 0%, #008060 50%, #00996b 100%);
   color: #fff;
   padding: 16px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  backdrop-filter: blur(20px);
   position: relative;
-  overflow: hidden;
 }
 
-/* Noise texture overlay */
-.wh::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  pointer-events: none;
-}
-
-/* Bottom gradient fade border */
+/* Bottom gradient fade border (v9: cleaner, no noise texture) */
 .wh::after {
   content: "";
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
 }
 
 .whl { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
 .wa {
   width: 40px; height: 40px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.15);
   display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.2);
   position: relative;
 }
 
@@ -988,8 +1035,8 @@ function CSS() {
   background: rgba(255,255,255,0.08);
   border-radius: 10px;
 }
-.wt { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
-.ws { font-size: 12px; opacity: 0.9; margin-top: 2px; display: flex; align-items: center; gap: 5px; }
+.wt { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+.ws { font-size: 12px; opacity: 0.85; margin-top: 2px; display: flex; align-items: center; gap: 5px; font-weight: 500; }
 .wdot {
   width: 7px; height: 7px;
   border-radius: 50%;
@@ -1014,7 +1061,7 @@ function CSS() {
 }
 
 .wx {
-  background: none; border: none; color: rgba(255,255,255,0.65);
+  background: none; border: none; color: rgba(255,255,255,0.6);
   cursor: pointer; padding: 8px; border-radius: 10px;
   transition: background 0.15s, color 0.15s, transform 0.15s; outline: none;
 }
@@ -1086,52 +1133,39 @@ function CSS() {
 .mts { font-size: 10px; color: var(--text-tertiary); margin-top: 6px; padding: 0 2px; }
 .m-user .mts { text-align: right; }
 
-/* ─── Skeleton Loading ─────────────────────────────── */
-.skeleton-card .ma-skel {
-  width: 30px; height: 30px;
-  border-radius: 10px;
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
-  background-size: 200% 100%;
-  animation: skelShimmer 1.5s infinite;
-  flex-shrink: 0;
+/* ─── Animated Loading Message (v9) ──────────────────────────────── */
+.loading-msg .mc {
+  padding: 12px 16px;
 }
-.mc-skel {
-  flex: 1;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
+.loading-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
 }
-.skel-order {
-  height: 24px;
-  width: 60%;
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
-  background-size: 200% 100%;
-  animation: skelShimmer 1.5s infinite;
-  border-radius: 6px;
-  margin-bottom: 16px;
+.loading-text {
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
-.skel-progress {
-  height: 60px;
-  width: 100%;
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
-  background-size: 200% 100%;
-  animation: skelShimmer 1.5s infinite 0.1s;
-  border-radius: 8px;
-  margin-bottom: 12px;
+.dot-anim {
+  display: flex;
+  gap: 3px;
+  align-items: center;
 }
-.skel-track {
-  height: 32px;
-  width: 80%;
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
-  background-size: 200% 100%;
-  animation: skelShimmer 1.5s infinite 0.2s;
-  border-radius: 6px;
+.dot-anim span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+  animation: dotBounce 1.2s ease-in-out infinite;
 }
+.dot-anim span:nth-child(1) { animation-delay: 0s; }
+.dot-anim span:nth-child(2) { animation-delay: 0.15s; }
+.dot-anim span:nth-child(3) { animation-delay: 0.3s; }
 
-@keyframes skelShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+@keyframes dotBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
 }
 
 /* ─── Inline Order Input Card ─────────────────────── */
@@ -1164,33 +1198,16 @@ function CSS() {
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 14px;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   display: flex;
   align-items: center;
 }
 
-/* Pin icon with sparkle animation */
+/* Pin icon */
 .oi-pin-icon {
   vertical-align: -3px;
-  margin-right: 6px;
+  margin-right: 8px;
   color: var(--ac);
-  animation: pinBounce 2s ease-in-out infinite;
-}
-
-@keyframes pinBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-/* Sparkle accents on pin */
-.oi-sparkle-1 {
-  animation: sparkle 2s ease-in-out infinite;
-  transform-origin: center;
-}
-
-@keyframes sparkle {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.2); }
 }
 
 .oi-row { display: flex; gap: 8px; }
@@ -1211,12 +1228,6 @@ function CSS() {
   border-color: var(--ac);
   box-shadow: 0 0 0 3px var(--ac-glow), inset 0 1px 2px rgba(0,0,0,0.05);
   background: var(--bg-card);
-  animation: inputBorderGlow 1.5s ease-in-out infinite;
-}
-
-@keyframes inputBorderGlow {
-  0%, 100% { box-shadow: 0 0 0 3px var(--ac-glow), inset 0 1px 2px rgba(0,0,0,0.05); }
-  50% { box-shadow: 0 0 0 4px var(--ac-glow-strong), inset 0 1px 2px rgba(0,0,0,0.05); }
 }
 
 .oi-input::placeholder { color: var(--text-tertiary); font-weight: 500; }
@@ -1251,39 +1262,40 @@ function CSS() {
 .oi-hint { font-size: 12px; color: var(--text-secondary); margin-top: 10px; font-weight: 500; }
 .oi-example { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; font-style: italic; }
 
-/* ─── Not Found Card ─────────────────────────────── */
+/* ─── Not Found Card (v9 - More Elegant) ─────────────────────── */
 .nf-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 24px 20px;
   text-align: center;
   animation: cardSlide 0.4s cubic-bezier(0.16,1,0.3,1) both;
 }
 .nf-icon {
-  width: 56px; height: 56px;
+  width: 64px; height: 64px;
   border-radius: 50%;
-  background: rgba(0,128,96,0.1);
+  background: rgba(0,128,96,0.08);
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 12px;
+  margin: 0 auto 16px;
   color: var(--ac);
 }
 .nf-title {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
 }
 .nf-tips {
   list-style: none;
   padding: 0;
-  margin: 0 0 16px;
+  margin: 0 0 20px;
   text-align: left;
 }
 .nf-tips li {
   font-size: 13px;
   color: var(--text-secondary);
-  padding: 6px 0;
+  padding: 8px 0;
   padding-left: 20px;
   position: relative;
 }
@@ -1296,13 +1308,13 @@ function CSS() {
 .nf-retry {
   display: flex;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 .nf-input {
   flex: 1;
   border: 1.5px solid var(--border-color);
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 11px 14px;
   font-size: 14px;
   font-family: inherit;
   outline: none;
@@ -1320,7 +1332,7 @@ function CSS() {
   color: #fff;
   border: none;
   border-radius: 10px;
-  padding: 0 18px;
+  padding: 0 20px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -1331,15 +1343,15 @@ function CSS() {
 .nf-btn:hover { opacity: 0.9; transform: scale(1.02); }
 .nf-btn:active { transform: scale(0.98); }
 
-/* ─── Order Card v3 (Horizontal Progress) ─────────── */
+/* ─── Order Card (v9 - Enhanced) ─────────────────────────────── */
 .oc {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-left: 5px solid var(--ac);
+  border-left: 4px solid var(--ac);
   border-radius: var(--radius);
   padding: 18px 20px;
-  margin-bottom: 6px;
-  box-shadow: var(--shadow), 0 0 0 1px rgba(0,128,96,0.05);
+  margin-bottom: 8px;
+  box-shadow: var(--shadow), 0 0 0 1px rgba(0,128,96,0.04);
 }
 .oc-h {
   display: flex;
@@ -1352,10 +1364,10 @@ function CSS() {
 .oc-ord { display: flex; align-items: center; gap: 8px; }
 .oc-num { font-weight: 800; font-size: 18px; color: var(--text-primary); letter-spacing: -0.02em; }
 .oc-status {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 7px 16px;
-  border-radius: 22px;
+  padding: 8px 14px;
+  border-radius: 20px;
   letter-spacing: 0.02em;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
@@ -1391,7 +1403,7 @@ function CSS() {
   flex-shrink: 0;
 }
 
-/* Horizontal Progress Bar - v3.0 with dates */
+/* Horizontal Progress Bar - v9 */
 .oc-progress {
   display: flex;
   align-items: center;
@@ -1473,7 +1485,7 @@ function CSS() {
 .tl-step.active .tl-label { color: var(--ac-dark); }
 .tl-date { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
 
-/* Tracking */
+/* Tracking - v9 with hover effect */
 .oc-track {
   display: flex;
   justify-content: space-between;
@@ -1491,15 +1503,17 @@ function CSS() {
 }
 .oc-track-btn:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,128,96,0.3); }
 .oc-track-btn:active { transform: scale(0.97); }
+.oc-track-btn svg { transition: transform 0.15s ease; }
+.oc-track-btn:hover svg { transform: translateX(2px); }
 
-/* Delivery Countdown */
+/* Delivery Countdown - v9 with better formatting */
 .oc-countdown {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--text-secondary);
   margin-top: 14px;
   padding-top: 14px;
   border-top: 1px solid var(--border-light);
-  font-weight: 600;
+  font-weight: 500;
 }
 .oc-countdown b { color: var(--text-primary); font-weight: 800; font-size: 16px; }
 
@@ -1536,12 +1550,12 @@ function CSS() {
   100% { transform: scale(1) rotate(0deg); }
 }
 
-/* ─── Quick Replies ────────────────────────────────── */
+/* ─── Quick Replies (v9 - Larger, More Prominent) ──────────────── */
 .wq {
   padding: 0 18px 14px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   background: var(--bg-msg);
   flex-shrink: 0;
 }
@@ -1549,16 +1563,16 @@ function CSS() {
   background: var(--bg-card);
   border: 1.5px solid var(--ac);
   color: var(--ac);
-  padding: 9px 18px;
-  border-radius: 22px;
-  font-size: 13px;
+  padding: 11px 20px;
+  border-radius: 24px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
   font-family: inherit;
   outline: none;
   animation: qrIn 0.3s cubic-bezier(0.16,1,0.3,1) both;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,128,96,0.04);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 @keyframes qrIn {
   from { opacity: 0; transform: translateY(8px) scale(0.9); }
@@ -1567,7 +1581,7 @@ function CSS() {
 .qb:hover {
   background: var(--ac);
   color: #fff;
-  transform: translateY(-2px) scale(1.04);
+  transform: translateY(-2px) scale(1.03);
   box-shadow: 0 4px 12px rgba(0,128,96,0.3), 0 8px 20px rgba(0,0,0,0.08);
   border-color: var(--ac);
 }
@@ -1583,30 +1597,25 @@ function CSS() {
   flex-shrink: 0;
   align-items: center;
 }
+
+/* Footer - v9 Ultra Minimal */
 .wft {
-  padding: 6px 16px calc(6px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
   text-align: center;
-  font-size: 10px;
-  color: #999;
+  font-size: 11px;
+  color: #aaa;
   background: #fafafa;
   flex-shrink: 0;
-  letter-spacing: 0.01em;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 6px;
 }
-.wft-divider { width: 1px; height: 12px; background: #e5e7eb; }
+.wft::before { content: "·"; font-size: 14px; }
 .w.dark .wft { background: #0f0f11; color: #555; }
-.w.dark .wft-divider { background: #2c2c2e; }
 .wft a { color: var(--ac); text-decoration: none; font-weight: 600; transition: color 0.15s; }
 .wft a:hover { color: #006b4d; text-decoration: underline; }
-.wft-privacy { 
-  padding: 2px 8px; 
-  background: rgba(0,128,96,0.08); 
-  border-radius: 4px; 
-}
-.w.dark .wft-privacy { background: rgba(0,128,96,0.15); }
+
 .win {
   flex: 1;
   border: 1.5px solid var(--border-color);
@@ -1624,7 +1633,6 @@ function CSS() {
   border-color: var(--ac);
   box-shadow: 0 0 0 3px var(--ac-glow), inset 0 1px 2px rgba(0,0,0,0.05);
   background: var(--bg-card);
-  animation: inputBorderGlow 1.5s ease-in-out infinite;
 }
 .win::placeholder { color: var(--text-tertiary); }
 .wsn {
@@ -1694,7 +1702,7 @@ function CSS() {
   .wm { -webkit-overflow-scrolling: auto; overscroll-behavior: contain; }
   
   /* Mobile quick replies: slightly larger touch targets */
-  .qb { padding: 10px 16px; font-size: 13px; }
+  .qb { padding: 11px 18px; font-size: 14px; }
   
   /* Mobile not found card: full width */
   .nf-card {
@@ -1704,8 +1712,8 @@ function CSS() {
     border-right: none;
   }
   
-  /* Mobile skeleton */
-  .mc-skel { border-radius: 0; margin: 0 -18px; border-left: none; border-right: none; }
+  /* Mobile: loading message adjustments */
+  .loading-dots { font-size: 13px; }
 }
 ';
 } // end __wismo_loaded guard
