@@ -159,7 +159,7 @@ var WINDOW_HTML = [
   '  <div class="wm" role="log" aria-live="polite" aria-label="Chat messages"></div>',
   '  <div class="wq" style="display:none"></div>',
   '  <div class="wi">',
-  '    <input type="text" class="win" placeholder="Ask anything..." autocomplete="off" aria-label="Type your message" />',
+  '    <input type="text" class="win" placeholder="Order # or question..." autocomplete="off" aria-label="Type your order number or question" />',
   '    <button class="wsn" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>',
   '  </div>',
   '  <div class="wft">AI-powered · <a href="' + API + '/privacy" target="_blank" rel="noopener">Privacy</a></div>',

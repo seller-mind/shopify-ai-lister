@@ -1,0 +1,32 @@
+# Shopify App配置文件
+name = "WISMO AI"
+client_id = "c89a54bc8d3f9038baa77056f8a55b6b"
+
+# 应用主URL
+application_url = "https://shopify-ai-lister-tau.vercel.app"
+
+# 是否为嵌入式应用
+embedded = true
+
+# 访问权限范围
+[access_scopes]
+scopes = "read_products,read_orders,read_fulfillments,read_themes,write_themes"
+
+# OAuth回调URL
+[auth]
+redirect_urls = [
+  "https://shopify-ai-lister-tau.vercel.app/auth/callback",
+]
+
+# Webhook配置
+[webhooks]
+api_version = "2026-04"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled", "app_subscriptions/update"]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "/webhooks"
+
+# POS配置
+[pos]
+embedded = false
