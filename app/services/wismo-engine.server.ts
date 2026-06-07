@@ -100,11 +100,11 @@ const LANG_PATTERNS: { pattern: RegExp; lang: string; name: string }[] = [
 ];
 
 const LANG_WORDS: Record<string, string[]> = {
-  es: ['donde', 'pedido', 'envío', 'entrega', 'rastrear', 'paquete', 'cuando', 'hola', 'gracias', 'ayuda'],
-  fr: ['commande', 'livraison', 'suivi', 'colis', 'bonjour', 'merci', 'où', 'quand', 'aide'],
-  de: ['bestellung', 'lieferung', 'sendung', 'versand', 'wo', 'wann', 'hallo', 'danke', 'hilfe'],
-  it: ['ordine', 'consegna', 'spedizione', 'dove', 'dov', 'quando', 'ciao', 'grazie', 'aiuto', 'mio'],
-  pt: ['pedido', 'entrega', 'rastreamento', 'pacote', 'onde', 'quando', 'olá', 'obrigado'],
+  es: ['donde', 'pedido', 'envío', 'entrega', 'rastrear', 'paquete', 'cuando', 'hola', 'gracias', 'ayuda', 'no', 'ha', 'llegado', 'mi', 'quiero', 'necesito', 'estado', 'tarde'],
+  fr: ['commande', 'livraison', 'suivi', 'colis', 'bonjour', 'merci', 'où', 'quand', 'aide', 'je', 'veux', 'suivre', 'ma', 'mon', 'pas', 'reçu', 'encore', 'état'],
+  de: ['bestellung', 'lieferung', 'sendung', 'versand', 'wo', 'wann', 'hallo', 'danke', 'hilfe', 'ich', 'meine', 'möchte', 'verfolgen', 'nicht', 'erhalten', 'status', 'kann'],
+  it: ['ordine', 'consegna', 'spedizione', 'dove', 'dov', 'quando', 'ciao', 'grazie', 'aiuto', 'mio', 'voglio', 'tracciare', 'non', 'ricevuto', 'stato', 'ancora'],
+  pt: ['pedido', 'entrega', 'rastreamento', 'pacote', 'onde', 'quando', 'olá', 'obrigado', 'rastrear', 'meu', 'minha', 'quero', 'não', 'recebi', 'status', 'ainda'],
   nl: ['bestelling', 'levering', 'zending', 'waar', 'wanneer', 'hallo', 'bedankt'],
   pl: ['zamówienie', 'dostawa', 'przesyłka', 'gdzie', 'kiedy', 'cześć', 'pomoc'],
   tr: ['sipariş', 'teslimat', 'kargo', 'nerede', 'ne zaman', 'merhaba', 'yardım'],
