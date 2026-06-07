@@ -381,7 +381,7 @@ var WINDOW_HTML = [
       var cardHtml = '<div class="oc">';
       // Header
       cardHtml += '<div class="oc-h">';
-      cardHtml += '<div class="oc-ord"><span class="oc-icon">' + statusIcon + '</span><span class="oc-num">' + esc(card.orderNumber) + '</span></div>';
+      cardHtml += '<div class="oc-ord"><span class="oc-num">' + esc(card.orderNumber) + '</span></div>';
       cardHtml += '<span class="oc-status" style="background:' + statusColor.bg + ';color:' + statusColor.fg + '">' + esc(card.statusLabel) + '</span>';
       cardHtml += '</div>';
 
@@ -417,7 +417,7 @@ var WINDOW_HTML = [
       // Tracking
       if (card.trackingCompany && card.trackingNumber) {
         cardHtml += '<div class="oc-track">';
-        cardHtml += '<div class="oc-carrier">🚚 ' + esc(card.trackingCompany) + ' · ' + esc(card.trackingNumber) + '</div>';
+        cardHtml += '<div class="oc-carrier">' + esc(card.trackingCompany) + ' · ' + esc(card.trackingNumber) + '</div>';
         if (card.trackingUrl) {
           cardHtml += '<a href="' + safeHref(card.trackingUrl) + '" target="_blank" rel="noopener" class="oc-track-btn">Track Package →</a>';
         }
@@ -426,7 +426,7 @@ var WINDOW_HTML = [
 
       // Estimated delivery
       if (card.estimatedDelivery) {
-        cardHtml += '<div class="oc-eta">📅 Est. delivery: <b>' + esc(card.estimatedDelivery) + '</b></div>';
+        cardHtml += '<div class="oc-eta">Est. delivery: <b>' + esc(card.estimatedDelivery) + '</b></div>';
       }
 
       cardHtml += '</div>';
@@ -530,12 +530,12 @@ function getStatusColor(status) {
 
 function getStatusIcon(status) {
   switch (status) {
-    case 'FULFILLED': return '🚚';
-    case 'UNFULFILLED': return '📦';
-    case 'PARTIALLY_FULFILLED': return '📤';
-    case 'RESTOCKED': return '↩️';
-    case 'PENDING': return '⏳';
-    default: return '📦';
+    case 'FULFILLED': return '';
+    case 'UNFULFILLED': return '';
+    case 'PARTIALLY_FULFILLED': return '';
+    case 'RESTOCKED': return '';
+    case 'PENDING': return '';
+    default: return '';
   }
 }
 
@@ -627,7 +627,7 @@ function CSS() {
   box-shadow: 0 6px 24px rgba(0,128,96,0.4), 0 2px 8px rgba(0,128,96,0.2), 0 0 0 1px rgba(0,128,96,0.1);
   transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
   outline: none;
-  animation: bubbleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both, bubbleIdle 4s ease-in-out 1s infinite;
+  animation: bubbleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
 }
 
 @keyframes bubbleIn {
@@ -635,10 +635,7 @@ function CSS() {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-@keyframes bubbleIdle {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-}
+
 
 .wb:hover {
   transform: scale(1.08) !important;
@@ -808,11 +805,11 @@ function CSS() {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .oi-label {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 12px;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 .oi-row { display: flex; gap: 8px; }
 .oi-input {
@@ -838,17 +835,18 @@ function CSS() {
   color: #fff;
   border: none;
   border-radius: 12px;
-  padding: 0 22px;
+  padding: 0 24px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
   transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,128,96,0.25);
+  box-shadow: 0 4px 14px rgba(0,128,96,0.3);
   min-height: 46px;
   display: flex;
   align-items: center;
+  letter-spacing: -0.01em;
 }
 .oi-btn:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(0,128,96,0.35); }
 .oi-btn:active { transform: scale(0.96); box-shadow: 0 1px 4px rgba(0,128,96,0.2); }
@@ -872,14 +870,14 @@ function CSS() {
   margin-bottom: 14px;
 }
 .oc-ord { display: flex; align-items: center; gap: 8px; }
-.oc-icon { font-size: 18px; }
-.oc-num { font-weight: 800; font-size: 15px; color: var(--text-primary); letter-spacing: -0.02em; }
+.oc-icon { display: none; }
+.oc-num { font-weight: 800; font-size: 16px; color: var(--text-primary); letter-spacing: -0.02em; }
 .oc-status {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 12px;
-  letter-spacing: 0.02em;
+  padding: 6px 14px;
+  border-radius: 14px;
+  letter-spacing: 0.01em;
 }
 .oc-items { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .oc-item {
@@ -953,18 +951,19 @@ function CSS() {
   padding: 12px 0 6px;
   border-top: 1px solid var(--border-light);
 }
-.oc-carrier { font-size: 12px; color: var(--text-secondary); }
+.oc-carrier { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
 .oc-track-btn {
-  color: var(--ac); text-decoration: none; font-weight: 700; font-size: 13px;
-  padding: 7px 16px; border-radius: 10px; background: var(--ac-light);
+  color: #fff; text-decoration: none; font-weight: 700; font-size: 13px;
+  padding: 8px 18px; border-radius: 10px; background: var(--ac);
   transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  box-shadow: 0 2px 8px rgba(0,128,96,0.2);
 }
-.oc-track-btn:hover { background: var(--ac); color: #fff; transform: scale(1.02); }
+.oc-track-btn:hover { opacity: 0.9; transform: scale(1.02); box-shadow: 0 4px 12px rgba(0,128,96,0.3); }
 .oc-track-btn:active { transform: scale(0.97); }
-.oc-eta { font-size: 12px; color: var(--text-secondary); margin-top: 10px; padding-top: 8px; }
+.oc-eta { font-size: 13px; color: var(--text-secondary); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light); }
 .oc-eta b { color: var(--text-primary); font-weight: 700; }
 
 /* ─── Feedback ────────────────────────────────────── */

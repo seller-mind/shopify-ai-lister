@@ -117,7 +117,7 @@ export default function Settings() {
 
         {/* Live Preview */}
         <div className="settings-preview">
-          <h3>⚡ Live Preview</h3>
+          <h3>Live Preview</h3>
           <div style={{ display: 'flex', justifyContent: widgetPosition === 'bottom-left' ? 'flex-start' : 'flex-end' }}>
             <div className="mini-widget" style={{ maxWidth: '280px' }}>
               <div className="mini-widget-header" style={{ background: `linear-gradient(135deg, ${widgetColor}, ${adjustColor(widgetColor, 20)})` }}>
@@ -131,7 +131,7 @@ export default function Settings() {
               </div>
               <div className="mini-widget-body">
                 <div className="mini-widget-card">
-                  <div style={{ marginBottom: '8px' }}>📦 {greeting || 'Track your order in seconds'}</div>
+                  <div style={{ marginBottom: '8px' }}>{greeting || 'Track your order in seconds'}</div>
                   <input 
                     type="text" 
                     placeholder="Enter order #" 

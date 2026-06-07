@@ -228,7 +228,7 @@ export function detectIntent(
     const lastBotMsg = [...previousMessages].reverse().find(m => m.role === 'assistant');
     if (lastBotMsg) {
       const botLower = lastBotMsg.content.toLowerCase();
-      if (botLower.includes('order') || botLower.includes('track') || botLower.includes('📦') ||
+      if (botLower.includes('order') || botLower.includes('track') || botLower.includes('') ||
           botLower.includes('pedido') || botLower.includes('commande') || botLower.includes('bestellung')) {
         return { intent: 'wismo' };
       }
@@ -328,7 +328,7 @@ function getCarrierTrackingUrl(carrier: string | null, tracking: string): string
 const DEMO_ORDERS: OrderInfo[] = [
   {
     orderNumber: '#1001',
-    status: 'Shipped ✅',
+    status: 'Shipped',
     financialStatus: 'Paid',
     fulfillmentStatus: 'FULFILLED',
     trackingCompany: 'USPS',
@@ -340,7 +340,7 @@ const DEMO_ORDERS: OrderInfo[] = [
   },
   {
     orderNumber: '#1002',
-    status: 'Processing 📤',
+    status: 'Processing',
     financialStatus: 'Paid',
     fulfillmentStatus: 'UNFULFILLED',
     trackingCompany: null,
@@ -540,7 +540,7 @@ export async function generateResponse(
   const intent = detectIntent(userMessage, context.previousMessages);
   const lang = detectLanguage(userMessage, context.customerLocale);
 
-  // ⚡ INSTANT: WISMO + order found → formatted response with order card
+  // INSTANT: WISMO + order found → formatted response with order card
   if (intent.intent === 'wismo' && orderInfo) {
     const card = Array.isArray(orderInfo) ? orderInfo.map(buildOrderCard) : buildOrderCard(orderInfo);
     const reply = fmtOrderResponse(orderInfo, context.settings, lang, scenario || intent.scenario);
@@ -555,7 +555,7 @@ export async function generateResponse(
       return {
         reply: t(lang, 'customs_no_order'),
         intent: 'wismo',
-        quickReplies: ['📦 Track my order', '💬 Talk to a human'],
+        quickReplies: ['Track order', 'Talk to human'],
         detectedLanguage: lang,
       };
     }
@@ -563,19 +563,19 @@ export async function generateResponse(
       return {
         reply: t(lang, 'lost_no_order'),
         intent: 'wismo',
-        quickReplies: ['📦 Track my order', '💬 Talk to a human'],
+        quickReplies: ['Track order', 'Talk to human'],
         detectedLanguage: lang,
       };
     }
     if (scenario === 'return' || intent.scenario === 'return') {
       const returnReply = t(lang, 'return_no_order', context.settings.brandName || 'our store');
       const returnLink = context.settings.returnPolicy
-        ? `\n\n🔗 Return policy: ${context.settings.returnPolicy}`
+        ? `\n\nReturn policy: ${context.settings.returnPolicy}`
         : '';
       return {
         reply: returnReply + returnLink,
         intent: 'wismo',
-        quickReplies: ['📦 Track my order', context.settings.returnPolicy ? '↩️ Return policy' : '💬 Talk to a human'].filter(Boolean),
+        quickReplies: ['Track my order', context.settings.returnPolicy ? 'Return policy' : 'Talk to a human'].filter(Boolean),
         detectedLanguage: lang,
       };
     }
@@ -585,8 +585,8 @@ export async function generateResponse(
       reply: t(lang, 'ask_order_info', brand),
       intent: 'wismo',
       quickReplies: lang === 'en'
-        ? ['📦 I have my order #', '📧 I used my email', '💬 Talk to a human']
-        : ['📦 Track my order', '💬 Talk to a human'],
+        ? [' I have my order #', 'My email', 'Talk to a human']
+        : ['Track order', 'Talk to human'],
       detectedLanguage: lang,
     };
   }
@@ -607,8 +607,8 @@ export async function generateResponse(
     reply,
     intent: 'general',
     quickReplies: lang === 'en'
-      ? ['📦 Track my order', '💬 Talk to a human']
-      : ['📦 Track my order'],
+      ? ['Track order', 'Talk to human']
+      : ['Track my order'],
     detectedLanguage: lang,
   };
 }
@@ -619,15 +619,15 @@ function getContextualQuickReplies(orders: OrderInfo | OrderInfo[], scenario?: s
   const order = Array.isArray(orders) ? orders[0] : orders;
 
   if (scenario === 'lost' || scenario === 'return') {
-    return ['💬 Talk to a human', '📦 Track another order'];
+    return ['Talk to a human', ' Track another order'];
   }
 
   if (order.fulfillmentStatus === 'UNFULFILLED') {
-    return ['Track another order', 'When will it ship?', '💬 Talk to a human'];
+    return ['Track another order', 'When will it ship?', 'Talk to a human'];
   }
 
   if (order.trackingUrl) {
-    return ['🚚 Open tracking page', 'Track another order', 'Need more help'];
+    return ['Open tracking page', 'Track another order', 'Need more help'];
   }
 
   return ['Track another order', 'Need more help'];
@@ -638,43 +638,43 @@ function getContextualQuickReplies(orders: OrderInfo | OrderInfo[], scenario?: s
 function t(lang: string, key: string, ...args: string[]): string {
   const templates: Record<string, Record<string, string>> = {
     en: {
-      ask_order_info: `I'd love to help! Just type your order number (like **#1001**) or the email you used when ordering.`,
-      handoff: `Connecting you with a human agent now. One moment please.`,
-      customs_no_order: `Customs clearance typically takes 3-7 business days for international shipments. Share your order number and I'll check the status.`,
-      lost_no_order: `Sorry to hear that! Share your order number and I'll check the tracking details right away.`,
-      return_no_order: `I can help with returns for **{0}**. Share your order number and I'll look up your options.`,
-      order_processing: `**{0}** — {1}\n\nItems: {2}\nBeing prepared — we'll notify you once it ships.`,
+      ask_order_info: `Enter your order number (e.g. **#1001**) or the email you used.`,
+      handoff: `Connecting you with a human agent. One moment.`,
+      customs_no_order: `Customs usually takes 3-7 business days. Share your order number and I'll check.`,
+      lost_no_order: `Sorry to hear that. Share your order number and I'll check tracking right away.`,
+      return_no_order: `I can help with returns for **{0}**. Share your order number.`,
+      order_processing: `**{0}** — {1}\n\nItems: {2}\nPreparing — we'll notify you when it ships.`,
       order_shipped: `**{0}** — {1}\n\nItems: {2}\nCarrier: {3} · {4}\nEst. delivery: **{5}**`,
       order_no_tracking: `**{0}** — {1}\n\nItems: {2}\nEst. delivery: **{3}**`,
-      customs_note: `\n\n**Note:** Your package may be going through customs. This typically takes 3-7 business days.`,
-      delay_note: `\n\n**Heads up:** There may be a delay. If your estimated delivery has passed, I can connect you with support.`,
-      lost_note: `\n\nI'd recommend contacting the carrier first. If they can't help, I can connect you with our support team.`,
+      customs_note: `\n\n**Note:** Your package may be in customs. Usually 3-7 business days.`,
+      delay_note: `\n\n**Heads up:** Possible delay. If past your estimated delivery, I can connect you with support.`,
+      lost_note: `\n\nI'd recommend contacting the carrier first. If they can't help, I can connect you with support.`,
       multiple_orders: `Found **{0}** orders:\n\n`,
-      order_not_found: `Couldn't find that order. Double-check the number? It usually looks like **#1001**. You can also try your email.`,
+      order_not_found: `Couldn't find that order. Check the number? Usually like **#1001**. Or try your email.`,
     },
     zh: {
-      ask_order_info: `请提供您的订单号（如#1001）或下单邮箱，我来帮您查询。`,
-      handoff: `正在为您转接人工客服，请稍候。`,
+      ask_order_info: `请输入订单号（如#1001）或下单邮箱，我来查询。`,
+      handoff: `正在转接人工客服，请稍候。`,
       customs_no_order: `海关清关通常需要3-7个工作日。请提供订单号，我帮您查看具体状态。`,
       lost_no_order: `很抱歉！请提供订单号，我帮您查看物流详情。`,
       return_no_order: `我可以帮您处理**{0}**的退货。请提供订单号，我来查看退货选项。`,
     },
     es: {
-      ask_order_info: `Comparte tu número de pedido (como #1001) o el correo que usaste al comprar y te ayudo.`,
+      ask_order_info: `Comparte tu número de pedido (como #1001) o tu correo y te ayudo.`,
       handoff: `Conectándote con un agente humano. Un momento por favor.`,
       customs_no_order: `El despacho de aduanas suele tardar 3-7 días hábiles. Comparte tu número de pedido y verifico el estado.`,
       lost_no_order: `Lamento eso. Comparte tu número de pedido y reviso el seguimiento.`,
       return_no_order: `Puedo ayudarte con devoluciones de **{0}**. Comparte tu número de pedido y reviso tus opciones.`,
     },
     fr: {
-      ask_order_info: `Partagez votre numéro de commande (comme #1001) ou l'e-mail utilisé lors de la commande et je vous aide.`,
+      ask_order_info: `Partagez votre numéro de commande (comme #1001) ou votre e-mail et je vous aide.`,
       handoff: `Connexion avec un agent humain en cours. Un instant svp.`,
       customs_no_order: `Le dédouanement prend généralement 3-7 jours ouvrables. Partagez votre numéro de commande pour vérifier.`,
       lost_no_order: `Désolé pour cela. Partagez votre numéro de commande et je vérifie le suivi.`,
       return_no_order: `Je peux vous aider avec les retours de **{0}**. Partagez votre numéro de commande.`,
     },
     de: {
-      ask_order_info: `Teilen Sie Ihre Bestellnummer (wie #1001) oder E-Mail-Adresse mit und ich helfe Ihnen.`,
+      ask_order_info: `Teilen Sie Ihre Bestellnummer (wie #1001) oder E-Mail mit und ich helfe.`,
       handoff: `Verbinde Sie mit einem Mitarbeiter. Einen Moment bitte.`,
       customs_no_order: `Die Zollabfertigung dauert meist 3-7 Werktage. Bestellnummer teilen und ich prüfe den Status.`,
       lost_no_order: `Das tut mir leid. Teilen Sie Ihre Bestellnummer und ich prüfe die Sendungsverfolgung.`,
@@ -710,7 +710,7 @@ function t(lang: string, key: string, ...args: string[]): string {
 
 function fmtOrderResponse(orders: OrderInfo | OrderInfo[], settings: WismoSettings, lang: string, scenario?: string): string {
   if (!Array.isArray(orders)) return fmtOne(orders, settings, lang, scenario);
-  if (orders.length === 0) return "I couldn't find any orders matching that. Could you double-check your order number or email? 🔍";
+  if (orders.length === 0) return "I couldn't find any orders matching that. Could you double-check your order number or email? ";
   if (orders.length === 1) return fmtOne(orders[0], settings, lang, scenario);
   const brand = settings.brandName || 'our store';
   return t(lang, 'multiple_orders', String(orders.length)) + orders.map((o, i) => fmtOne(o, settings, lang, scenario, i + 1)).join('\n');
@@ -735,9 +735,9 @@ function fmtOne(order: OrderInfo, settings: WismoSettings, lang: string, scenari
     r = t(lang, 'order_no_tracking', order.orderNumber, order.status, items, delivery);
   } else {
     // Fallback
-    r = `${prefix}📦 **${order.orderNumber}** — ${order.status}\n   Items: ${items}`;
+    r = `${prefix} **${order.orderNumber}** — ${order.status}\n   Items: ${items}`;
     if (order.fulfillmentStatus === 'UNFULFILLED') {
-      r += `\n   ⏳ Being prepared — we'll notify you once it ships!`;
+      r += `\n   Being prepared — we'll notify you once it ships!`;
     }
   }
 
@@ -769,7 +769,7 @@ async function aiResponse(message: string, ctx: ChatContext, lang: string): Prom
       `You are a friendly, helpful customer service bot for ${brand}, a Shopify store. Your main job is order tracking and customer support.
 
 RULES:
-- Be warm but VERY concise (1-2 sentences max, every word must earn its place)
+- Be warm but EXTREMELY concise (1-2 sentences max, no filler words, every word must earn its place)
 - ALWAYS respond in ${langName}, matching the customer's language
 - If asked about orders, ask for order number or email
 - Use store FAQ if available — answer from it directly
@@ -825,7 +825,7 @@ async function callDeepSeek(system: string, message: string, history: { role: st
 // ─── Helpers ─────────────────────────────────────────────────────────
 
 function fmtStatus(s: string): string {
-  return ({ FULFILLED: 'Shipped ✅', UNFULFILLED: 'Processing 📤', PARTIALLY_FULFILLED: 'Partially Shipped 📦', RESTOCKED: 'Returned ↩️', PENDING: 'Pending ⏳' })[s] || s;
+  return ({ FULFILLED: 'Shipped', UNFULFILLED: 'Processing', PARTIALLY_FULFILLED: 'Partially Shipped', RESTOCKED: 'Returned', PENDING: 'Pending' })[s] || s;
 }
 function fmtFin(s: string): string {
   return ({ PAID: 'Paid', PENDING: 'Payment Pending', REFUNDED: 'Refunded', PARTIALLY_REFUNDED: 'Partially Refunded', VOIDED: 'Cancelled' })[s] || s;

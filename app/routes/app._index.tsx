@@ -265,7 +265,7 @@ export default function Dashboard() {
               <circle cx="42" cy="44" r="4" fill="#008060"/>
             </svg>
           </div>
-          <h2>Your chatbot is ready! 🎉</h2>
+          <h2>Your chatbot is ready!</h2>
           <p>Customers on your store can now track orders instantly. Here's what happens next:</p>
           <div className="empty-steps">
             <div className="empty-step">
