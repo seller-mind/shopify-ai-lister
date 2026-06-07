@@ -538,10 +538,7 @@ export async function generateResponse(
   scenario?: string,
 ): Promise<ChatResponse> {
   const intent = detectIntent(userMessage, context.previousMessages);
-  // Respect merchant's language preference — if set to a specific language, use it instead of auto-detect
-  const lang = (context.settings.autoReplyLanguage && context.settings.autoReplyLanguage !== 'auto')
-    ? context.settings.autoReplyLanguage
-    : detectLanguage(userMessage, context.customerLocale);
+  const lang = detectLanguage(userMessage, context.customerLocale);
 
   // ⚡ INSTANT: WISMO + order found → formatted response with order card
   if (intent.intent === 'wismo' && orderInfo) {
@@ -641,61 +638,61 @@ function getContextualQuickReplies(orders: OrderInfo | OrderInfo[], scenario?: s
 function t(lang: string, key: string, ...args: string[]): string {
   const templates: Record<string, Record<string, string>> = {
     en: {
-      ask_order_info: `I'd love to help you find your order from **{0}**! 👇\n\nJust type your order number (like **#1001**) or the email you used when ordering.`,
-      handoff: `I'll connect you with a human agent right away. Please hold on for a moment. ⏳`,
-      customs_no_order: `Customs clearance can take 3-7 business days for international shipments. This is normal and usually resolves on its own. To check your specific order, please share your order number (like **#1001**). 📦`,
-      lost_no_order: `I'm sorry to hear your package may be lost! Let me look into this for you. Please share your order number (like **#1001**) so I can check the tracking details and help you. 📦`,
-      return_no_order: `I can help you with returns for **{0}**. Please share your order number (like **#1001**) and I'll look up your return options. 🔄`,
-      order_processing: `📦 **{0}** — {1}\n\n   Items: {2}\n   ⏳ Being prepared — we'll notify you once it ships!`,
-      order_shipped: `📦 **{0}** — {1}\n\n   Items: {2}\n   🚚 {3}: {4}\n   📅 Est. delivery: **{5}**`,
-      order_no_tracking: `📦 **{0}** — {1}\n\n   Items: {2}\n   📅 Est. delivery: **{3}**`,
-      customs_note: `\n\n   🛃 **Note:** Your package may be going through customs clearance. This typically takes 3-7 business days and is completely normal for international shipments.`,
-      delay_note: `\n\n   ⚠️ **Heads up:** There may be a delay with this shipment. If your estimated delivery has passed, I recommend contacting the carrier directly or I can connect you with a human agent.`,
-      lost_note: `\n\n   🔍 I'm sorry your package hasn't arrived. I'd recommend contacting the carrier first. If they can't help, I can connect you with our support team to file a claim.`,
-      multiple_orders: `I found **{0}** orders for you:\n\n`,
-      order_not_found: `Hmm, I couldn't find that order. Could you double-check the number? It usually looks like **#1001**. You can also try your email address. 🔍`,
+      ask_order_info: `I'd love to help! Just type your order number (like **#1001**) or the email you used when ordering.`,
+      handoff: `Connecting you with a human agent now. One moment please.`,
+      customs_no_order: `Customs clearance typically takes 3-7 business days for international shipments. Share your order number and I'll check the status.`,
+      lost_no_order: `Sorry to hear that! Share your order number and I'll check the tracking details right away.`,
+      return_no_order: `I can help with returns for **{0}**. Share your order number and I'll look up your options.`,
+      order_processing: `**{0}** — {1}\n\nItems: {2}\nBeing prepared — we'll notify you once it ships.`,
+      order_shipped: `**{0}** — {1}\n\nItems: {2}\nCarrier: {3} · {4}\nEst. delivery: **{5}**`,
+      order_no_tracking: `**{0}** — {1}\n\nItems: {2}\nEst. delivery: **{3}**`,
+      customs_note: `\n\n**Note:** Your package may be going through customs. This typically takes 3-7 business days.`,
+      delay_note: `\n\n**Heads up:** There may be a delay. If your estimated delivery has passed, I can connect you with support.`,
+      lost_note: `\n\nI'd recommend contacting the carrier first. If they can't help, I can connect you with our support team.`,
+      multiple_orders: `Found **{0}** orders:\n\n`,
+      order_not_found: `Couldn't find that order. Double-check the number? It usually looks like **#1001**. You can also try your email.`,
     },
     zh: {
-      ask_order_info: `我很乐意帮您查询来自**{0}**的订单！请提供您的订单号（如#1001）或下单时使用的邮箱。📦`,
-      handoff: `我将为您转接人工客服，请稍候。⏳`,
-      customs_no_order: `海关清关通常需要3-7个工作日，这是国际运输的正常流程。请提供您的订单号，我帮您查看具体状态。📦`,
-      lost_no_order: `很抱歉听说您的包裹可能丢失了！请提供订单号，我帮您查看物流详情并协助处理。📦`,
-      return_no_order: `我可以帮您处理**{0}**的退货。请提供您的订单号，我来查看退货选项。🔄`,
+      ask_order_info: `请提供您的订单号（如#1001）或下单邮箱，我来帮您查询。`,
+      handoff: `正在为您转接人工客服，请稍候。`,
+      customs_no_order: `海关清关通常需要3-7个工作日。请提供订单号，我帮您查看具体状态。`,
+      lost_no_order: `很抱歉！请提供订单号，我帮您查看物流详情。`,
+      return_no_order: `我可以帮您处理**{0}**的退货。请提供订单号，我来查看退货选项。`,
     },
     es: {
-      ask_order_info: `¡Me encantaría ayudarte a rastrear tu pedido de **{0}**! Comparte tu número de pedido (como #1001) o el correo electrónico que usaste al comprar. 📦`,
-      handoff: `Te conectaré con un agente humano de inmediato. Por favor espera un momento. ⏳`,
-      customs_no_order: `El despacho de aduanas puede tardar de 3 a 7 días hábiles. Esto es normal para envíos internacionales. Comparte tu número de pedido para verificar el estado. 📦`,
-      lost_no_order: `¡Lamento que tu paquete pueda estar perdido! Comparte tu número de pedido para revisar los detalles de seguimiento. 📦`,
-      return_no_order: `Puedo ayudarte con devoluciones de **{0}**. Comparte tu número de pedido y revisaré tus opciones. 🔄`,
+      ask_order_info: `Comparte tu número de pedido (como #1001) o el correo que usaste al comprar y te ayudo.`,
+      handoff: `Conectándote con un agente humano. Un momento por favor.`,
+      customs_no_order: `El despacho de aduanas suele tardar 3-7 días hábiles. Comparte tu número de pedido y verifico el estado.`,
+      lost_no_order: `Lamento eso. Comparte tu número de pedido y reviso el seguimiento.`,
+      return_no_order: `Puedo ayudarte con devoluciones de **{0}**. Comparte tu número de pedido y reviso tus opciones.`,
     },
     fr: {
-      ask_order_info: `J'aimerais vous aider à suivre votre commande de **{0}** ! Partagez votre numéro de commande (comme #1001) ou l'e-mail utilisé lors de la commande. 📦`,
-      handoff: `Je vais vous connecter avec un agent humain immédiatement. Veuillez patienter. ⏳`,
-      customs_no_order: `Le dédouanement peut prendre 3 à 7 jours ouvrables. C'est normal pour les expéditions internationales. Partagez votre numéro de commande pour vérifier le statut. 📦`,
-      lost_no_order: `Je suis désolé que votre colis soit peut-être perdu ! Partagez votre numéro de commande pour vérifier le suivi. 📦`,
-      return_no_order: `Je peux vous aider avec les retours de **{0}**. Partagez votre numéro de commande et je vérifierai vos options. 🔄`,
+      ask_order_info: `Partagez votre numéro de commande (comme #1001) ou l'e-mail utilisé lors de la commande et je vous aide.`,
+      handoff: `Connexion avec un agent humain en cours. Un instant svp.`,
+      customs_no_order: `Le dédouanement prend généralement 3-7 jours ouvrables. Partagez votre numéro de commande pour vérifier.`,
+      lost_no_order: `Désolé pour cela. Partagez votre numéro de commande et je vérifie le suivi.`,
+      return_no_order: `Je peux vous aider avec les retours de **{0}**. Partagez votre numéro de commande.`,
     },
     de: {
-      ask_order_info: `Ich helfe Ihnen gerne bei der Sendungsverfolgung von **{0}**! Teilen Sie Ihre Bestellnummer (wie #1001) oder Ihre E-Mail-Adresse mit. 📦`,
-      handoff: `Ich verbinde Sie sofort mit einem menschlichen Mitarbeiter. Bitte warten Sie einen Moment. ⏳`,
-      customs_no_order: `Die Zollabfertigung kann 3-7 Werktage dauern. Das ist normal für internationale Sendungen. Teilen Sie Ihre Bestellnummer mit, um den Status zu prüfen. 📦`,
-      lost_no_order: `Es tut mir leid, dass Ihr Paket möglicherweise verloren ist! Teilen Sie Ihre Bestellnummer mit, um die Sendungsverfolgung zu prüfen. 📦`,
-      return_no_order: `Ich kann Ihnen bei Rücksendungen von **{0}** helfen. Teilen Sie Ihre Bestellnummer mit und ich prüfe Ihre Optionen. 🔄`,
+      ask_order_info: `Teilen Sie Ihre Bestellnummer (wie #1001) oder E-Mail-Adresse mit und ich helfe Ihnen.`,
+      handoff: `Verbinde Sie mit einem Mitarbeiter. Einen Moment bitte.`,
+      customs_no_order: `Die Zollabfertigung dauert meist 3-7 Werktage. Bestellnummer teilen und ich prüfe den Status.`,
+      lost_no_order: `Das tut mir leid. Teilen Sie Ihre Bestellnummer und ich prüfe die Sendungsverfolgung.`,
+      return_no_order: `Ich helfe bei Rücksendungen von **{0}**. Teilen Sie Ihre Bestellnummer.`,
     },
     ja: {
-      ask_order_info: `**{0}**のご注文を追跡いたします！注文番号（#1001など）またはご注文時のメールアドレスをお知らせください。📦`,
-      handoff: `オペレーターにお繋ぎします。少々お待ちください。⏳`,
-      customs_no_order: `通関手続きには3〜7営業日かかる場合があります。これは国際配送の正常なプロセスです。注文番号をお知らせいただければ、ステータスを確認します。📦`,
-      lost_no_order: `お荷物が届かないとのこと、申し訳ございません！注文番号をお知らせいただければ、追跡状況を確認いたします。📦`,
-      return_no_order: `**{0}**の返品についてご案内いたします。注文番号をお知らせいただければ、返品オプションを確認いたします。🔄`,
+      ask_order_info: `注文番号（#1001など）またはご注文時のメールアドレスをお知らせください。`,
+      handoff: `オペレーターにお繋ぎします。少々お待ちください。`,
+      customs_no_order: `通関手続きには3〜7営業日かかる場合があります。注文番号をお知らせいただければ、ステータスを確認します。`,
+      lost_no_order: `申し訳ございません。注文番号をお知らせいただければ、追跡状況を確認いたします。`,
+      return_no_order: `**{0}**の返品についてご案内いたします。注文番号をお知らせください。`,
     },
     ko: {
-      ask_order_info: `**{0}** 주문을 추적해 드리겠습니다! 주문 번호(예: #1001) 또는 주문 시 사용한 이메일을 알려주세요. 📦`,
-      handoff: `상담원을 연결해 드리겠습니다. 잠시만 기다려 주세요. ⏳`,
-      customs_no_order: `통관은 3~7영업일이 소요될 수 있습니다. 이는 국제 배송의 정상적인 과정입니다. 주문 번호를 알려주시면 상태를 확인해 드리겠습니다. 📦`,
-      lost_no_order: `택배를 분실하셨다니 죄송합니다! 주문 번호를 알려주시면 배송 추적 정보를 확인해 드리겠습니다. 📦`,
-      return_no_order: `**{0}**의 반품을 도와드리겠습니다. 주문 번호를 알려주시면 반품 옵션을 확인해 드리겠습니다. 🔄`,
+      ask_order_info: `주문 번호(예: #1001) 또는 주문 시 사용한 이메일을 알려주세요.`,
+      handoff: `상담원을 연결해 드리겠습니다. 잠시만 기다려 주세요.`,
+      customs_no_order: `통관은 3~7영업일이 소요될 수 있습니다. 주문 번호를 알려주시면 상태를 확인해 드리겠습니다.`,
+      lost_no_order: `죄송합니다. 주문 번호를 알려주시면 배송 추적을 확인해 드리겠습니다.`,
+      return_no_order: `**{0}**의 반품을 도와드리겠습니다. 주문 번호를 알려주세요.`,
     },
   };
 
@@ -772,16 +769,17 @@ async function aiResponse(message: string, ctx: ChatContext, lang: string): Prom
       `You are a friendly, helpful customer service bot for ${brand}, a Shopify store. Your main job is order tracking and customer support.
 
 RULES:
-- Be warm but concise (2-3 sentences max)
+- Be warm but VERY concise (1-2 sentences max, every word must earn its place)
 - ALWAYS respond in ${langName}, matching the customer's language
 - If asked about orders, ask for order number or email
-- Use store FAQ if available
+- Use store FAQ if available — answer from it directly
 - If asked about returns/refunds, use the return policy if available
-- For shipping delays, be empathetic and proactive: suggest checking tracking, contacting carrier, or connecting with support
-- For lost packages, express concern and offer to help file a claim
+- For shipping delays, be empathetic but brief: suggest next step (check tracking / contact carrier / connect support)
+- For lost packages, express concern briefly and offer one clear next step
 - If you can't help, offer to connect with a human agent
 - Never make up order or product details
-- Use emojis sparingly and appropriately${faq}${returnPolicyNote}`,
+- No emojis unless the customer uses them first
+- Write like a premium brand: confident, clear, helpful — never wordy${faq}${returnPolicyNote}`,
       message,
       ctx.previousMessages,
     );

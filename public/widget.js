@@ -85,7 +85,6 @@ try {
       if (!c || !c.enabled) { removeShell(); return; }
       state.config = c;
       state.loading = false;
-      state.planLimited = c.planLimited || false;
       applyConfig(c);
     })
     .catch(function() { removeShell(); });
@@ -124,11 +123,6 @@ function applyConfig(c) {
   }
   var title = shadow.querySelector('.wt');
   if (title && c.brandName) title.textContent = c.brandName;
-  // Show plan-limited notice if applicable
-  if (c.planLimited) {
-    var badge = shadow.querySelector('.wb');
-    if (badge) badge.style.opacity = '0.6';
-  }
 }
 
 // ─── HTML ─────────────────────────────────────────────────────────────
@@ -282,24 +276,17 @@ var WINDOW_HTML = [
 
     // ─── Greeting with inline order input ──────────────────
     function showGreeting() {
-      var brand = state.config && state.config.brandName ? state.config.brandName : '';
       var greetingText = state.config && state.config.greeting ? state.config.greeting : 'Track your order in seconds';
 
-      // Main greeting
+      // Clean greeting — ONE focused message, then the action card
       addMsg('bot', esc(greetingText));
 
-      // AI disclosure (EU AI Act Art. 52 compliance)
-      var aiNotice = document.createElement('div');
-      aiNotice.className = 'mm m-bot';
-      aiNotice.innerHTML = '<div class="ma"></div><div class="mc ai-notice" style="font-size:11px;color:#888;padding:8px 12px;background:#f9fafb;border-radius:12px;">🤖 AI-powered assistant — responses are automated</div>';
-      msgs.appendChild(aiNotice);
-
-      // Inline order input card
+      // Inline order input card — the CORE action, front and center
       var card = document.createElement('div');
       card.className = 'mm m-bot';
       var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
       card.innerHTML = avatar + '<div class="mc"><div class="oi-card">' +
-        '<div class="oi-label">📦 Enter your order number</div>' +
+        '<div class="oi-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px;color:var(--ac)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Enter your order number</div>' +
         '<div class="oi-row">' +
         '<input type="text" class="oi-input" placeholder="#1001" autocomplete="off" />' +
         '<button class="oi-btn">Track</button>' +
@@ -332,9 +319,9 @@ var WINDOW_HTML = [
         if (e.key === 'Enter') { e.preventDefault(); trackOrder(); }
       });
 
-      // Also show "Ask a question" as secondary option
+      // Quick reply — simple secondary option
       setTimeout(function() {
-        showQR(['💬 Ask a question']);
+        showQR(['Ask a question']);
       }, 300);
     }
 

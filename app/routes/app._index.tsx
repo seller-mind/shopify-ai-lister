@@ -368,30 +368,38 @@ export default function Dashboard() {
         </>
       )}
 
-      {/* How it Works — icon-only steps with connecting line */}
+      {/* How it Works — professional SVG icons with connecting line */}
       <div className="card how-it-works">
         <h2>How WISMO AI Works</h2>
         <div className="hiw-steps">
           <div className="hiw-step">
-            <div className="hiw-step-icon">💬</div>
+            <div className="hiw-step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
             <div className="hiw-step-label">Customer asks</div>
             <div className="hiw-step-sub">"Where's my order?"</div>
           </div>
           <div className="hiw-connector"></div>
           <div className="hiw-step">
-            <div className="hiw-step-icon">🤖</div>
+            <div className="hiw-step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
             <div className="hiw-step-label">AI finds order</div>
             <div className="hiw-step-sub">Real-time lookup</div>
           </div>
           <div className="hiw-connector"></div>
           <div className="hiw-step">
-            <div className="hiw-step-icon">📦</div>
+            <div className="hiw-step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
             <div className="hiw-step-label">Instant reply</div>
             <div className="hiw-step-sub">Status & tracking</div>
           </div>
           <div className="hiw-connector"></div>
           <div className="hiw-step">
-            <div className="hiw-step-icon">✨</div>
+            <div className="hiw-step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
             <div className="hiw-step-label">Ticket resolved</div>
             <div className="hiw-step-sub">No human needed</div>
           </div>
