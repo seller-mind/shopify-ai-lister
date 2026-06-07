@@ -50,6 +50,9 @@ const NAV_ITEMS = [
 export default function App() {
   const location = useLocation();
   const currentPath = location.pathname;
+  // Preserve shop parameter across navigation so authenticateAdmin always works
+  const shopParam = new URLSearchParams(location.search).get('shop');
+  const shopQuery = shopParam ? `?shop=${encodeURIComponent(shopParam)}` : '';
 
   return (
     <html lang="en">
@@ -76,7 +79,7 @@ export default function App() {
             {NAV_ITEMS.map(item => (
               <a
                 key={item.href}
-                href={item.href}
+                href={`${item.href}${shopQuery}`}
                 className={`nav-item ${currentPath === item.href || (item.href === '/app' && currentPath === '/app') ? 'active' : ''}`}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: item.icon }} />

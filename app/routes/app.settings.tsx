@@ -290,8 +290,6 @@ export default function Settings() {
           The widget is automatically injected into your store theme. No code changes needed.
         </div>
       </div>
-
-      <AddFaqButton />
     </div>
   );
 }
