@@ -32,12 +32,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const shop = url.searchParams.get('shop');
 
   if (!shop) {
-    return json({ error: 'Missing shop parameter' }, { status: 400 });
+    const h = new Headers(); addCorsHeaders(h, request);
+    return json({ error: 'Missing shop parameter' }, { status: 400, headers: h });
   }
 
   // Validate shop domain format (prevent reconnaissance/abuse)
   if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
-    return json({ error: 'Invalid shop domain' }, { status: 400 });
+    const h = new Headers(); addCorsHeaders(h, request);
+    return json({ error: 'Invalid shop domain' }, { status: 400, headers: h });
   }
 
   // Rate limit check
@@ -50,7 +52,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Verify store exists and has app installed
   const store = await getStore(shop);
   if (!store) {
-    return json({ error: 'Store not found' }, { status: 404 });
+    const h = new Headers(); addCorsHeaders(h, request);
+    return json({ error: 'Store not found' }, { status: 404, headers: h });
   }
 
   // Get WISMO settings
@@ -82,7 +85,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   } catch { /* use defaults */ }
 
   if (!settings.enabled) {
-    return json({ enabled: false });
+    const h = new Headers(); addCorsHeaders(h, request);
+    return json({ enabled: false }, { headers: h });
   }
 
   const responseHeaders = new Headers();
