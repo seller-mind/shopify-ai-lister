@@ -347,7 +347,7 @@ var WINDOW_HTML = [
       if (role === 'bot') {
         var fb = document.createElement('div');
         fb.className = 'fb';
-        fb.innerHTML = '<button class="fb-up" title="Helpful" data-msg="' + msgId + '">👍</button><button class="fb-down" title="Not helpful" data-msg="' + msgId + '">👎</button>';
+        fb.innerHTML = '<button class="fb-up" title="Helpful" data-msg="' + msgId + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button><button class="fb-down" title="Not helpful" data-msg="' + msgId + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>';
         d.querySelector('.mc').appendChild(fb);
         setTimeout(function() {
           var up = fb.querySelector('.fb-up');
@@ -436,7 +436,7 @@ var WINDOW_HTML = [
 
       var fb = document.createElement('div');
       fb.className = 'fb';
-      fb.innerHTML = '<button class="fb-up" title="Helpful" data-msg="' + msgId + '">👍</button><button class="fb-down" title="Not helpful" data-msg="' + msgId + '">👎</button>';
+      fb.innerHTML = '<button class="fb-up" title="Helpful" data-msg="' + msgId + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button><button class="fb-down" title="Not helpful" data-msg="' + msgId + '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>';
       d.querySelector('.mc').appendChild(fb);
 
       var timeEl = document.createElement('div');
@@ -470,7 +470,7 @@ var WINDOW_HTML = [
       if (rating === 'positive') {
         var thank = document.createElement('div');
         thank.className = 'fb-thanks';
-        thank.textContent = 'Thanks! ❤️';
+        thank.textContent = 'Thanks!';
         fbEl.appendChild(thank);
         setTimeout(function() { thank.remove(); }, 2000);
       }

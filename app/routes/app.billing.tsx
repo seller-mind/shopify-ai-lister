@@ -222,7 +222,7 @@ export default function Billing() {
             <tr>
               <th style={{ borderBottom: '1px solid #e1e3e5', padding: '12px 8px', textAlign: 'left', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8c9196' }}>Feature</th>
               <th style={{ borderBottom: '1px solid #e1e3e5', padding: '12px 8px', textAlign: 'center', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8c9196' }}>Starter</th>
-              <th style={{ borderBottom: '1px solid #e1e3e5', padding: '12px 8px', textAlign: 'center', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#008060' }}>Pro ⭐</th>
+              <th style={{ borderBottom: '1px solid #e1e3e5', padding: '12px 8px', textAlign: 'center', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#008060' }}>Pro</th>
               <th style={{ borderBottom: '1px solid #e1e3e5', padding: '12px 8px', textAlign: 'center', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8c9196' }}>Business</th>
             </tr>
           </thead>
