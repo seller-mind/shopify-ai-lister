@@ -33,7 +33,10 @@ function checkRateLimit(shop: string): boolean {
 export async function action({ request }: ActionFunctionArgs) {
   const preflight = handleCorsPreflightRequest(request);
   if (preflight) return preflight;
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, { status: 405 });
+  if (request.method !== 'POST') {
+    const h = new Headers(); addCorsHeaders(h, request);
+    return json({ error: 'Method not allowed' }, { status: 405, headers: h });
+  }
 
   // Check if this is a feedback request
   const contentType = request.headers.get('content-type') || '';
@@ -46,11 +49,15 @@ export async function action({ request }: ActionFunctionArgs) {
     const body = await request.json();
     const { shop, message, conversationId, customerEmail, customerName, customerLocale } = body;
 
-    if (!shop || !message) return json({ error: 'Missing shop or message' }, { status: 400 });
+    if (!shop || !message) {
+      const h = new Headers(); addCorsHeaders(h, request);
+      return json({ error: 'Missing shop or message' }, { status: 400, headers: h });
+    }
 
     // Validate shop domain format (prevent API abuse)
     if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
-      return json({ error: 'Invalid shop domain' }, { status: 400 });
+      const h = new Headers(); addCorsHeaders(h, request);
+      return json({ error: 'Invalid shop domain' }, { status: 400, headers: h });
     }
 
     // Rate limit check
@@ -61,10 +68,16 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     const store = await getStore(shop);
-    if (!store) return json({ error: 'Store not found' }, { status: 404 });
+    if (!store) {
+      const h = new Headers(); addCorsHeaders(h, request);
+      return json({ error: 'Store not found' }, { status: 404, headers: h });
+    }
 
     const settings = await getSettings(shop);
-    if (!settings?.enabled) return json({ error: 'WISMO disabled' }, { status: 403 });
+    if (!settings?.enabled) {
+      const h = new Headers(); addCorsHeaders(h, request);
+      return json({ error: 'WISMO disabled' }, { status: 403, headers: h });
+    }
 
     // Plan limit check — enforce monthly conversation limits
     const planLimit = await checkPlanLimit(shop, store.plan || 'FREE');
@@ -153,7 +166,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
   } catch (e) {
     console.error('[WISMO] Error:', e);
-    return json({ error: 'Internal error' }, { status: 500 });
+    const h = new Headers(); addCorsHeaders(h, request);
+    return json({ error: 'Internal error' }, { status: 500, headers: h });
   }
 }
 
@@ -165,7 +179,8 @@ async function handleFeedback(request: Request) {
     const { conversationId, messageId, rating, comment } = body;
 
     if (!conversationId || !rating) {
-      return json({ error: 'Missing required fields' }, { status: 400 });
+      const h = new Headers(); addCorsHeaders(h, request);
+      return json({ error: 'Missing required fields' }, { status: 400, headers: h });
     }
 
     // Rate limit feedback (max 10 per conversation per minute)
@@ -173,7 +188,8 @@ async function handleFeedback(request: Request) {
     const fbEntry = RATE_LIMITS[feedbackKey];
     const now = Date.now();
     if (fbEntry && now <= fbEntry.resetAt && fbEntry.count >= 10) {
-      return json({ error: 'Too many requests' }, { status: 429 });
+      const h = new Headers(); addCorsHeaders(h, request);
+      return json({ error: 'Too many requests' }, { status: 429, headers: h });
     }
     if (!fbEntry || now > fbEntry.resetAt) {
       RATE_LIMITS[feedbackKey] = { count: 1, resetAt: now + RATE_LIMIT_WINDOW };
@@ -217,10 +233,12 @@ async function handleFeedback(request: Request) {
       }
     }
 
-    return json({ ok: true });
+    const h = new Headers(); addCorsHeaders(h, request);
+    return json({ ok: true }, { headers: h });
   } catch (e) {
     console.error('[WISMO] Feedback error:', e);
-    return json({ ok: true }); // Don't expose errors for feedback
+    const h = new Headers(); addCorsHeaders(h, request);
+    return json({ ok: true }, { headers: h }); // Don't expose errors for feedback
   }
 }
 
