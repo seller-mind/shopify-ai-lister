@@ -538,7 +538,10 @@ export async function generateResponse(
   scenario?: string,
 ): Promise<ChatResponse> {
   const intent = detectIntent(userMessage, context.previousMessages);
-  const lang = detectLanguage(userMessage, context.customerLocale);
+  // Respect merchant's language preference — if set to a specific language, use it instead of auto-detect
+  const lang = (context.settings.autoReplyLanguage && context.settings.autoReplyLanguage !== 'auto')
+    ? context.settings.autoReplyLanguage
+    : detectLanguage(userMessage, context.customerLocale);
 
   // ⚡ INSTANT: WISMO + order found → formatted response with order card
   if (intent.intent === 'wismo' && orderInfo) {

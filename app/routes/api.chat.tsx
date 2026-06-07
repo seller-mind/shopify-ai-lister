@@ -267,9 +267,12 @@ async function getSettings(shop: string) {
   try {
     const { data } = await getSupabaseAdmin().from('wismo_settings').select('*').eq('shop', shop).single();
     if (!data) return { enabled: true, greeting: 'Track your order in seconds', brandName: '', autoReplyLanguage: 'auto', faqItems: [] };
-    // Extract return_policy from business_hours JSON (no standalone column)
+    // Map snake_case DB fields to camelCase for engine compatibility
     return {
       ...data,
+      brandName: data.brand_name || '',
+      autoReplyLanguage: data.auto_reply_language || 'auto',
+      faqItems: data.faq_items || [],
       returnPolicy: data.business_hours?.return_policy || '',
     };
   } catch { return { enabled: true, greeting: 'Track your order in seconds', brandName: '', autoReplyLanguage: 'auto', faqItems: [] }; }
