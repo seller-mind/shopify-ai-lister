@@ -89,8 +89,10 @@ const LANG_PATTERNS: { pattern: RegExp; lang: string; name: string }[] = [
   { pattern: /[\u0400-\u04ff]/, lang: 'ru', name: 'Russian' },
   // Thai
   { pattern: /[\u0e00-\u0e7f]/, lang: 'th', name: 'Thai' },
-  // Vietnamese
-  { pattern: /[ăâđêôơưàảãáạằẳẵắặầẩẫấậèẻẽéẹềểễếệìỉĩíịòỏõóọồổỗốộờởỡớợùủũúụừửữứựỳỷỹýỵ]/i, lang: 'vi', name: 'Vietnamese' },
+  // Vietnamese — ONLY unique characters (ơ, ư, ă, đ) that don't overlap with Romance languages.
+  // Shared accented chars (á, é, è, ì, ò, ù…) are handled by word matching below
+  // to avoid false positives on Spanish, French, Italian, etc.
+  { pattern: /[ơưăđ]/i, lang: 'vi', name: 'Vietnamese' },
   // Devanagari (Hindi, etc.)
   { pattern: /[\u0900-\u097f]/, lang: 'hi', name: 'Hindi' },
   // Hebrew
@@ -110,6 +112,7 @@ const LANG_WORDS: Record<string, string[]> = {
   da: ['bestilling', 'levering', 'forsendelse', 'hvor', 'hvornår', 'hej', 'tak'],
   no: ['bestilling', 'levering', 'frakt', 'hvor', 'når', 'hei', 'takk'],
   fi: ['tilaus', 'toimitus', 'lähetys', 'missä', 'milloin', 'moi', 'kiitos'],
+  vi: ['đơn hàng', 'giao hàng', 'theo dõi', 'gói hàng', 'ở đâu', 'khi nào', 'xin chào', 'cảm ơn', 'trợ giúp'],
   id: ['pesanan', 'pengiriman', 'paket', 'di mana', 'kapan', 'halo', 'bantuan'],
   ms: ['pesanan', 'penghantaran', 'bungkusan', 'di mana', 'bila', 'hai', 'bantuan'],
   ro: ['comandă', 'livrare', 'colet', 'unde', 'când', 'bună', 'ajutor'],
