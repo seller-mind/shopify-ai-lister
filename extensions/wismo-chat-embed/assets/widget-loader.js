@@ -6,6 +6,8 @@
  */
 (function() {
   'use strict';
+  // Prevent duplicate loading
+  if (window.__wismo_loaded) return;
 
   // Read config from the embed block
   var root = document.getElementById('wismo-chat-root');

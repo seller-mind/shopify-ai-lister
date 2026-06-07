@@ -151,9 +151,10 @@ export function detectIntent(
 
   // 1. Handoff
   const handoffWords = [
-    'speak to human', 'talk to agent', 'real person', 'human agent', 'complaint', 'escalate', 'manager',
-    '人工客服', '人工', '转人工', 'agente humano', 'parler à un agent', 'mit mensch sprechen',
-    '대리자', 'オペレーター', 'nv梯度iente real', 'opérateur',
+    'speak to human', 'talk to human', 'talk to agent', 'talk to a human', 'real person', 'human agent', 'complaint', 'escalate', 'manager', 'contact support', 'customer service',
+    '人工客服', '人工', '转人工', '联系客服',
+    'agente humano', 'parler à un agent', 'mit mensch sprechen',
+    '대리자', 'オペレーター', 'agente real', 'opérateur',
   ];
   if (handoffWords.some(w => lower.includes(w))) return { intent: 'handoff' };
 

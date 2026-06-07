@@ -21,6 +21,8 @@ function escAttr(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').
 function safeHref(url) { if (!url) return ''; var u = String(url).trim(); if (/^(https?:\/\/|mailto:)/i.test(u)) return escAttr(u); return '#'; }
 
 // ─── Bootstrap ────────────────────────────────────────────────────────
+// Prevent duplicate loading
+if (window.__wismo_loaded) { console.log('[WISMO] Already loaded, skipping duplicate'); } else { window.__wismo_loaded = true;
 var SCRIPT = document.currentScript;
 var SRC = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src) : null;
 var SHOP = (SRC ? SRC.searchParams.get('shop') : '') || (document.getElementById('wismo-chat-root') || {}).dataset?.shop || '';
@@ -1112,4 +1114,4 @@ function CSS() {
   .wq { padding: 0 14px 10px; }
 }
 ';
-}
+} // end __wismo_loaded guard

@@ -241,7 +241,7 @@ export default function Settings() {
               </div>
             ))}
           </div>
-          <button type="button" className="btn" style={{ marginTop: '4px' }} id="add-faq-btn">+ Add FAQ Item</button>
+          <AddFaqButton />
         </div>
 
         {/* Save Button */}
@@ -291,17 +291,26 @@ export default function Settings() {
         </div>
       </div>
 
-      <script dangerouslySetInnerHTML={{ __html: `
-        document.getElementById('add-faq-btn')?.addEventListener('click', function() {
-          var list = document.getElementById('faq-list');
-          var div = document.createElement('div');
-          div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px';
-          div.innerHTML = '<input type="text" name="faq_question" placeholder="Question" style="padding:10px 12px;border:1px solid #e1e3e5;border-radius:10px;font-size:14px" /><input type="text" name="faq_answer" placeholder="Answer" style="padding:10px 12px;border:1px solid #e1e3e5;border-radius:10px;font-size:14px" /><button type="button" class="btn" style="padding:8px 12px;color:#dc2626" onclick="this.closest(\\'div\\').remove()">✕</button>';
-          list.appendChild(div);
-        });
-      ` }} />
+      <AddFaqButton />
     </div>
   );
+}
+
+// React component to replace dangerouslySetInnerHTML <script> (which doesn't execute in Remix)
+function AddFaqButton() {
+  const handleClick = () => {
+    const list = document.getElementById('faq-list');
+    if (!list) return;
+    const div = document.createElement('div');
+    div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px';
+    div.innerHTML = '<input type="text" name="faq_question" placeholder="Question" style="padding:10px 12px;border:1px solid #e1e3e5;border-radius:10px;font-size:14px" /><input type="text" name="faq_answer" placeholder="Answer" style="padding:10px 12px;border:1px solid #e1e3e5;border-radius:10px;font-size:14px" /><button type="button" class="btn" style="padding:8px 12px;color:#dc2626">✕</button>';
+    div.querySelector('button')?.addEventListener('click', () => div.remove());
+    list.appendChild(div);
+    // Focus the new question input
+    const input = div.querySelector('input[name="faq_question"]') as HTMLInputElement;
+    if (input) input.focus();
+  };
+  return <button type="button" className="btn" style={{ marginTop: '4px' }} onClick={handleClick}>+ Add FAQ Item</button>;
 }
 
 // Helper to lighten/darken hex colors
