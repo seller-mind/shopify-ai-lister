@@ -78,9 +78,10 @@ interface ChatResponse {
 // ─── Language Detection ──────────────────────────────────────────────
 
 const LANG_PATTERNS: { pattern: RegExp; lang: string; name: string }[] = [
-  // CJK
-  { pattern: /[\u4e00-\u9fff]/, lang: 'zh', name: 'Chinese' },
+  // Japanese must be checked before Chinese (Kanji overlaps — Japanese text always has Hiragana/Katakana)
   { pattern: /[\u3040-\u309f\u30a0-\u30ff]/, lang: 'ja', name: 'Japanese' },
+  // CJK (Chinese characters — also used in Japanese, so checked after Japanese)
+  { pattern: /[\u4e00-\u9fff]/, lang: 'zh', name: 'Chinese' },
   { pattern: /[\uac00-\ud7af]/, lang: 'ko', name: 'Korean' },
   // Arabic
   { pattern: /[\u0600-\u06ff]/, lang: 'ar', name: 'Arabic' },
@@ -126,15 +127,20 @@ export function detectLanguage(message: string, locale?: string): string {
   }
 
   const lower = message.toLowerCase();
+  // Normalize diacritics for word matching (dónde→donde, où→ou, etc.)
+  const normalized = lower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   // 2. Check character-set patterns
   for (const { pattern, lang } of LANG_PATTERNS) {
     if (pattern.test(message)) return lang;
   }
 
-  // 3. Check word patterns
+  // 3. Check word patterns (compare normalized text against normalized words)
   for (const [lang, words] of Object.entries(LANG_WORDS)) {
-    const matchCount = words.filter(w => lower.includes(w)).length;
+    const matchCount = words.filter(w => {
+      const normalizedWord = w.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return normalized.includes(normalizedWord);
+    }).length;
     if (matchCount >= 2) return lang;
   }
 
@@ -151,7 +157,7 @@ export function detectIntent(
 
   // 1. Handoff
   const handoffWords = [
-    'speak to human', 'talk to human', 'talk to agent', 'talk to a human', 'real person', 'human agent', 'complaint', 'escalate', 'manager', 'contact support', 'customer service',
+    'speak to human', 'talk to human', 'talk to agent', 'talk to a human', 'real person', 'human agent', 'complain', 'complaint', 'escalate', 'manager', 'contact support', 'customer service',
     '人工客服', '人工', '转人工', '联系客服',
     'agente humano', 'parler à un agent', 'mit mensch sprechen',
     '대리자', 'オペレーター', 'agente real', 'opérateur',
@@ -244,14 +250,14 @@ export function detectIntent(
 }
 
 function extractOrderNumber(message: string): string | undefined {
-  // 1. #1001, # 1001
-  let m = /#\s*(\d{3,6})/.exec(message);
+  // 1. #1001, #ABC-123, # 1001 (alphanumeric order names supported)
+  let m = /#\s*([A-Za-z]{0,5}-?\d{3,10})/.exec(message);
   if (m) return m[1];
-  // 2. order #1001, order 1001, order#1001, order number 1001
-  m = /order\s*(?:#|number|#\s*)?\s*(\d{3,6})/i.exec(message);
+  // 2. order #1001, order 1001, order#ABC-123, order number 1001
+  m = /order\s*(?:#|number|#\s*)?\s*([A-Za-z]{0,5}-?\d{3,10})/i.exec(message);
   if (m) return m[1];
-  // 3. "1001" as standalone number when context suggests order (3-6 digits, preceded by space/start)
-  m = /(?:^|\s)(\d{3,6})(?:\s|$|[.,!?])/.exec(message);
+  // 3. "1001" as standalone number when context suggests order (3-10 digits, preceded by space/start)
+  m = /(?:^|\s)(\d{3,10})(?:\s|$|[.,!?])/.exec(message);
   if (m && message.toLowerCase().match(/order|track|find|where|ship|deliver|#/i)) return m[1];
   return undefined;
 }

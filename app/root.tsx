@@ -108,6 +108,9 @@ export function ErrorBoundary() {
     (error && typeof error === 'object' && 'data' in error) ? String((error as any).data) :
     'Unknown error';
   const errorStatus = (error && typeof error === 'object' && 'status' in error) ? (error as any).status : '';
+  // Preserve shop parameter in error recovery link
+  const shopParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('shop') : null;
+  const shopQuery = shopParam ? `?shop=${encodeURIComponent(shopParam)}` : '';
   
   return (
     <html lang="en">
@@ -124,7 +127,7 @@ export function ErrorBoundary() {
           <h1 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#1c1c1e' }}>Something went wrong</h1>
           {errorStatus && <p style={{ fontSize: '13px', color: '#6d7175', marginBottom: '8px' }}>Status: {errorStatus}</p>}
           <p style={{ fontSize: '14px', color: '#6d7175', lineHeight: 1.5 }}>{errorMessage}</p>
-          <a href="/app" style={{ display: 'inline-block', marginTop: '20px', padding: '10px 24px', background: '#008060', color: '#fff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>Back to Dashboard</a>
+          <a href={`/app${shopQuery}`} style={{ display: 'inline-block', marginTop: '20px', padding: '10px 24px', background: '#008060', color: '#fff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>Back to Dashboard</a>
         </div>
       </body>
     </html>
