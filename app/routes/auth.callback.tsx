@@ -1,6 +1,6 @@
 import { redirect } from '@remix-run/node';
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { shopify, API_KEY } from '~/shopify.server';
+import { shopify, API_KEY, SCOPES } from '~/shopify.server';
 import { storeSessionInDB, upsertStore } from '~/services/supabase.server';
 
 /**
@@ -15,6 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const shop = url.searchParams.get('shop');
   const state = url.searchParams.get('state');
   const hmac = url.searchParams.get('hmac');
+  const timestamp = url.searchParams.get('timestamp');
 
   console.log('[auth/callback] Received callback:', { 
     hasCode: !!code, 
@@ -38,6 +39,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!shopDomain.endsWith('.myshopify.com') || shopDomain.length < 10) {
     console.error('[auth/callback] Invalid shop domain:', shopDomain);
     return new Response('Invalid shop domain', { status: 400 });
+  }
+
+  // Verify HMAC to prevent URL tampering (Shopify includes hmac + timestamp in callback)
+  // This is separate from the state parameter — it's the URL-level signature
+  if (hmac && timestamp) {
+    const params = new URLSearchParams(url.search);
+    params.delete('hmac');
+    const sortedParams = [...params.entries()].sort(([a], [b]) => a.localeCompare(b));
+    const message = sortedParams.map(([k, v]) => `${k}=${v}`).join('&');
+    const isValidHmac = await shopify.verifyHmac(message, hmac);
+    if (!isValidHmac) {
+      console.error('[auth/callback] Invalid HMAC signature — possible URL tampering');
+      return new Response('Invalid signature', { status: 401 });
+    }
   }
 
   console.log('[auth/callback] Exchanging code for token, shop:', shopDomain);

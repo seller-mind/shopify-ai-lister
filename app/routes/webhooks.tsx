@@ -149,6 +149,8 @@ async function handleCustomersDataRequest(shopDomain: string, payload: any) {
           requested_at: new Date().toISOString(),
           // Full data package NOT stored in DB for security — only in logs
         },
+      }).then(() => {
+        console.log('[GDPR] Data request logged as system message');
       }).catch(() => {
         console.log('[GDPR] Data request logged (could not insert system message)');
       });

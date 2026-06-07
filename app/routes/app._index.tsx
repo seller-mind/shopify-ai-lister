@@ -5,9 +5,12 @@
 import { json } from '@remix-run/node';
 import { useLoaderData, Link } from '@remix-run/react';
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { authenticateAdmin, getAuthUrl } from '~/shopify.server';
+import { authenticateAdmin, getAuthUrl, SCOPES } from '~/shopify.server';
 import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
 import { useEffect, useRef, useState } from 'react';
+
+// Required scopes — must match shopify.app.toml
+const REQUIRED_SCOPES = SCOPES.split(',').map(s => s.trim()).sort();
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -15,6 +18,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   try {
     const { session } = await authenticateAdmin(request);
+
+    // Check if session has all required scopes — if not, redirect to re-auth
+    const supabase = getSupabaseAdmin();
+    const { data: sessionData } = await supabase
+      .from('shopify_sessions')
+      .select('scope')
+      .eq('shop', session.shop)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (sessionData?.scope) {
+      const currentScopes = sessionData.scope.split(',').map(s => s.trim()).sort();
+      const missingScopes = REQUIRED_SCOPES.filter(s => !currentScopes.includes(s));
+      if (missingScopes.length > 0) {
+        console.log(`[Dashboard] Missing scopes: ${missingScopes.join(', ')} — redirecting to re-auth`);
+        const state = crypto.randomUUID();
+        const oauthUrl = getAuthUrl(session.shop, state);
+        return json({
+          shop: session.shop,
+          status: 'need_reauth',
+          missingScopes,
+          oauthUrl,
+          settings: { enabled: true, widget_color: '#008060', widget_position: 'bottom-right', greeting: 'Track your order in seconds' },
+          analytics: { totalConversations: 0, totalWismo: 0, totalAutoResolved: 0, totalHandoffs: 0, resolutionRate: 0, timeSavedMin: 0, daily: [] },
+          recentConversations: [],
+          hasData: false,
+        });
+      }
+    }
     
     let settings = null;
     let analytics = null;
@@ -131,6 +164,24 @@ function getWelcomeMessage(): string {
 
 export default function Dashboard() {
   const data = useLoaderData<typeof loader>();
+
+  if (data.status === 'need_reauth') {
+    return (
+      <div className="onboarding">
+        <div className="onboarding-card">
+          <div className="onboarding-icon" style={{ background: '#fef3c7' }}>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round"><path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+          </div>
+          <h1>Update Required</h1>
+          <p>WISMO AI needs additional permissions to work properly. Missing scopes: <strong>{(data as any).missingScopes?.join(', ')}</strong></p>
+          <a href={(data as any).oauthUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-lg">
+            Re-authorize App
+          </a>
+          <p className="onboarding-hint">After authorization, refresh this page.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (data.status === 'need_auth') {
     return (

@@ -81,7 +81,7 @@ export default function Settings() {
 
   // Show success checkmark
   useEffect(() => {
-    if (actionData?.success) {
+    if (actionData && 'success' in actionData && actionData.success) {
       setShowSuccess(true);
       const t = setTimeout(() => setShowSuccess(false), 3000);
       return () => clearTimeout(t);
@@ -93,7 +93,7 @@ export default function Settings() {
       <h1>Settings</h1>
       <p className="sub">Configure your WISMO AI chatbot</p>
 
-      {actionData?.success && (
+      {actionData && 'success' in actionData && actionData.success && (
         <div className="banner banner-success">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           Settings saved successfully
@@ -165,12 +165,10 @@ export default function Settings() {
                 <input type="color" name="widget_color" defaultValue={settings.widget_color} className="color-picker" onInput={(e) => setWidgetColor((e.target as HTMLInputElement).value)} />
                 <div className="color-presets">
                   {['#008060', '#000000', '#1a1a2e', '#2563eb', '#7c3aed', '#db2777', '#ea580c', '#ca8a04'].map(c => (
-                    <button key={c} type="button" className={`color-swatch ${settings.widget_color === c ? 'color-swatch-active' : ''}`} style={{ background: c }} data-color={c} onClick={function() {
-                      var picker = document.querySelector('input[name="widget_color"]') as HTMLInputElement;
+                    <button key={c} type="button" className={`color-swatch ${settings.widget_color === c ? 'color-swatch-active' : ''}`} style={{ background: c }} data-color={c} onClick={() => {
+                      const picker = document.querySelector('input[name="widget_color"]') as HTMLInputElement;
                       if (picker) { picker.value = c; picker.dispatchEvent(new Event('input', { bubbles: true })); }
                       setWidgetColor(c);
-                      document.querySelectorAll('.color-swatch').forEach(function(s) { s.classList.remove('color-swatch-active'); });
-                      (this as HTMLElement).classList.add('color-swatch-active');
                     }} />
                   ))}
                 </div>
@@ -239,7 +237,7 @@ export default function Settings() {
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', marginBottom: '8px' }}>
                 <input type="text" name="faq_question" defaultValue={item.question} placeholder="Question" style={{ padding: '10px 12px', border: '1px solid #e1e3e5', borderRadius: '10px', fontSize: '14px' }} />
                 <input type="text" name="faq_answer" defaultValue={item.answer} placeholder="Answer" style={{ padding: '10px 12px', border: '1px solid #e1e3e5', borderRadius: '10px', fontSize: '14px' }} />
-                <button type="button" className="btn" style={{ padding: '8px 12px', color: '#dc2626' }} onClick={function() { (this as any).closest('div').remove(); }}>✕</button>
+                <button type="button" className="btn" style={{ padding: '8px 12px', color: '#dc2626' }} onClick={(e) => { (e.currentTarget.closest('div') as HTMLElement)?.remove(); }}>✕</button>
               </div>
             ))}
           </div>
