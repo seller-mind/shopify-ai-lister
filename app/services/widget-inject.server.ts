@@ -19,7 +19,7 @@ const WISMO_MARKER_END = '<!-- WISMO_AI_WIDGET_END -->';
 const LEGACY_MARKER_START = '<!-- WISMO AI Widget v11 (Inline) -->';
 const LEGACY_MARKER_END = '<!-- End WISMO AI Widget v11 -->';
 
-const WIDGET_VERSION = '3.5.5';
+const WIDGET_VERSION = '3.5.6';
 
 /**
  * Build the tiny loader script that goes into theme.liquid
