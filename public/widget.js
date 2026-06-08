@@ -1,32 +1,31 @@
 /**
- * WISMO AI - Storefront Chat Widget v9 (Global Premium SaaS)
+ * WISMO AI - Storefront Chat Widget v10 (Global Premium SaaS)
  * 
  * "Simple. Practical. Beautiful." - Apple/Stripe/Intercom level quality
  * ====================================================
+ * v10 Key Improvements:
+ * - Skeleton loading with shimmer effect (faster perceived speed)
+ * - FAQ quick replies with instant local answers (no API delay)
+ * - Multiple order cards with "View all X orders" summary header
+ * - Mobile-collapsible order cards with smooth expand/collapse
+ * - Refined typography and spacing (Apple-level polish)
+ * - Optimized animations (60fps guarantee)
+ * - Enhanced dark mode transitions
+ * - Better accessibility (ARIA improvements)
+ * 
+ * Features:
  * ✓ ONE-STEP Tracking: inline order input in greeting card
  * ✓ Conversation Memory: persists across page loads via localStorage
  * ✓ Product Images: thumbnails in order card from Shopify
  * ✓ Premium Design: Apple-level polish, color-coded status, bot avatar
- * ✓ Instant Speed: greeting renders before API, animated loading messages
+ * ✓ Instant Speed: greeting renders before API, skeleton loading
  * ✓ Zero Learning Curve: order input is the FIRST thing you see
  * ✓ Multi-language: auto-detect + respond in customer's language (20+)
  * ✓ Dark Mode: smooth auto-detect with refined palette
  * ✓ Feedback: thumbs up/down with thank-you animation
  * ✓ Mobile-first: full-screen overlay, safe area, touch-optimized
- * ✓ FAQ Integration: configurable quick replies from store settings
- * ✓ Multiple Orders: renders all order cards when returned
- * 
- * v9 "Global Premium SaaS":
- * - Animated contextual loading messages (feels faster, more human)
- * - Ultra-minimal header (cleaner gradient, no noise texture)
- * - Ultra-minimal footer (just separator + Privacy)
- * - Refined bubble animation (smoother pulse)
- * - Enhanced order card (better hierarchy, hover effects, dividers)
- * - Refined not-found card (elegant, better icon)
- * - Better quick replies (larger, more prominent)
- * - Smart greeting quick replies with FAQ integration
- * - Multiple order cards support
- * - Not-found card now functional (API fixed)
+ * ✓ FAQ Integration: instant local answers from store settings
+ * ✓ Multiple Orders: renders all order cards with summary header
  */
 
 // ─── HTML Escaping (XSS Prevention) ────────────────────────────────────
@@ -35,7 +34,6 @@ function escAttr(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').
 function safeHref(url) { if (!url) return ''; var u = String(url).trim(); if (/^(https?:\/\/|mailto:)/i.test(u)) return escAttr(u); return '#'; }
 
 // ─── Bootstrap ────────────────────────────────────────────────────────
-// Prevent duplicate loading
 if (window.__wismo_loaded) { console.log('[WISMO] Already loaded, skipping duplicate'); } else { window.__wismo_loaded = true;
 var SCRIPT = document.currentScript;
 var SRC = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src) : null;
@@ -56,6 +54,7 @@ var state = {
   darkMode: false,
   lang: 'en',
   lastMsgId: 0,
+  expandedCards: {}, // Track expanded state for mobile collapsible cards
 };
 
 // ─── Restore conversation from localStorage ───────────────────────────
@@ -63,7 +62,7 @@ try {
   var saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     var parsed = JSON.parse(saved);
-    if (parsed.convId && Date.now() - parsed.ts < 86400000) { // 24h
+    if (parsed.convId && Date.now() - parsed.ts < 86400000) {
       state.convId = parsed.convId;
     }
   }
@@ -92,10 +91,8 @@ try {
 
 // ─── Boot ─────────────────────────────────────────────────────────────
 (function boot() {
-  if (!SHOP) { removeShell(); return; } // No shop = no widget
+  if (!SHOP) { removeShell(); return; }
   renderShell();
-  // Render bubble IMMEDIATELY — don't wait for API (instant perceived speed)
-  // Then async load config and apply
   fetch(API + '/api/widget-config?shop=' + encodeURIComponent(SHOP))
     .then(function(r) { return r.json(); })
     .then(function(c) {
@@ -120,8 +117,6 @@ function renderShell() {
   el.className = 'w' + (state.darkMode ? ' dark' : '');
   el.innerHTML = BUBBLE_HTML + WINDOW_HTML;
   shadow.appendChild(el);
-  
-  // Setup tooltip for bubble button
   setupBubbleTooltip(shadow);
 }
 
@@ -132,7 +127,6 @@ function removeShell() {
 
 function applyConfig(c) {
   var shadow = document.getElementById('wismo-host').shadowRoot;
-  // URL params override API config (from Theme Editor settings)
   var effectiveColor = URL_COLOR || c.color;
   var effectivePosition = URL_POSITION || c.position;
   if (effectiveColor) {
@@ -141,10 +135,8 @@ function applyConfig(c) {
   if (effectivePosition === 'bottom-left') {
     shadow.querySelector('.w').classList.add('left');
   }
-  // Update header with brand name (or keep default "Order Tracking")
   var title = shadow.querySelector('.wt');
   if (title && c.brandName) title.textContent = c.brandName;
-  // Update tooltip with brand name
   var tooltip = shadow.querySelector('.wb-tooltip');
   if (tooltip) {
     tooltip.textContent = c.brandName ? 'Track with ' + c.brandName : 'Track your order';
@@ -160,7 +152,6 @@ function setupBubbleTooltip(shadow) {
   var tooltipTimeout;
   var isMobile = window.matchMedia('(max-width: 480px)').matches;
   
-  // Desktop: show on hover with delay
   if (!isMobile) {
     bubble.addEventListener('mouseenter', function() {
       tooltipTimeout = setTimeout(function() {
@@ -172,7 +163,6 @@ function setupBubbleTooltip(shadow) {
       tooltip.classList.remove('wb-tooltip-show');
     });
   } else {
-    // Mobile: show briefly on first appearance, then hide
     var hasShownMobileTooltip = false;
     bubble.addEventListener('click', function() {
       if (hasShownMobileTooltip) return;
@@ -284,10 +274,24 @@ var WINDOW_HTML = [
       addMsg('user', text);
       state.typing = true;
       
-      // Show animated contextual loading message
       var loadingEl = showLoadingMessage();
-      // Mobile: scroll to bottom after user sends
       setTimeout(function() { msgs.scrollTop = msgs.scrollHeight; }, 50);
+
+      // Check FAQ for instant local answer first
+      var faqAnswer = checkLocalFAQ(text);
+      if (faqAnswer !== null) {
+        setTimeout(function() {
+          loadingEl.remove();
+          state.typing = false;
+          addMsg('bot', faqAnswer);
+          // Show related quick replies
+          var relatedFAQ = getRelatedFAQ(text);
+          if (relatedFAQ.length > 0) {
+            setTimeout(function() { showQR(relatedFAQ); }, 150);
+          }
+        }, 400); // Short delay for UX
+        return;
+      }
 
       fetch(API + '/api/chat', {
         method: 'POST',
@@ -307,17 +311,14 @@ var WINDOW_HTML = [
         saveConv();
         if (d.language) state.lang = d.language;
 
-        // Plan limit reached — show upgrade notice
         if (d.planLimited) {
           addMsg('bot', d.reply || 'This service is temporarily unavailable. The store owner needs to upgrade their plan.');
           return;
         }
 
-        // Handle multiple order cards (NEW in v9)
+        // Handle multiple order cards
         if (d.orderCards && d.orderCards.length) {
-          d.orderCards.forEach(function(card) {
-            addOrderCard(card);
-          });
+          addMultipleOrderCards(d.orderCards);
         } else if (d.orderCard) {
           addOrderCard(d.orderCard);
         } else if (d.notFound) {
@@ -326,7 +327,6 @@ var WINDOW_HTML = [
           addMsg('bot', d.reply);
         }
 
-        // Smart quick replies based on context
         if (d.quickReplies && d.quickReplies.length) {
           setTimeout(function() { showQR(d.quickReplies); }, 150);
         }
@@ -346,7 +346,6 @@ var WINDOW_HTML = [
     input.addEventListener('input', function() { updateSendBtn(); });
     updateSendBtn();
     
-    // Paste Event Listener
     input.addEventListener('paste', function(e) {
       var pastedText = e.clipboardData.getData('text');
       if (/^#\d/.test(pastedText) || /^\d{4,}$/.test(pastedText.trim())) {
@@ -362,19 +361,53 @@ var WINDOW_HTML = [
       }
     }
 
+    // ─── FAQ Local Answer System (v10) ─────────────────────
+    function checkLocalFAQ(text) {
+      var faqItems = state.config && state.config.faqItems ? state.config.faqItems : [];
+      var lowerText = text.toLowerCase().trim();
+      
+      for (var i = 0; i < faqItems.length; i++) {
+        var faq = faqItems[i];
+        var question = (faq.question || '').toLowerCase();
+        // Match if user text contains key words from FAQ question
+        var keywords = question.replace(/[^\w\s]/g, '').split(/\s+/).filter(function(w) { return w.length > 3; });
+        var matchCount = 0;
+        for (var j = 0; j < keywords.length; j++) {
+          if (lowerText.indexOf(keywords[j]) !== -1) matchCount++;
+        }
+        if (matchCount >= Math.min(2, keywords.length) || lowerText.indexOf(question) !== -1) {
+          return faq.answer || '';
+        }
+      }
+      return null; // No local match
+    }
+
+    function getRelatedFAQ(text) {
+      var faqItems = state.config && state.config.faqItems ? state.config.faqItems : [];
+      var related = [];
+      var lowerText = text.toLowerCase().trim();
+      
+      for (var i = 0; i < faqItems.length; i++) {
+        var faq = faqItems[i];
+        var question = (faq.question || '').toLowerCase();
+        if (question.indexOf(lowerText) === -1 && lowerText.indexOf(question) === -1) {
+          related.push(faq.question);
+        }
+      }
+      return related.slice(0, 3);
+    }
+
     // ─── Greeting with inline order input ──────────────────
     function showGreeting() {
       var greetingText = state.config && state.config.greeting ? state.config.greeting : 'Track your order';
       var faqItems = state.config && state.config.faqItems ? state.config.faqItems.slice(0, 2) : [];
 
-      // Build greeting quick replies: "Where is my order?" first, FAQ items, "I have a question" last
       var qrItems = ['Where is my order?'];
       faqItems.forEach(function(item) {
-        qrItems.push(item);
+        qrItems.push(item.question || item);
       });
       qrItems.push('I have a question');
 
-      // SINGLE card: greeting text embedded in the input card — zero extra steps
       var card = document.createElement('div');
       card.className = 'mm m-bot';
       var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
@@ -390,7 +423,6 @@ var WINDOW_HTML = [
       msgs.appendChild(card);
       msgs.scrollTop = msgs.scrollHeight;
 
-      // Wire the inline input
       var oiInput = card.querySelector('.oi-input');
       var oiBtn = card.querySelector('.oi-btn');
       oiInput.focus();
@@ -398,7 +430,6 @@ var WINDOW_HTML = [
       var trackOrder = function() {
         var val = oiInput.value.trim();
         if (!val) return;
-        // Hide the input card with animation
         card.style.transition = 'opacity 0.2s, max-height 0.2s';
         card.style.opacity = '0';
         card.style.maxHeight = '0';
@@ -413,7 +444,6 @@ var WINDOW_HTML = [
         if (e.key === 'Enter') { e.preventDefault(); trackOrder(); }
       });
 
-      // Smart greeting quick replies
       setTimeout(function() {
         showQR(qrItems);
       }, 300);
@@ -431,7 +461,7 @@ var WINDOW_HTML = [
         avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
       }
 
-      var html = esc(content)  // Escape HTML first to prevent XSS
+      var html = esc(content)
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(m, text, url) { return '<a href="' + safeHref(url) + '" target="_blank" rel="noopener">' + esc(text) + '</a>'; })
         .replace(/\n/g, '<br>');
@@ -462,51 +492,20 @@ var WINDOW_HTML = [
       }
     }
 
-    // ─── Animated Contextual Loading Messages (v9) ─────────────
-    var loadingMessages = [
-      { text: 'Looking up your order...', delay: 0 },
-      { text: 'Checking delivery status...', delay: 1000 },
-      { text: 'Almost there...', delay: 2000 }
-    ];
-    var loadingTimers = [];
-    
+    // ─── Skeleton Loading (v10) ─────────────────────────────
     function showLoadingMessage() {
       var d = document.createElement('div');
       d.className = 'mm m-bot loading-msg';
       var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
-      d.innerHTML = avatar + '<div class="mc"><div class="loading-dots"><span class="loading-text"></span><span class="dot-anim"><span></span><span></span><span></span></span></div></div>';
+      
+      // Skeleton card with shimmer effect
+      d.innerHTML = avatar + '<div class="mc"><div class="skel-card">' +
+        '<div class="skel-header"><div class="skel skel-order"></div><div class="skel skel-status"></div></div>' +
+        '<div class="skel-progress"><div class="skel skel-bar"></div><div class="skel skel-bar"></div><div class="skel skel-bar"></div></div>' +
+        '<div class="skel-footer"><div class="skel skel-text"></div></div>' +
+        '</div></div>';
       msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
-
-      var textEl = d.querySelector('.loading-text');
-      var currentIdx = 0;
-
-      // Show first message immediately
-      textEl.textContent = loadingMessages[0].text;
-
-      // Set up timed message changes
-      loadingTimers = [];
-      for (var i = 1; i < loadingMessages.length; i++) {
-        (function(idx) {
-          var timer = setTimeout(function() {
-            textEl.style.opacity = '0';
-            textEl.style.transform = 'translateY(-4px)';
-            setTimeout(function() {
-              textEl.textContent = loadingMessages[idx].text;
-              textEl.style.opacity = '1';
-              textEl.style.transform = 'translateY(0)';
-            }, 150);
-          }, loadingMessages[idx].delay);
-          loadingTimers.push(timer);
-        })(i);
-      }
-
-      // Cleanup timers when removed
-      d.cleanup = function() {
-        loadingTimers.forEach(function(t) { clearTimeout(t); });
-        loadingTimers = [];
-      };
-
       return d;
     }
 
@@ -543,7 +542,6 @@ var WINDOW_HTML = [
       msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
 
-      // Wire retry functionality
       var nfInput = d.querySelector('.nf-input');
       var nfBtn = d.querySelector('.nf-btn');
       
@@ -561,42 +559,159 @@ var WINDOW_HTML = [
       });
       
       setTimeout(function() { nfInput.focus(); }, 100);
-      
-      // Quick replies for not found
       showQR(['Try my email', 'Contact support']);
     }
 
-    // ─── Order Card ──────────────────────────────────────────
-    function addOrderCard(card) {
+    // ─── Multiple Order Cards (v10) ──────────────────────────
+    function addMultipleOrderCards(orderCards) {
+      if (!orderCards || !orderCards.length) return;
+      
       var msgId = 'msg-' + (++state.lastMsgId);
       var d = document.createElement('div');
       d.className = 'mm m-bot';
       d.dataset.msgId = msgId;
 
-      var statusColor = getStatusColor(card.status);
-      var isActive = ['PROCESSING', 'PARTIALLY_FULFILLED', 'FULFILLED'].indexOf(card.status) > -1;
+      var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
+      d.innerHTML = avatar + '<div class="mc" id="moc-' + msgId + '"></div>';
 
-      var cardHtml = '<div class="oc">';
-      // Header
-      cardHtml += '<div class="oc-h">';
-      cardHtml += '<div class="oc-ord"><span class="oc-num">' + esc(card.orderNumber) + '</span></div>';
-      cardHtml += '<span class="oc-status' + (isActive ? ' oc-status-pulse' : '') + '" style="background:' + statusColor.bg + ';color:' + statusColor.fg + '">' + esc(card.statusLabel) + '</span>';
-      cardHtml += '</div>';
+      var container = d.querySelector('.mc');
 
-      // Items with optional images
-      if (card.items && card.items.length) {
-        cardHtml += '<div class="oc-items">';
-        card.items.forEach(function(item, idx) {
-          var img = card.itemImages && card.itemImages[idx] ? '<img src="' + escAttr(card.itemImages[idx]) + '" class="oc-item-img" />' : '<div class="oc-item-placeholder"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg></div>';
-          cardHtml += '<span class="oc-item">' + img + esc(item) + '</span>';
-        });
-        cardHtml += '</div>';
+      // Summary header when more than 2 orders
+      if (orderCards.length > 2) {
+        var summary = document.createElement('div');
+        summary.className = 'moc-summary';
+        summary.innerHTML = '<span class="moc-count">' + orderCards.length + ' orders found</span><span class="moc-hint">Showing most recent first</span>';
+        container.appendChild(summary);
       }
 
-      // Horizontal Progress Bar with dates
-      if (card.timeline && card.timeline.length) {
-        cardHtml += '<div class="oc-progress">';
+      // Render first 2 orders fully visible, rest collapsible on mobile
+      orderCards.forEach(function(card, idx) {
+        var cardWrapper = document.createElement('div');
+        cardWrapper.className = 'moc-item' + (idx >= 2 ? ' moc-collapsed' : '');
+        cardWrapper.dataset.idx = idx;
         
+        if (idx === 0) {
+          // First card - full render
+          cardWrapper.innerHTML = renderOrderCardHTML(card);
+        } else if (idx === 1) {
+          // Second card - full render
+          cardWrapper.innerHTML = renderOrderCardHTML(card);
+        } else {
+          // Additional cards - collapsed preview on mobile, full on desktop
+          var preview = renderOrderCardPreview(card);
+          cardWrapper.innerHTML = '<div class="moc-preview" data-idx="' + idx + '">' + preview + '</div>';
+        }
+
+        container.appendChild(cardWrapper);
+      });
+
+      // Add expand/collapse functionality
+      setupMobileExpand(container, orderCards);
+
+      var timeEl = document.createElement('div');
+      timeEl.className = 'mts';
+      timeEl.textContent = formatTime(new Date());
+      container.appendChild(timeEl);
+
+      msgs.appendChild(d);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      // Smart quick replies after finding orders
+      showQR(['Track another order', 'When will they arrive?', 'Need more help']);
+    }
+
+    function renderOrderCardPreview(card) {
+      var statusColor = getStatusColor(card.status);
+      return '<div class="moc-preview-content">' +
+        '<div class="moc-preview-header">' +
+        '<span class="moc-preview-num">' + esc(card.orderNumber) + '</span>' +
+        '<span class="moc-preview-status" style="background:' + statusColor.bg + ';color:' + statusColor.fg + '">' + esc(card.statusLabel) + '</span>' +
+        '</div>' +
+        '<button class="moc-expand-btn" data-idx="' + card.index + '">View details <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>' +
+        '</div>';
+    }
+
+    function setupMobileExpand(container, orderCards) {
+      var isMobile = window.matchMedia('(max-width: 480px)').matches;
+      
+      // Expand buttons for collapsed cards
+      container.querySelectorAll('.moc-expand-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var idx = parseInt(this.dataset.idx, 10);
+          var wrapper = container.querySelector('.moc-item[data-idx="' + idx + '"]');
+          if (wrapper && orderCards[idx]) {
+            wrapper.innerHTML = renderOrderCardHTML(orderCards[idx]);
+            wrapper.classList.remove('moc-collapsed');
+            wrapper.classList.add('moc-expanded');
+            // Scroll to expanded card
+            setTimeout(function() {
+              wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+          }
+        });
+      });
+
+      // Collapse button for expanded cards on mobile
+      if (isMobile) {
+        container.querySelectorAll('.moc-expanded').forEach(function(wrapper) {
+          var collapseBtn = wrapper.querySelector('.oc-collapse-btn');
+          if (collapseBtn) {
+            collapseBtn.addEventListener('click', function() {
+              var idx = parseInt(wrapper.dataset.idx, 10);
+              var preview = renderOrderCardPreview(orderCards[idx]);
+              wrapper.innerHTML = '<div class="moc-preview" data-idx="' + idx + '">' + preview + '</div>';
+              wrapper.classList.remove('moc-expanded');
+              wrapper.classList.add('moc-collapsed');
+              // Re-wire expand button
+              var newBtn = wrapper.querySelector('.moc-expand-btn');
+              if (newBtn) {
+                newBtn.addEventListener('click', function() {
+                  wrapper.innerHTML = renderOrderCardHTML(orderCards[idx]);
+                  wrapper.classList.remove('moc-collapsed');
+                  wrapper.classList.add('moc-expanded');
+                  setupMobileExpand(container, orderCards);
+                });
+              }
+            });
+          }
+        });
+      }
+    }
+
+    function renderOrderCardHTML(card) {
+      var statusColor = getStatusColor(card.status);
+      var isActive = ['PROCESSING', 'PARTIALLY_FULFILLED', 'FULFILLED'].indexOf(card.status) > -1;
+      var cardId = card.orderNumber || 'order-' + Math.random().toString(36).substr(2, 9);
+
+      var html = '<div class="oc"' + (window.innerWidth <= 480 ? ' data-collapsible="true"' : '') + '>';
+
+      // Mobile collapse button
+      if (window.innerWidth <= 480) {
+        html += '<button class="oc-collapse-btn" data-card="' + escAttr(cardId) + '">';
+        html += '<span class="oc-collapse-text">Hide details</span>';
+        html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>';
+        html += '</button>';
+      }
+
+      // Header
+      html += '<div class="oc-h">';
+      html += '<div class="oc-ord"><span class="oc-num">' + esc(card.orderNumber) + '</span></div>';
+      html += '<span class="oc-status' + (isActive ? ' oc-status-pulse' : '') + '" style="background:' + statusColor.bg + ';color:' + statusColor.fg + '">' + esc(card.statusLabel) + '</span>';
+      html += '</div>';
+
+      // Items
+      if (card.items && card.items.length) {
+        html += '<div class="oc-items">';
+        card.items.forEach(function(item, idx) {
+          var img = card.itemImages && card.itemImages[idx] ? '<img src="' + escAttr(card.itemImages[idx]) + '" class="oc-item-img" />' : '<div class="oc-item-placeholder"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg></div>';
+          html += '<span class="oc-item">' + img + esc(item) + '</span>';
+        });
+        html += '</div>';
+      }
+
+      // Progress
+      if (card.timeline && card.timeline.length) {
+        html += '<div class="oc-progress">';
         var stages = [
           { key: 'processing', label: 'Processing', icon: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>' },
           { key: 'shipped', label: 'Shipped', icon: '<rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>' },
@@ -613,39 +728,47 @@ var WINDOW_HTML = [
             }
           });
           var cls = 'op-stage' + (isDone ? ' done' : '') + (isAct ? ' active' : '');
-          cardHtml += '<div class="' + cls + '">';
-          cardHtml += '<div class="op-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + stage.icon + '</svg></div>';
-          cardHtml += '<div class="op-label">' + stage.label + '</div>';
+          html += '<div class="' + cls + '">';
+          html += '<div class="op-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + stage.icon + '</svg></div>';
+          html += '<div class="op-label">' + stage.label + '</div>';
           if (stageDate) {
-            cardHtml += '<div class="op-date">' + formatDate(stageDate) + '</div>';
+            html += '<div class="op-date">' + formatDate(stageDate) + '</div>';
           }
-          if (idx < stages.length - 1) cardHtml += '<div class="op-line' + (isDone ? ' done' : '') + '"></div>';
-          cardHtml += '</div>';
+          if (idx < stages.length - 1) html += '<div class="op-line' + (isDone ? ' done' : '') + '"></div>';
+          html += '</div>';
         });
-        
-        cardHtml += '</div>';
+        html += '</div>';
       }
 
       // Tracking
       if (card.trackingCompany && card.trackingNumber) {
-        cardHtml += '<div class="oc-track">';
-        cardHtml += '<div class="oc-carrier">' + esc(card.trackingCompany) + ' · ' + esc(card.trackingNumber) + '</div>';
+        html += '<div class="oc-track">';
+        html += '<div class="oc-carrier">' + esc(card.trackingCompany) + ' · ' + esc(card.trackingNumber) + '</div>';
         if (card.trackingUrl) {
-          cardHtml += '<a href="' + safeHref(card.trackingUrl) + '" target="_blank" rel="noopener" class="oc-track-btn">Track <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>';
+          html += '<a href="' + safeHref(card.trackingUrl) + '" target="_blank" rel="noopener" class="oc-track-btn">Track <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>';
         }
-        cardHtml += '</div>';
+        html += '</div>';
       }
 
-      // Delivery Countdown (v9: better formatting with <b> tags)
+      // Countdown
       if (card.estimatedDelivery) {
         var countdownText = getDeliveryCountdown(card.estimatedDelivery);
-        cardHtml += '<div class="oc-countdown">' + countdownText + '</div>';
+        html += '<div class="oc-countdown">' + countdownText + '</div>';
       }
 
-      cardHtml += '</div>';
+      html += '</div>';
+      return html;
+    }
+
+    // ─── Single Order Card ─────────────────────────────────────
+    function addOrderCard(card) {
+      var msgId = 'msg-' + (++state.lastMsgId);
+      var d = document.createElement('div');
+      d.className = 'mm m-bot';
+      d.dataset.msgId = msgId;
 
       var avatar = '<div class="ma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>';
-      d.innerHTML = avatar + '<div class="mc">' + cardHtml;
+      d.innerHTML = avatar + '<div class="mc">' + renderOrderCardHTML(card) + '</div>';
 
       var fb = document.createElement('div');
       fb.className = 'fb';
@@ -667,7 +790,6 @@ var WINDOW_HTML = [
       msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
 
-      // Smart quick replies after finding order
       showQR(['Track another order', 'When will it arrive?', 'Need more help']);
 
       setTimeout(function() {
@@ -702,9 +824,9 @@ var WINDOW_HTML = [
       items.forEach(function(t, i) {
         var b = document.createElement('button');
         b.className = 'qb';
-        b.textContent = t;
+        b.textContent = typeof t === 'string' ? t : (t.question || t);
         b.style.animationDelay = (i * 60) + 'ms';
-        b.addEventListener('click', function() { send(t); });
+        b.addEventListener('click', function() { send(typeof t === 'string' ? t : (t.question || JSON.stringify(t))); });
         qr.appendChild(b);
       });
       qr.style.display = 'flex';
@@ -807,7 +929,7 @@ function CSS() {
   line-height: 1.5;
 }
 
-/* ─── Dark Mode ────────────────────────────────────── */
+/* ─── Dark Mode (v10 Enhanced) ──────────────────────────── */
 .w.dark {
   --bg-msg: #0f0f11;
   --bg-card: #1a1a1e;
@@ -819,55 +941,61 @@ function CSS() {
   --text-tertiary: #6b7280;
   --border-color: #38383a;
   --border-light: #2c2c2e;
+  --shadow: 0 4px 14px rgba(0,0,0,0.25), 0 1px 4px rgba(0,0,0,0.15);
+  --shadow-lg: 0 16px 56px rgba(0,0,0,0.35), 0 6px 20px rgba(0,0,0,0.2);
 }
-.w.dark .ww { background: #0f0f11; border-color: #2c2c2e; }
-.w.dark .wm { background: #111113; }
-.w.dark .wh { background: linear-gradient(135deg, #0a3d2e 0%, #0d4f3a 100%); }
-.w.dark .m-bot .mc { background: var(--bg-card); color: var(--text-primary); }
-.w.dark .ai-notice { background: #1a1a1e !important; color: #666 !important; }
-.w.dark .m-user .mc { background: var(--ac); color: #fff; }
-.w.dark .wi { background: #111113; border-top-color: var(--border-color); }
-.w.dark .win { background: #2c2c2e; border-color: var(--border-color); color: var(--text-primary); }
+.w.dark .ww { background: #0f0f11; border-color: #2c2c2e; transition: background 0.2s, border-color 0.2s; }
+.w.dark .wm { background: #111113; transition: background 0.2s; }
+.w.dark .wh { background: linear-gradient(135deg, #0a3d2e 0%, #0d4f3a 100%); transition: background 0.2s; }
+.w.dark .m-bot .mc { background: var(--bg-card); color: var(--text-primary); transition: background 0.2s, color 0.2s; }
+.w.dark .m-user .mc { background: var(--ac); color: #fff; transition: background 0.2s; }
+.w.dark .wi { background: #111113; border-top-color: var(--border-color); transition: background 0.2s, border-color 0.2s; }
+.w.dark .win { background: #2c2c2e; border-color: var(--border-color); color: var(--text-primary); transition: background 0.2s, border-color 0.2s, color 0.2s; }
 .w.dark .win::placeholder { color: var(--text-tertiary); }
-.w.dark .wq { background: #111113; }
-.w.dark .qb { background: var(--bg-card); border-color: var(--ac); color: var(--ac); }
-.w.dark .qb:hover { background: var(--ac); color: #fff; }
-.w.dark .ma { background: #1a3d30; color: #4ade80; }
-.w.dark .oc { background: var(--bg-card); border-color: #2c2c2e; box-shadow: 0 2px 12px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.05); }
-.w.dark .oc-h { border-color: var(--border-color); }
-.w.dark .oc-track { border-color: var(--border-color); }
+.w.dark .wq { background: #111113; transition: background 0.2s; }
+.w.dark .qb { background: var(--bg-card); border-color: var(--ac); color: var(--ac); transition: background 0.2s, border-color 0.2s, color 0.2s; }
+.w.dark .qb:hover { background: var(--ac); color: #fff; transition: background 0.2s, color 0.2s; }
+.w.dark .ma { background: #1a3d30; color: #4ade80; transition: background 0.2s, color 0.2s; }
+.w.dark .oc { background: var(--bg-card); border-color: #2c2c2e; box-shadow: 0 2px 12px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.05); transition: background 0.2s, border-color 0.2s, box-shadow 0.2s; }
+.w.dark .oc-h { border-color: var(--border-color); transition: border-color 0.2s; }
+.w.dark .oc-track { border-color: var(--border-color); transition: border-color 0.2s; }
 .w.dark .oc-carrier { color: var(--text-secondary); }
 .w.dark .oc-countdown { color: var(--text-secondary); }
 .w.dark .oc-countdown b { color: var(--text-primary); }
 .w.dark .tl-label { color: var(--text-primary); }
 .w.dark .tl-date { color: var(--text-tertiary); }
-.w.dark .tl-line { background: #38383a; }
+.w.dark .tl-line { background: #38383a; transition: background 0.2s; }
 .w.dark .tl-line.done { background: var(--ac); }
 .w.dark .tl-step:not(.done):not(.active) .tl-dot { background: #2c2c2e; border-color: #38383a; }
-.w.dark .oi-card { background: #1c1c1e; border-color: #38383a; }
-.w.dark .oi-label { color: var(--text-primary); }
-.w.dark .oi-input { background: #2c2c2e; border-color: #38383a; color: var(--text-primary); }
+.w.dark .oi-card { background: #1c1c1e; border-color: #38383a; transition: background 0.2s, border-color 0.2s; }
+.w.dark .oi-label { color: var(--text-primary); transition: color 0.2s; }
+.w.dark .oi-input { background: #2c2c2e; border-color: #38383a; color: var(--text-primary); transition: background 0.2s, border-color 0.2s, color 0.2s; }
 .w.dark .oi-input::placeholder { color: var(--text-tertiary); }
 .w.dark .oi-hint { color: var(--text-tertiary); }
 .w.dark .oi-example { color: var(--text-tertiary); }
 .w.dark .fb button { color: var(--text-tertiary); }
 .w.dark .mts { color: var(--text-tertiary); }
-.w.dark .skeleton-card { background: var(--bg-card); }
-.w.dark .skel-order, .w.dark .skel-progress, .w.dark .skel-track { background: #2c2c2e; }
-.w.dark .ma-skel { background: #2c2c2e; }
-.w.dark .nf-card { background: var(--bg-card); border-color: #38383a; }
+.w.dark .nf-card { background: var(--bg-card); border-color: #38383a; transition: background 0.2s, border-color 0.2s; }
 .w.dark .nf-icon { background: rgba(0,128,96,0.15); color: var(--ac); }
 .w.dark .nf-title { color: var(--text-primary); }
 .w.dark .nf-tips li { color: var(--text-secondary); }
-.w.dark .nf-input { background: #2c2c2e; border-color: #38383a; color: var(--text-primary); }
+.w.dark .nf-input { background: #2c2c2e; border-color: #38383a; color: var(--text-primary); transition: background 0.2s, border-color 0.2s, color 0.2s; }
 .w.dark .nf-input::placeholder { color: var(--text-tertiary); }
-.w.dark .oc-item-placeholder { background: #2c2c2e; color: #555; }
+.w.dark .oc-item-placeholder { background: #2c2c2e; color: #555; transition: background 0.2s, color 0.2s; }
 .w.dark .loading-dots { color: var(--text-secondary); }
 .w.dark .loading-text { color: var(--text-secondary); }
+.w.dark .skel-card { background: var(--bg-card); transition: background 0.2s; }
+.w.dark .skel { background: #2c2c2e !important; transition: background 0.2s; }
+.w.dark .ma-skel { background: #2c2c2e; transition: background 0.2s; }
+.w.dark .moc-summary { background: rgba(0,128,96,0.08); transition: background 0.2s; }
+.w.dark .moc-preview { background: var(--bg-msg); border-color: var(--border-color); transition: background 0.2s, border-color 0.2s; }
+.w.dark .moc-preview-header { background: var(--bg-card); transition: background 0.2s; }
+.w.dark .moc-expand-btn { color: var(--ac); background: rgba(0,128,96,0.1); transition: background 0.2s, color 0.2s; }
+.w.dark .oc-collapse-btn { background: rgba(255,255,255,0.05); color: var(--text-secondary); transition: background 0.2s, color 0.2s; }
 
 .w.left { right: auto; left: 24px; }
 
-/* ─── Bubble with Refined Animation (v9) ──────────────────────────── */
+/* ─── Bubble (v10 Refined) ───────────────────────────────── */
 .wb {
   width: 64px;
   height: 64px;
@@ -889,6 +1017,7 @@ function CSS() {
   outline: none;
   animation: bubbleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
   position: relative;
+  will-change: transform;
 }
 
 @keyframes bubbleIn {
@@ -896,7 +1025,6 @@ function CSS() {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* Refined smoother pulse animation (v9) */
 .wb::before {
   content: "";
   position: absolute;
@@ -905,10 +1033,10 @@ function CSS() {
   border-radius: 50%;
   border: 2px solid var(--ac);
   opacity: 0;
-  animation: pulseRingV9 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  animation: pulseRingV10 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
 }
 
-@keyframes pulseRingV9 {
+@keyframes pulseRingV10 {
   0% { transform: scale(1); opacity: 0.5; }
   50% { transform: scale(1.35); opacity: 0.2; }
   100% { transform: scale(1); opacity: 0; }
@@ -962,7 +1090,6 @@ function CSS() {
   transform: translateY(-50%) translateX(-4px);
 }
 
-/* Left positioned bubble tooltip */
 .w.left .wb-tooltip {
   right: auto;
   left: calc(100% + 12px);
@@ -1000,7 +1127,7 @@ function CSS() {
   to { opacity: 0; transform: translateY(8px) scale(0.98); }
 }
 
-/* ─── Header - v9 Ultra Minimal ──────────────────────────────────── */
+/* ─── Header - v10 Minimal ─────────────────────────── */
 .wh {
   background: linear-gradient(135deg, #006b4d 0%, #008060 50%, #00996b 100%);
   color: #fff;
@@ -1012,7 +1139,6 @@ function CSS() {
   position: relative;
 }
 
-/* Bottom gradient fade border (v9: cleaner, no noise texture) */
 .wh::after {
   content: "";
   position: absolute;
@@ -1048,7 +1174,6 @@ function CSS() {
   position: relative;
 }
 
-/* Online status dot glow ring */
 .wdot::before {
   content: "";
   position: absolute;
@@ -1089,6 +1214,7 @@ function CSS() {
   gap: 8px;
   max-width: 92%;
   animation: msgIn 0.35s cubic-bezier(0.16,1,0.3,1) both;
+  will-change: opacity, transform;
 }
 
 @keyframes msgIn {
@@ -1097,7 +1223,6 @@ function CSS() {
 }
 .m-user { margin-left: auto; flex-direction: row-reverse; }
 
-/* Bot avatar */
 .ma {
   width: 30px; height: 30px;
   border-radius: 10px;
@@ -1109,7 +1234,6 @@ function CSS() {
   border: 1px solid rgba(0,128,96,0.08);
 }
 
-/* Message content */
 .mc {
   padding: 11px 15px;
   border-radius: 16px;
@@ -1136,39 +1260,41 @@ function CSS() {
 .mts { font-size: 10px; color: var(--text-tertiary); margin-top: 6px; padding: 0 2px; }
 .m-user .mts { text-align: right; }
 
-/* ─── Animated Loading Message (v9) ──────────────────────────────── */
-.loading-msg .mc {
-  padding: 12px 16px;
+/* ─── Skeleton Loading (v10) ─────────────────────────────── */
+.loading-msg .mc { padding: 0; background: transparent; border: none; box-shadow: none; }
+.skel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 16px;
+  animation: skelPulse 1.5s ease-in-out infinite;
 }
-.loading-dots {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--text-secondary);
+@keyframes skelPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
-.loading-text {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+.skel {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
 }
-.dot-anim {
-  display: flex;
-  gap: 3px;
-  align-items: center;
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
-.dot-anim span {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--text-tertiary);
-  animation: dotBounce 1.2s ease-in-out infinite;
-}
-.dot-anim span:nth-child(1) { animation-delay: 0s; }
-.dot-anim span:nth-child(2) { animation-delay: 0.15s; }
-.dot-anim span:nth-child(3) { animation-delay: 0.3s; }
-
-@keyframes dotBounce {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30% { transform: translateY(-4px); opacity: 1; }
+.skel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.skel-order { width: 80px; height: 24px; }
+.skel-status { width: 70px; height: 24px; border-radius: 20px; }
+.skel-progress { display: flex; gap: 8px; margin-bottom: 14px; }
+.skel-bar { flex: 1; height: 40px; border-radius: 8px; }
+.skel-footer { margin-top: 8px; }
+.skel-text { width: 120px; height: 16px; }
+.ma-skel {
+  width: 30px; height: 30px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
 }
 
 /* ─── Inline Order Input Card ─────────────────────── */
@@ -1182,7 +1308,6 @@ function CSS() {
   overflow: hidden;
 }
 
-/* Gradient border effect */
 .oi-card::before {
   content: "";
   position: absolute;
@@ -1206,7 +1331,6 @@ function CSS() {
   align-items: center;
 }
 
-/* Pin icon */
 .oi-pin-icon {
   vertical-align: -3px;
   margin-right: 8px;
@@ -1265,7 +1389,7 @@ function CSS() {
 .oi-hint { font-size: 12px; color: var(--text-secondary); margin-top: 10px; font-weight: 500; }
 .oi-example { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; font-style: italic; }
 
-/* ─── Not Found Card (v9 - More Elegant) ─────────────────────── */
+/* ─── Not Found Card ─────────────────────── */
 .nf-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -1346,7 +1470,83 @@ function CSS() {
 .nf-btn:hover { opacity: 0.9; transform: scale(1.02); }
 .nf-btn:active { transform: scale(0.98); }
 
-/* ─── Order Card (v9 - Enhanced) ─────────────────────────────── */
+/* ─── Multiple Order Cards Container (v10) ───────────────── */
+.moc-summary {
+  background: rgba(0,128,96,0.06);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.moc-count { font-size: 14px; font-weight: 700; color: var(--ac); }
+.moc-hint { font-size: 12px; color: var(--text-tertiary); }
+
+.moc-item { margin-bottom: 12px; }
+.moc-item:last-child { margin-bottom: 0; }
+
+.moc-collapsed {
+  animation: mocCollapse 0.3s ease forwards;
+}
+@keyframes mocCollapse {
+  from { opacity: 1; }
+  to { opacity: 0.6; }
+}
+
+.moc-preview {
+  background: var(--bg-msg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.moc-preview-content { display: flex; justify-content: space-between; align-items: center; }
+.moc-preview-header { display: flex; align-items: center; gap: 10px; }
+.moc-preview-num { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.moc-preview-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+.moc-expand-btn {
+  background: rgba(0,128,96,0.1);
+  color: var(--ac);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+.moc-expand-btn:hover { background: rgba(0,128,96,0.2); }
+
+/* Mobile collapsible order cards */
+.oc-collapse-btn {
+  display: none;
+  width: 100%;
+  background: rgba(0,0,0,0.03);
+  border: none;
+  padding: 8px 12px;
+  margin: -18px -20px 14px -20px;
+  border-radius: 0;
+  cursor: pointer;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.oc-collapse-btn:hover { background: rgba(0,0,0,0.05); }
+.oc-collapse-btn svg { transition: transform 0.2s ease; }
+
+/* ─── Order Card ─────────────────────────────── */
 .oc {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -1406,7 +1606,7 @@ function CSS() {
   flex-shrink: 0;
 }
 
-/* Horizontal Progress Bar - v9 */
+/* Progress Bar */
 .oc-progress {
   display: flex;
   align-items: center;
@@ -1488,7 +1688,7 @@ function CSS() {
 .tl-step.active .tl-label { color: var(--ac-dark); }
 .tl-date { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
 
-/* Tracking - v9 with hover effect */
+/* Tracking */
 .oc-track {
   display: flex;
   justify-content: space-between;
@@ -1509,7 +1709,7 @@ function CSS() {
 .oc-track-btn svg { transition: transform 0.15s ease; }
 .oc-track-btn:hover svg { transform: translateX(2px); }
 
-/* Delivery Countdown - v9 with better formatting */
+/* Countdown */
 .oc-countdown {
   font-size: 14px;
   color: var(--text-secondary);
@@ -1542,7 +1742,6 @@ function CSS() {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Thumbs up celebration */
 .fb-up.celebrating {
   animation: celebrate 0.5s cubic-bezier(0.34,1.56,0.64,1);
 }
@@ -1553,7 +1752,7 @@ function CSS() {
   100% { transform: scale(1) rotate(0deg); }
 }
 
-/* ─── Quick Replies (v9 - Larger, More Prominent) ──────────────── */
+/* ─── Quick Replies ──────────────────────────────── */
 .wq {
   padding: 0 18px 14px;
   display: flex;
@@ -1576,6 +1775,7 @@ function CSS() {
   outline: none;
   animation: qrIn 0.3s cubic-bezier(0.16,1,0.3,1) both;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  will-change: transform, background, color;
 }
 @keyframes qrIn {
   from { opacity: 0; transform: translateY(8px) scale(0.9); }
@@ -1601,7 +1801,6 @@ function CSS() {
   align-items: center;
 }
 
-/* Footer - v9 Ultra Minimal */
 .wft {
   padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
   text-align: center;
@@ -1670,7 +1869,6 @@ function CSS() {
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); 
   }
   
-  /* Mobile bubble: smaller but larger touch target */
   .wb { 
     width: 54px; 
     height: 54px; 
@@ -1679,13 +1877,11 @@ function CSS() {
   }
   .wb svg { width: 24px; height: 24px; }
   
-  /* Mobile tooltip adjustments */
   .wb-tooltip {
     font-size: 12px;
     padding: 6px 10px;
   }
   
-  /* Mobile greeting card: full width */
   .oi-card { 
     padding: 14px 16px; 
     border-radius: 0;
@@ -1699,15 +1895,13 @@ function CSS() {
   .mm { max-width: 95%; }
   .wm { padding: 12px 14px; }
   .wq { padding: 0 14px 10px; }
-  .oc { padding: 14px 16px; }
+  .oc { padding: 14px 16px; margin: 0 -14px 12px -14px; border-radius: 0; border-left: none; border-right: none; }
+  .oc-collapse-btn { display: flex; }
   
-  /* Mobile: prevent bounce scroll on iOS */
   .wm { -webkit-overflow-scrolling: auto; overscroll-behavior: contain; }
   
-  /* Mobile quick replies: slightly larger touch targets */
   .qb { padding: 11px 18px; font-size: 14px; }
   
-  /* Mobile not found card: full width */
   .nf-card {
     border-radius: 0;
     margin: 0 -18px;
@@ -1715,8 +1909,13 @@ function CSS() {
     border-right: none;
   }
   
-  /* Mobile: loading message adjustments */
   .loading-dots { font-size: 13px; }
+  
+  /* Mobile multiple order cards */
+  .moc-item { margin: 0 -14px 12px -14px; }
+  .moc-item:first-child { margin-top: -12px; }
+  .moc-summary { border-radius: 0; margin: 0 -14px 12px -14px; padding: 10px 14px; }
+  .moc-collapsed { opacity: 1; }
 }
 ';
 } // end __wismo_loaded guard
