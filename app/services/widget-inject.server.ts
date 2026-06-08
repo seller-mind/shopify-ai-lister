@@ -80,16 +80,18 @@ a{color:#2563eb}
 <div class="c" id="wc"><div class="ch"><div><h3>Order Tracking</h3><small>AI-powered</small></div><button class="cx" id="wx">&times;</button></div><div class="cb" id="wm"></div><div class="ci"><input id="wi" placeholder="Enter order number or email..." /><button id="wt">Track</button></div><div class="pr">Privacy</div></div>\`;
   document.body.appendChild(s);
   var bubble=sh.getElementById('wb'),chat=sh.getElementById('wc'),msgs=sh.getElementById('wm'),inp=sh.getElementById('wi'),btn=sh.getElementById('wt'),close=sh.getElementById('wx'),cid=null,open=false;
+  function safeHtml(t){var e=document.createElement('span');e.textContent=t;var s=e.innerHTML;s=s.replace(/\\*\\*(.+?)\\*\\*/g,'<strong>$1</strong>');s=s.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');return s}
+  try{var saved=localStorage.getItem('wismo_cid');if(saved)cid=saved}catch(e){}
   function toggle(){open=!open;chat.style.display=open?'flex':'none';bubble.style.display=open?'none':'flex';if(open&&msgs.children.length===0)addBot(GREETING)}
   bubble.onclick=toggle;close.onclick=toggle;
-  function addBot(t){var d=sh.createElement('div');d.className='m mb';d.innerHTML=t;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
+  function addBot(t){var d=sh.createElement('div');d.className='m mb';d.innerHTML=safeHtml(t);msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
   function addUser(t){var d=sh.createElement('div');d.className='m mu';d.textContent=t;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
   function addLoading(){var d=sh.createElement('div');d.className='m mb';d.id='wld';d.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
   function rmLoading(){var d=sh.getElementById('wld');if(d)d.remove()}
   function addQuick(replies){if(!replies||!replies.length)return;var d=sh.createElement('div');d.className='qr';replies.forEach(function(r){var b=sh.createElement('button');b.className='qb';b.textContent=r;b.onclick=function(){d.remove();sendMsg(r)};d.appendChild(b)});msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
-  function sendMsg(text){if(!text.trim())return;addUser(text);inp.value='';addLoading();fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({shop:SHOP,message:text,conversationId:cid})}).then(function(r){return r.json()}).then(function(d){rmLoading();if(d.conversationId)cid=d.conversationId;if(d.reply)addBot(d.reply);if(d.quickReplies)addQuick(d.quickReplies)}).catch(function(){rmLoading();addBot('Connection error. Please try again.')})}
+  function sendMsg(text){if(!text.trim())return;addUser(text);inp.value='';addLoading();fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({shop:SHOP,message:text,conversationId:cid})}).then(function(r){return r.json()}).then(function(d){rmLoading();if(d.conversationId){cid=d.conversationId;try{localStorage.setItem('wismo_cid',cid)}catch(e){}}if(d.reply)addBot(d.reply);if(d.quickReplies)addQuick(d.quickReplies)}).catch(function(){rmLoading();addBot('Connection error. Please try again.')})}
   btn.onclick=function(){sendMsg(inp.value)};inp.onkeydown=function(e){if(e.key==='Enter')sendMsg(inp.value)};
-  fetch(API.replace('/chat','/widget-config')+'?shop='+encodeURIComponent(SHOP)).then(function(r){return r.json()}).then(function(d){if(d.enabled===false){bubble.style.display='none';return}bubble.style.display='flex'}).catch(function(){bubble.style.display='flex'});
+  fetch(API.replace('/chat','/widget-config')+'?shop='+encodeURIComponent(SHOP)).then(function(r){return r.json()}).then(function(d){if(d.enabled===false){bubble.style.display='none';return}bubble.style.display='flex';if(d.faqItems&&d.faqItems.length>0){var fd=sh.createElement('div');fd.className='qr';d.faqItems.forEach(function(item){var b=sh.createElement('button');b.className='qb';b.textContent=item.question;b.onclick=function(){fd.remove();sendMsg(item.question)};fd.appendChild(b)});msgs.appendChild(fd);msgs.scrollTop=msgs.scrollHeight}}).catch(function(){bubble.style.display='flex'});
 })();
 </script>
 ${WISMO_MARKER_END}`;

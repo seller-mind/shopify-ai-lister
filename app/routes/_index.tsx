@@ -33,7 +33,7 @@ export default function LandingPage() {
           <p style={{ fontSize: '20px', opacity: 0.92, marginBottom: '32px', maxWidth: '560px', margin: '0 auto 32px' }}>
             Stop answering &quot;Where is my order?&quot; — WISMO AI tracks orders instantly, in any language, 24/7.
           </p>
-          <a href="https://apps.shopify.com/wismo-ai" style={{ display: 'inline-block', padding: '16px 40px', background: '#fff', color: '#008060', borderRadius: '12px', fontWeight: 700, fontSize: '17px', textDecoration: 'none', boxShadow: '0 4px 16px rgba(0,0,0,.15)' }}>
+          <a href="https://apps.shopify.com/haimo-ai-lister" style={{ display: 'inline-block', padding: '16px 40px', background: '#fff', color: '#008060', borderRadius: '12px', fontWeight: 700, fontSize: '17px', textDecoration: 'none', boxShadow: '0 4px 16px rgba(0,0,0,.15)' }}>
             Install Free on Shopify
           </a>
           <p style={{ fontSize: '14px', opacity: 0.8, marginTop: '16px' }}>Free plan available · No credit card required · Setup in 2 minutes</p>
@@ -72,6 +72,7 @@ export default function LandingPage() {
               { name: 'Free', price: '$0', period: '', features: ['10 conversations/month', 'Order tracking', 'Multi-language', '1 store'], cta: 'Get Started' },
               { name: 'Starter', price: '$15', period: '/mo', features: ['50 conversations/month', 'FAQ auto-reply', '7-day free trial', '1 store'], cta: 'Start Free Trial', featured: true },
               { name: 'Pro', price: '$49', period: '/mo', features: ['500 conversations/month', 'Custom brand voice', 'Analytics dashboard', 'Priority support'], cta: 'Start Free Trial' },
+              { name: 'Business', price: '$149', period: '/mo', features: ['Unlimited conversations', 'Human agent handoff', 'Multiple stores', 'Dedicated support'], cta: 'Start Free Trial' },
             ].map((p, i) => (
               <div key={i} style={{ padding: '32px 24px', background: p.featured ? '#fff' : '#fff', borderRadius: '16px', border: p.featured ? '2px solid #008060' : '1px solid #e1e3e5', boxShadow: p.featured ? '0 8px 32px rgba(0,128,96,.12)' : 'none' }}>
                 {p.featured && <div style={{ background: '#008060', color: '#fff', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, display: 'inline-block', marginBottom: '12px' }}>Most Popular</div>}
@@ -82,7 +83,7 @@ export default function LandingPage() {
                     <li key={j} style={{ padding: '6px 0', fontSize: '14px', color: '#1a1a1a' }}>✓ {f}</li>
                   ))}
                 </ul>
-                <a href="https://apps.shopify.com/wismo-ai" style={{ display: 'block', padding: '12px', background: p.featured ? '#008060' : '#f1f3f5', color: p.featured ? '#fff' : '#1a1a1a', borderRadius: '10px', fontWeight: 600, fontSize: '14px', textDecoration: 'none', textAlign: 'center' }}>{p.cta}</a>
+                <a href="https://apps.shopify.com/haimo-ai-lister" style={{ display: 'block', padding: '12px', background: p.featured ? '#008060' : '#f1f3f5', color: p.featured ? '#fff' : '#1a1a1a', borderRadius: '10px', fontWeight: 600, fontSize: '14px', textDecoration: 'none', textAlign: 'center' }}>{p.cta}</a>
               </div>
             ))}
           </div>

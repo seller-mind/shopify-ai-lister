@@ -54,6 +54,10 @@ export default function App() {
   const shopParam = new URLSearchParams(location.search).get('shop');
   const shopQuery = shopParam ? `?shop=${encodeURIComponent(shopParam)}` : '';
 
+  // Public routes that should NOT show the admin sidebar
+  const isPublicPage = currentPath === '/' || 
+    ['/privacy', '/terms', '/dpa', '/dmca'].some(p => currentPath.startsWith(p));
+
   return (
     <html lang="en">
       <head>
@@ -65,8 +69,8 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <div className="app-layout">
-          <nav className="sidebar">
+        <div className={isPublicPage ? 'public-layout' : 'app-layout'}>
+          {!isPublicPage && <nav className="sidebar">
             <div className="logo">
               <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                 <rect width="32" height="32" rx="8" fill="#008060"/>
@@ -86,14 +90,14 @@ export default function App() {
                 {item.label}
               </a>
             ))}
-          </nav>
-          <main className="content">
+          </nav>}
+          <main className={isPublicPage ? 'public-content' : 'content'}>
             <Outlet />
           </main>
         </div>
-        <div className="footer-note">
+        {!isPublicPage && <div className="footer-note">
           WISMO AI — AI-powered order tracking for Shopify stores · <a href="/privacy" style={{ color: '#888' }}>Privacy</a> · <a href="/terms" style={{ color: '#888' }}>Terms</a> · <a href="/dpa" style={{ color: '#888' }}>DPA</a> · <a href="/dmca" style={{ color: '#888' }}>DMCA</a>
-        </div>
+        </div>}
         <ScrollRestoration />
         <Scripts />
       </body>

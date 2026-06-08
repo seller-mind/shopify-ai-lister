@@ -42,8 +42,8 @@ export async function action({ request }: ActionFunctionArgs) {
   const enabled = fd.get('enabled') === 'on';
   const widgetPosition = sanitizePosition((fd.get('widget_position') as string) || 'bottom-right');
   const widgetColor = sanitizeColor((fd.get('widget_color') as string) || '#008060');
-  const greeting = sanitizeText((fd.get('greeting') as string) || 'Track your order in seconds').substring(0, 200);
-  const brandName = sanitizeText((fd.get('brand_name') as string) || '').substring(0, 100);
+  const greeting = ((fd.get('greeting') as string) || 'Track your order in seconds').replace(/<[^>]*>/g,'').substring(0, 200);
+  const brandName = ((fd.get('brand_name') as string) || '').replace(/<[^>]*>/g,'').substring(0, 100);
   const autoReplyLanguage = (fd.get('auto_reply_language') as string) || 'auto';
   const returnPolicy = sanitizeUrl((fd.get('return_policy') as string) || '');
 

@@ -39,6 +39,8 @@ body {
 /* ─── Layout ─────────────────────────────────────────────────────────── */
 
 .app-layout { display: flex; min-height: 100vh; }
+.public-layout { min-height: 100vh; }
+.public-content { flex: 1; width: 100%; }
 
 /* ─── Sidebar ──────────────────────────────────────────────────────── */
 .sidebar {
