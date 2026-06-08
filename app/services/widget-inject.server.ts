@@ -13,6 +13,10 @@ import { shopifyREST } from '~/shopify.server';
 const WISMO_MARKER_START = '<!-- WISMO_AI_WIDGET_START -->';
 const WISMO_MARKER_END = '<!-- WISMO_AI_WIDGET_END -->';
 
+// Legacy markers from v11 inline widget (before auto-injection)
+const LEGACY_MARKER_START = '<!-- WISMO AI Widget v11 (Inline) -->';
+const LEGACY_MARKER_END = '<!-- End WISMO AI Widget v11 -->';
+
 /**
  * Build the inline widget code that goes into theme.liquid
  */
@@ -33,8 +37,8 @@ function buildWidgetCode(config: {
   var API='${config.apiEndpoint}';
   var POS='${pos}';
   var COLOR='${config.color}';
-  var GREETING='${config.greeting.replace(/'/g, "\\'")}';
-  var BRAND='${config.brandName.replace(/'/g, "\\'")}';
+  var GREETING='${config.greeting.replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, "")}';
+  var BRAND='${config.brandName.replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, "")}';
   if(window.__wismo_booted)return;window.__wismo_booted=true;
   var s=document.createElement('div');s.id='wismo-host';
   var sh=s.attachShadow({mode:'open'});
@@ -186,6 +190,21 @@ export async function injectWidget(config: {
   
   // 4. Remove existing widget code (if any) and add new
   let newContent: string;
+  
+  // First, remove any legacy v11 widget code (no WISMO_AI_WIDGET markers)
+  if (currentContent.includes(LEGACY_MARKER_START)) {
+    const legacyStart = currentContent.indexOf(LEGACY_MARKER_START);
+    const legacyEndMarker = currentContent.indexOf(LEGACY_MARKER_END);
+    if (legacyEndMarker > -1) {
+      const legacyEnd = legacyEndMarker + LEGACY_MARKER_END.length;
+      currentContent = currentContent.substring(0, legacyStart).trimEnd() + '\n' + currentContent.substring(legacyEnd).trimStart();
+    } else {
+      // Legacy start marker but no end marker — remove from start to </script>
+      const scriptEnd = currentContent.indexOf('</script>', legacyStart) + '</script>'.length;
+      currentContent = currentContent.substring(0, legacyStart).trimEnd() + '\n' + currentContent.substring(scriptEnd).trimStart();
+    }
+  }
+  
   if (currentContent.includes(WISMO_MARKER_START)) {
     // Replace existing widget block
     const startIdx = currentContent.indexOf(WISMO_MARKER_START);
@@ -219,11 +238,30 @@ export async function removeWidget(shop: string, accessToken: string): Promise<b
   if (!themeId) return false;
   
   const currentContent = await getThemeLiquid(shop, accessToken, themeId);
-  if (!currentContent || !currentContent.includes(WISMO_MARKER_START)) return true;
+  if (!currentContent) return false;
   
-  const startIdx = currentContent.indexOf(WISMO_MARKER_START);
-  const endIdx = currentContent.indexOf(WISMO_MARKER_END) + WISMO_MARKER_END.length;
-  const newContent = currentContent.substring(0, startIdx) + currentContent.substring(endIdx);
+  let newContent = currentContent;
   
+  // Remove new-style widget (with markers)
+  if (newContent.includes(WISMO_MARKER_START)) {
+    const startIdx = newContent.indexOf(WISMO_MARKER_START);
+    const endIdx = newContent.indexOf(WISMO_MARKER_END) + WISMO_MARKER_END.length;
+    newContent = newContent.substring(0, startIdx).trimEnd() + '\n' + newContent.substring(endIdx).trimStart();
+  }
+  
+  // Remove legacy v11 widget (with old markers)
+  if (newContent.includes(LEGACY_MARKER_START)) {
+    const legacyStart = newContent.indexOf(LEGACY_MARKER_START);
+    const legacyEndMarker = newContent.indexOf(LEGACY_MARKER_END);
+    if (legacyEndMarker > -1) {
+      const legacyEnd = legacyEndMarker + LEGACY_MARKER_END.length;
+      newContent = newContent.substring(0, legacyStart).trimEnd() + '\n' + newContent.substring(legacyEnd).trimStart();
+    } else {
+      const scriptEnd = newContent.indexOf('</script>', legacyStart) + '</script>'.length;
+      newContent = newContent.substring(0, legacyStart).trimEnd() + '\n' + newContent.substring(scriptEnd).trimStart();
+    }
+  }
+  
+  if (newContent === currentContent) return true; // nothing to remove
   return await updateThemeLiquid(shop, accessToken, themeId, newContent);
 }

@@ -47,15 +47,15 @@ export default function LandingPage() {
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
           {[
-            { icon: '⚡', title: 'Instant Order Tracking', desc: 'Customers enter their order number and get real-time status, tracking info, and delivery estimates — zero wait time.' },
-            { icon: '🌍', title: '20+ Languages', desc: 'Auto-detects customer language and responds accordingly. English, Chinese, Spanish, French, Japanese, and 20+ more.' },
-            { icon: '🤖', title: 'Smart AI Responses', desc: 'WISMO queries are answered instantly with zero AI calls. General questions use AI with your brand voice and FAQ items.' },
-            { icon: '🎨', title: 'Customizable Widget', desc: 'Match your brand with custom colors, greeting messages, and position. Live preview in settings.' },
-            { icon: '🔒', title: 'Privacy First', desc: 'GDPR compliant with data request and deletion support. 90-day data retention. SOC 2 aligned infrastructure.' },
-            { icon: '📊', title: 'Analytics Dashboard', desc: 'Track conversations, resolution rates, and time saved. See what customers ask and how WISMO handles it.' },
+            { icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#008060" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>', title: 'Instant Order Tracking', desc: 'Customers enter their order number and get real-time status, tracking info, and delivery estimates — zero wait time.' },
+            { icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#008060" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>', title: '20+ Languages', desc: 'Auto-detects customer language and responds accordingly. English, Chinese, Spanish, French, Japanese, and 20+ more.' },
+            { icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#008060" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>', title: 'Smart AI Responses', desc: 'WISMO queries are answered instantly with zero AI calls. General questions use AI with your brand voice and FAQ items.' },
+            { icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#008060" stroke-width="2" stroke-linecap="round"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17.5 10.5a2.5 2.5 0 1 0 0-5"/><path d="M6 17.5a2.5 2.5 0 1 0 0-5"/><path d="M12 22a7 7 0 0 0-7-7"/><path d="M19 15a7 7 0 0 1-7 7"/></svg>', title: 'Customizable Widget', desc: 'Match your brand with custom colors, greeting messages, and position. Live preview in settings.' },
+            { icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#008060" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', title: 'Privacy First', desc: 'GDPR compliant with data request and deletion support. 90-day data retention. SOC 2 aligned infrastructure.' },
+            { icon: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#008060" stroke-width="2" stroke-linecap="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>', title: 'Analytics Dashboard', desc: 'Track conversations, resolution rates, and time saved. See what customers ask and how WISMO handles it.' },
           ].map((f, i) => (
             <div key={i} style={{ padding: '24px', background: '#f8fafb', borderRadius: '16px', border: '1px solid #f1f3f5' }}>
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>{f.icon}</div>
+              <div style={{ marginBottom: '12px' }} dangerouslySetInnerHTML={{ __html: f.icon }} />
               <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>{f.title}</h3>
               <p style={{ fontSize: '14px', color: '#6d7175', lineHeight: 1.6 }}>{f.desc}</p>
             </div>
