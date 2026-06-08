@@ -269,10 +269,12 @@ function extractOrderNumber(message: string): string | undefined {
   // 2. order #1001, order 1001, order#ABC-123, order number 1001, order no. 1001
   m = /order\s*(?:#|number|no\.?|#\s*)?\s*([A-Za-z]{0,5}-?[A-Za-z0-9]{3,12})/i.exec(message);
   if (m) return m[1];
-  // 3. "1001" as standalone number when context suggests order (3-10 digits, preceded by space/start)
-  m = /(?:^|\s)(\d{3,10})(?:\s|$|[.,!?])/.exec(message);
+  // 3. "1001" as standalone number when context suggests order (3-12 digits, preceded by space/start)
+  m = /(?:^|\s)(\d{3,12})(?:\s|$|[.,!?])/.exec(message);
   if (m && message.toLowerCase().match(/order|track|find|where|ship|deliver|#/i)) return m[1];
-  // 4. UK/JP style: letters+numbers without # (e.g., "MY12345", "AB-789")
+  // 4. Message is ONLY a number (entire message is digits, 3-12 digits) — treat as order number
+  if (/^\d{3,12}$/.test(message.trim())) return message.trim();
+  // 5. UK/JP style: letters+numbers without # (e.g., "MY12345", "AB-789")
   m = /(?:^|\s)([A-Z]{2,4}-?\d{4,8})(?:\s|$|[.,!?])/i.exec(message);
   if (m && message.toLowerCase().match(/order|track|find|where|ship|deliver/i)) return m[1];
   return undefined;
