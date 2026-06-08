@@ -9,7 +9,7 @@
  * - Feedback endpoint
  */
 import { json } from '@remix-run/node';
-import type { ActionFunctionArgs } from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
 import { detectIntent, lookupOrderByNumber, lookupOrdersByEmail, generateResponse, detectLanguage } from '~/services/wismo-engine.server';
 import { addCorsHeaders, handleCorsPreflightRequest } from '~/utils/cors';
@@ -28,6 +28,16 @@ function checkRateLimit(shop: string): boolean {
   }
   entry.count++;
   return entry.count <= RATE_LIMIT_MAX;
+}
+
+// ─── CORS Preflight Handler (OPTIONS) ──────────────────────────────
+export async function loader({ request }: LoaderFunctionArgs) {
+  const preflight = handleCorsPreflightRequest(request);
+  if (preflight) return preflight;
+  // For non-OPTIONS GET requests to /api/chat, return method not allowed
+  const h = new Headers();
+  addCorsHeaders(h, request);
+  return json({ error: 'Method not allowed. Use POST.' }, { status: 405, headers: h });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
