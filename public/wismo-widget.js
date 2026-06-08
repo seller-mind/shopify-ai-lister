@@ -140,12 +140,35 @@
   // ─── Restore conversation ───
   try { var saved = localStorage.getItem('wismo_cid'); if (saved) cid = saved; } catch(e) {}
 
+  // ─── Load history for restored conversation ───
+  function loadHistory() {
+    if (!cid) return Promise.resolve();
+    var histUrl = API.replace('/chat', '/chat/history') + '?conversationId=' + encodeURIComponent(cid) + '&shop=' + encodeURIComponent(SHOP);
+    return fetch(histUrl)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.messages || !d.messages.length) return;
+        for (var i = 0; i < d.messages.length; i++) {
+          var m = d.messages[i];
+          if (m.role === 'customer') addUser(m.content);
+          else if (m.role === 'assistant') addBot(m.content);
+        }
+      })
+      .catch(function() { /* history load failure is non-critical */ });
+  }
+
   // ─── Toggle chat ───
   function toggle() {
     open = !open;
     chat.style.display = open ? 'flex' : 'none';
     bubble.style.display = open ? 'none' : 'flex';
-    if (open && msgs.children.length === 0) addBot(GREETING);
+    if (open && msgs.children.length === 0) {
+      if (cid) {
+        loadHistory();
+      } else {
+        addBot(GREETING);
+      }
+    }
   }
   bubble.addEventListener('click', toggle);
   closeBtn.addEventListener('click', toggle);
