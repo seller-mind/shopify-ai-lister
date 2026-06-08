@@ -1,7 +1,8 @@
 import { json } from '@remix-run/node';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { shopify } from '~/shopify.server';
-import { getSupabaseAdmin, deleteStore } from '~/services/supabase.server';
+import { getSupabaseAdmin, deleteStore, getStore } from '~/services/supabase.server';
+import { removeWidget } from '~/services/widget-inject.server';
 
 /**
  * Unified webhook handler — all webhooks go through /webhooks
@@ -91,6 +92,16 @@ async function handlePurchasesUpdate(shopDomain: string, payload: any) {
 
 async function handleAppUninstalled(shopDomain: string) {
   if (!shopDomain) return;
+  // Remove widget from theme before deleting store data
+  try {
+    const store = await getStore(shopDomain);
+    if (store) {
+      await removeWidget(shopDomain, store.accessToken);
+      console.log(`[Webhook] ✅ Widget removed from theme for ${shopDomain}`);
+    }
+  } catch (e) {
+    console.error(`[Webhook] ⚠️ Widget removal failed for ${shopDomain}:`, e);
+  }
   const deleted = await deleteStore(shopDomain);
   if (deleted) {
     console.log(`[Webhook] ✅ All data deleted for ${shopDomain} (app/uninstalled)`);

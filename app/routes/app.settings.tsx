@@ -6,7 +6,9 @@ import { json } from '@remix-run/node';
 import { useLoaderData, Form, useActionData, useNavigation } from '@remix-run/react';
 import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
 import { authenticateAdmin } from '~/shopify.server';
-import { getSupabaseAdmin } from '~/services/supabase.server';
+import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
+import { injectWidget } from '~/services/widget-inject.server';
+import { sanitizeText, sanitizeUrl, sanitizeColor, sanitizePosition, sanitizeFaqItem } from '~/utils/sanitize';
 import { useState, useEffect } from 'react';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -38,16 +40,16 @@ export async function action({ request }: ActionFunctionArgs) {
   const fd = await request.formData();
 
   const enabled = fd.get('enabled') === 'on';
-  const widgetPosition = (fd.get('widget_position') as string) || 'bottom-right';
-  const widgetColor = (fd.get('widget_color') as string) || '#008060';
-  const greeting = (fd.get('greeting') as string) || 'Track your order in seconds';
-  const brandName = (fd.get('brand_name') as string) || '';
+  const widgetPosition = sanitizePosition((fd.get('widget_position') as string) || 'bottom-right');
+  const widgetColor = sanitizeColor((fd.get('widget_color') as string) || '#008060');
+  const greeting = sanitizeText((fd.get('greeting') as string) || 'Track your order in seconds').substring(0, 200);
+  const brandName = sanitizeText((fd.get('brand_name') as string) || '').substring(0, 100);
   const autoReplyLanguage = (fd.get('auto_reply_language') as string) || 'auto';
-  const returnPolicy = (fd.get('return_policy') as string) || '';
+  const returnPolicy = sanitizeUrl((fd.get('return_policy') as string) || '');
 
   const faqQuestions = fd.getAll('faq_question') as string[];
   const faqAnswers = fd.getAll('faq_answer') as string[];
-  const faqItems = faqQuestions.map((q, i) => ({ question: q.trim(), answer: (faqAnswers[i] || '').trim() })).filter(item => item.question && item.answer);
+  const faqItems = faqQuestions.map((q, i) => sanitizeFaqItem(q, faqAnswers[i] || '')).filter(item => item.question && item.answer);
 
   // Merge return_policy into business_hours JSON (column doesn't exist as standalone)
   const { data: existingSettings } = await getSupabaseAdmin().from('wismo_settings').select('business_hours').eq('shop', session.shop).single();
@@ -62,6 +64,25 @@ export async function action({ request }: ActionFunctionArgs) {
     }, { onConflict: 'shop' });
 
     if (error) return json({ error: 'Failed to save settings' }, { status: 500 });
+
+    // Re-inject widget with updated settings
+    try {
+      const store = await getStore(session.shop);
+      if (store) {
+        await injectWidget({
+          shop: session.shop,
+          accessToken: store.accessToken,
+          position: widgetPosition,
+          color: widgetColor,
+          greeting,
+          brandName: brandName,
+        });
+        console.log('[Settings] Widget re-injected with updated config');
+      }
+    } catch (e) {
+      console.error('[Settings] Widget re-injection failed:', e);
+    }
+
     return json({ success: true });
   } catch {
     return json({ error: 'Failed to save settings' }, { status: 500 });

@@ -2,6 +2,7 @@ import { redirect } from '@remix-run/node';
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { shopify, API_KEY, SCOPES } from '~/shopify.server';
 import { storeSessionInDB, upsertStore } from '~/services/supabase.server';
+import { injectWidget } from '~/services/widget-inject.server';
 
 /**
  * /auth/callback - OAuth callback handler
@@ -102,6 +103,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // App-level webhooks automatically apply to all installations.
 
   console.log('[auth/callback] OAuth complete! Redirecting to Shopify admin for:', shopDomain);
+
+  // Auto-inject WISMO widget into the store's theme
+  try {
+    const widgetResult = await injectWidget({ shop: shopDomain, accessToken: result.accessToken });
+    if (widgetResult.success) {
+      console.log('[auth/callback] ✅ Widget auto-injected into theme');
+    } else {
+      console.error('[auth/callback] ⚠️ Widget injection failed:', widgetResult.error);
+    }
+  } catch (e) {
+    console.error('[auth/callback] ⚠️ Widget injection exception:', e);
+  }
 
   const shopName = shopDomain.replace('.myshopify.com', '');
   return redirect(`https://admin.shopify.com/store/${shopName}/apps/${API_KEY}`);
