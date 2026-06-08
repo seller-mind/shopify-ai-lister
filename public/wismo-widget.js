@@ -170,8 +170,13 @@
   function newConversation() {
     cid = null;
     try { localStorage.removeItem('wismo_cid'); } catch(e) {}
-    while (msgs.firstChild) msgs.removeChild(msgs.firstChild);
+    // Add divider to separate old and new conversations
+    var divider = document.createElement('div');
+    divider.style.cssText = 'text-align:center;color:#bbb;font-size:11px;padding:8px 0;border-top:1px solid #f1f3e5;';
+    divider.textContent = '── New conversation ──';
+    msgs.appendChild(divider);
     addBot(GREETING);
+    msgs.scrollTop = msgs.scrollHeight;
   }
 
   // ─── Toggle chat ───
