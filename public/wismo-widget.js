@@ -83,8 +83,17 @@
   var closeBtn = document.createElement('button');
   closeBtn.className = 'cx';
   closeBtn.innerHTML = '&times;';
+  var newChatBtn = document.createElement('button');
+  newChatBtn.className = 'cx';
+  newChatBtn.innerHTML = '&#8635;';
+  newChatBtn.title = 'New conversation';
   header.appendChild(headerText);
-  header.appendChild(closeBtn);
+  var headerBtns = document.createElement('div');
+  headerBtns.style.display = 'flex';
+  headerBtns.style.gap = '4px';
+  headerBtns.appendChild(newChatBtn);
+  headerBtns.appendChild(closeBtn);
+  header.appendChild(headerBtns);
 
   // Messages area
   var msgs = document.createElement('div');
@@ -157,6 +166,14 @@
       .catch(function() { /* history load failure is non-critical */ });
   }
 
+  // ─── New conversation ───
+  function newConversation() {
+    cid = null;
+    try { localStorage.removeItem('wismo_cid'); } catch(e) {}
+    while (msgs.firstChild) msgs.removeChild(msgs.firstChild);
+    addBot(GREETING);
+  }
+
   // ─── Toggle chat ───
   function toggle() {
     open = !open;
@@ -172,6 +189,7 @@
   }
   bubble.addEventListener('click', toggle);
   closeBtn.addEventListener('click', toggle);
+  newChatBtn.addEventListener('click', function(e) { e.stopPropagation(); newConversation(); });
 
   // ─── Message functions ───
   function addBot(t) {
