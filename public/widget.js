@@ -417,7 +417,7 @@ var WINDOW_HTML = [
         '<input type="text" class="oi-input" placeholder="#1001 or email" autocomplete="off" />' +
         '<button class="oi-btn">Track <span class="oi-arrow">→</span></button>' +
         '</div>' +
-        '<div class="oi-hint">AI-powered assistant · We'll find it instantly</div>' +
+        '<div class="oi-hint">AI-powered assistant · We will find it instantly</div>' +
         '<div class="oi-example">e.g. #1001 or you@email.com</div>' +
         '</div></div>';
       msgs.appendChild(card);
@@ -896,7 +896,7 @@ function getStatusColor(status) {
 
 // ─── CSS ──────────────────────────────────────────────────────────────
 function CSS() {
-  return '
+  return `
 .w {
   --ac: #008060;
   --ac-light: #e8f5ef;
@@ -1917,5 +1917,6 @@ function CSS() {
   .moc-summary { border-radius: 0; margin: 0 -14px 12px -14px; padding: 10px 14px; }
   .moc-collapsed { opacity: 1; }
 }
-';
+`;
+}
 } // end __wismo_loaded guard
