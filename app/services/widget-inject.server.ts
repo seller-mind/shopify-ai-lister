@@ -37,8 +37,8 @@ function buildWidgetCode(config: {
   var API='${config.apiEndpoint}';
   var POS='${pos}';
   var COLOR='${config.color}';
-  var GREETING='${config.greeting.replace(/\\/g, "\\\\").replace(/<[^>]*>/g, "").replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, "")}';
-  var BRAND='${config.brandName.replace(/\\/g, "\\\\").replace(/<[^>]*>/g, "").replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, "")}';
+  var GREETING='${config.greeting.replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, "")}';
+  var BRAND='${config.brandName.replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, "")}';
   if(window.__wismo_booted)return;window.__wismo_booted=true;
   var s=document.createElement('div');s.id='wismo-host';
   var sh=s.attachShadow({mode:'open'});
