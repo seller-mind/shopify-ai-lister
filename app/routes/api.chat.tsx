@@ -317,7 +317,7 @@ async function bumpAnalytics(shop: string, detected: string, replied: string, is
         total_conversations: ex.total_conversations + (isNewConv ? 1 : 0),
         total_messages: ex.total_messages + 2,
         wismo_queries: ex.wismo_queries + (detected === 'wismo' ? 1 : 0),
-        auto_resolved: ex.auto_resolved + (replied !== 'handoff' ? 1 : 0),
+        auto_resolved: ex.auto_resolved + (isNewConv && replied !== 'handoff' ? 1 : 0),
         handoffs: ex.handoffs + (replied === 'handoff' ? 1 : 0),
       }).eq('id', ex.id);
     } else {
@@ -326,7 +326,7 @@ async function bumpAnalytics(shop: string, detected: string, replied: string, is
         total_conversations: isNewConv ? 1 : 0,
         total_messages: 2,
         wismo_queries: detected === 'wismo' ? 1 : 0,
-        auto_resolved: replied !== 'handoff' ? 1 : 0,
+        auto_resolved: isNewConv && replied !== 'handoff' ? 1 : 0,
         handoffs: replied === 'handoff' ? 1 : 0,
       });
     }
