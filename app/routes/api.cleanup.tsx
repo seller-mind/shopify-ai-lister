@@ -20,8 +20,7 @@ export async function action({ request }: ActionFunctionArgs) {
   // Verify authorization: either cleanup secret key or Vercel cron job
   const url = new URL(request.url);
   const key = url.searchParams.get('key');
-  const isVercelCron = request.headers.get('x-vercel-cron') === 'true';
-  if (key !== CLEANUP_KEY && !isVercelCron) {
+  if (key !== CLEANUP_KEY) {
     return json({ error: 'Unauthorized' }, { status: 403 });
   }
 
