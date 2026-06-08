@@ -37,8 +37,8 @@ function buildWidgetCode(config: {
   var API='${config.apiEndpoint}';
   var POS='${pos}';
   var COLOR='${config.color}';
-  var GREETING='${config.greeting.replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, "")}';
-  var BRAND='${config.brandName.replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, "")}';
+  var GREETING='${config.greeting.replace(/\\/g, "\\\\").replace(/<[^>]*>/g, "").replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, "")}';
+  var BRAND='${config.brandName.replace(/\\/g, "\\\\").replace(/<[^>]*>/g, "").replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, "")}';
   if(window.__wismo_booted)return;window.__wismo_booted=true;
   var s=document.createElement('div');s.id='wismo-host';
   var sh=s.attachShadow({mode:'open'});
@@ -80,7 +80,7 @@ a{color:#2563eb}
 <div class="c" id="wc"><div class="ch"><div><h3>Order Tracking</h3><small>AI-powered</small></div><button class="cx" id="wx">&times;</button></div><div class="cb" id="wm"></div><div class="ci"><input id="wi" placeholder="Enter order number or email..." /><button id="wt">Track</button></div><div class="pr">Privacy</div></div>\`;
   document.body.appendChild(s);
   var bubble=sh.getElementById('wb'),chat=sh.getElementById('wc'),msgs=sh.getElementById('wm'),inp=sh.getElementById('wi'),btn=sh.getElementById('wt'),close=sh.getElementById('wx'),cid=null,open=false;
-  function safeHtml(t){var e=document.createElement('span');e.textContent=t;var s=e.innerHTML;s=s.replace(/\\*\\*(.+?)\\*\\*/g,'<strong>$1</strong>');s=s.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');return s}
+  function safeHtml(t){var e=document.createElement('span');e.textContent=t;var s=e.innerHTML;s=s.replace(/\\*\\*(.+?)\\*\\*/g,'<strong>$1</strong>');s=s.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g,function(m,t,u){return/^https?:\/\//i.test(u)?'<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>':t});return s}
   try{var saved=localStorage.getItem('wismo_cid');if(saved)cid=saved}catch(e){}
   function toggle(){open=!open;chat.style.display=open?'flex':'none';bubble.style.display=open?'none':'flex';if(open&&msgs.children.length===0)addBot(GREETING)}
   bubble.onclick=toggle;close.onclick=toggle;
