@@ -10,7 +10,8 @@ import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
 import { useEffect, useRef, useState } from 'react';
 
 // Required scopes — must match shopify.app.toml
-const REQUIRED_SCOPES = SCOPES.split(',').map(s => s.trim()).sort();
+// Note: write_themes implies read_themes in Shopify, so we normalize
+const REQUIRED_SCOPES = SCOPES.split(',').map(s => s.trim()).filter(s => s !== 'read_themes').sort();
 
 // Unified loader return type
 type DashboardData = {
@@ -44,7 +45,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     if (sessionData?.scope) {
       const currentScopes = sessionData.scope.split(',').map((s: string) => s.trim()).sort();
-      const missingScopes = REQUIRED_SCOPES.filter((s: string) => !currentScopes.includes(s));
+      // write_themes implies read_themes — normalize before comparing
+      const impliedScopes = [...currentScopes];
+      if (impliedScopes.includes('write_themes') && !impliedScopes.includes('read_themes')) {
+        impliedScopes.push('read_themes');
+      }
+      const missingScopes = REQUIRED_SCOPES.filter((s: string) => !impliedScopes.includes(s));
       if (missingScopes.length > 0) {
         console.log(`[Dashboard] Missing scopes: ${missingScopes.join(', ')} — redirecting to re-auth`);
         const state = crypto.randomUUID();
