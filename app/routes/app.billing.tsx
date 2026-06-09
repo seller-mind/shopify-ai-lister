@@ -28,7 +28,7 @@ const PLANS = [
     name: 'Business',
     price: 149,
     features: ['Unlimited conversations', 'Everything in Pro', 'Handoff to human agents', 'Multiple stores', 'Custom integrations', 'Dedicated support'],
-    trialDays: 14,
+    trialDays: 7,
     planId: 'BUSINESS',
   },
 ];

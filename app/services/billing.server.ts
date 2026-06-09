@@ -29,7 +29,7 @@ export const PLAN_CONFIGS = {
   BUSINESS: {
     name: 'Business',
     price: 149,
-    trialDays: 14,
+    trialDays: 7,
     features: ['Unlimited AI conversations', 'Everything in Pro', 'Handoff to human agents', 'Multiple stores', 'Custom integrations', 'Dedicated support'],
   },
 } as const;
