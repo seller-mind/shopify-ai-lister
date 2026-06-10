@@ -3,7 +3,7 @@ name = "WISMO AI"
 client_id = "a07b097182c0b2772f10316ef8c657b0"
 
 # 应用主URL
-application_url = "https://shopify-ai-lister-tau.vercel.app"
+application_url = "https://wismo-ai-app.vercel.app"
 
 # 是否为嵌入式应用
 embedded = true
@@ -15,7 +15,7 @@ scopes = "read_products,read_orders,read_fulfillments,write_themes"
 # OAuth回调URL
 [auth]
 redirect_urls = [
-  "https://shopify-ai-lister-tau.vercel.app/auth/callback",
+  "https://wismo-ai-app.vercel.app/auth/callback",
 ]
 
 # Webhook配置
