@@ -1,6 +1,6 @@
 # Shopify App配置文件
 name = "WISMO AI"
-client_id = "c89a54bc8d3f9038baa77056f8a55b6b"
+client_id = "a07b097182c0b2772f10316ef8c657b0"
 
 # 应用主URL
 application_url = "https://shopify-ai-lister-tau.vercel.app"
