@@ -19,7 +19,7 @@ const WISMO_MARKER_END = '<!-- WISMO_AI_WIDGET_END -->';
 const LEGACY_MARKER_START = '<!-- WISMO AI Widget v11 (Inline) -->';
 const LEGACY_MARKER_END = '<!-- End WISMO AI Widget v11 -->';
 
-const WIDGET_VERSION = '3.5.6';
+const WIDGET_VERSION = '3.5.8';
 
 /**
  * Build the tiny loader script that goes into theme.liquid
@@ -34,7 +34,7 @@ function buildWidgetCode(config: {
   brandName: string;
 }): string {
   const pos = config.position === 'bottom-left' ? 'left' : 'right';
-  const baseUrl = config.apiEndpoint.replace('/chat', '');
+  const baseUrl = config.apiEndpoint.replace('/api/chat', '');
   
   // Sanitize config values for safe JSON embedding
   const safeGreeting = config.greeting
