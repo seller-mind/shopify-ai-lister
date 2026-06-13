@@ -18,12 +18,12 @@
     var shopDomain = '{{ shop.permanent_domain }}';
     var widgetColor = '{{ block.settings.primary_color }}' || '#008060';
     var widgetPosition = '{{ block.settings.widget_position }}' || 'bottom-right';
-    var scriptSrc = 'https://shopify-ai-lister-tau.vercel.app/widget.js?shop=' + encodeURIComponent(shopDomain) + '&color=' + encodeURIComponent(widgetColor) + '&position=' + encodeURIComponent(widgetPosition);
+    var scriptSrc = 'https://wismo-ai-app.vercel.app/widget.js?shop=' + encodeURIComponent(shopDomain) + '&color=' + encodeURIComponent(widgetColor) + '&position=' + encodeURIComponent(widgetPosition);
     
     // Preconnect to our server
     var preconnect = document.createElement('link');
     preconnect.rel = 'preconnect';
-    preconnect.href = 'https://shopify-ai-lister-tau.vercel.app';
+    preconnect.href = 'https://wismo-ai-app.vercel.app';
     document.head.appendChild(preconnect);
     
     // Load widget script asynchronously

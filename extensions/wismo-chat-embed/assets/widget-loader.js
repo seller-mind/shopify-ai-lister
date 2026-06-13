@@ -23,7 +23,7 @@
   // Check if widget is disabled via Theme Editor setting
   if (config.enabled === 'false') return;
 
-  var API_BASE = 'https://shopify-ai-lister-tau.vercel.app';
+  var API_BASE = 'https://wismo-ai-app.vercel.app';
   var loaded = false;
 
   // Create host with Shadow DOM for CSS isolation

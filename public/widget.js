@@ -38,7 +38,7 @@ if (window.__wismo_loaded) { console.log('[WISMO] Already loaded, skipping dupli
 var SCRIPT = document.currentScript;
 var SRC = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src) : null;
 var SHOP = (SRC ? SRC.searchParams.get('shop') : '') || (document.getElementById('wismo-chat-root') || {}).dataset?.shop || '';
-var API = SRC ? SRC.origin : 'https://shopify-ai-lister-tau.vercel.app';
+var API = SRC ? SRC.origin : 'https://wismo-ai-app.vercel.app';
 var URL_COLOR = SRC ? SRC.searchParams.get('color') : null;
 var URL_POSITION = SRC ? SRC.searchParams.get('position') : null;
 var STORAGE_KEY = 'wismo_conv_' + SHOP;

@@ -1,8 +1,8 @@
 Contact: mailto:haimozhouqiu@outlook.com
-Contact: https://shopify-ai-lister-tau.vercel.app/privacy
+Contact: https://wismo-ai-app.vercel.app/privacy
 Preferred-Languages: en
-Canonical: https://shopify-ai-lister-tau.vercel.app/.well-known/security.txt
-Policy: https://shopify-ai-lister-tau.vercel.app/privacy
+Canonical: https://wismo-ai-app.vercel.app/.well-known/security.txt
+Policy: https://wismo-ai-app.vercel.app/privacy
 
 # WISMO AI Security Disclosure Policy
 # We appreciate responsible disclosure of security vulnerabilities.

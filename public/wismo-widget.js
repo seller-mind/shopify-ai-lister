@@ -9,7 +9,7 @@
   window.__wismo_booted = true;
 
   var SHOP = config.shop;
-  var API = config.api || 'https://shopify-ai-lister-tau.vercel.app/api/chat';
+  var API = config.api || 'https://wismo-ai-app.vercel.app/api/chat';
   var POS = config.pos || 'right';
   var COLOR = config.color || '#008060';
   var GREETING = config.greeting || 'Track your order in seconds';
