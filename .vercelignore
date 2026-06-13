@@ -1,0 +1,14 @@
+node_modules
+.vercel
+.shopify
+build
+public/build
+.cache
+*.timestamp-*
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+test-*.mjs
+check-bridge.mjs
+app-store-listing

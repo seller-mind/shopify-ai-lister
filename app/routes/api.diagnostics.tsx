@@ -83,6 +83,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
     criticalIssues.push('Supabase env not set — sessions cannot be persisted, OAuth callback will fail');
   }
 
+  // Emit a structured log line so we can monitor health from Vercel runtime logs
+  // without exposing secrets. NEVER include API_SECRET / DB keys / DeepSeek key.
+  console.log('[Diagnostics]', JSON.stringify({
+    status: criticalIssues.length === 0 ? 'ok' : 'error',
+    requestHost,
+    appUrlHost,
+    hostMatchesAppUrl,
+    redirectUriMatchesAppUrl,
+    scopes,
+    envPresent: Object.entries(envs).filter(([,v])=>v).map(([k])=>k),
+    envMissing: Object.entries(envs).filter(([,v])=>!v).map(([k])=>k),
+    criticalIssues,
+  }));
+
   return json({
     status: criticalIssues.length === 0 ? 'ok' : 'error',
     timestamp: new Date().toISOString(),
