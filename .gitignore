@@ -10,3 +10,8 @@ public/build
 build
 *.tsbuildinfo
 .cache/
+
+# App Store listing submission docs — contain test store credentials,
+# Client Secret, and other materials only meant for Shopify reviewer.
+# NEVER commit to public/shared repo.
+app-store-listing/

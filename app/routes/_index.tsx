@@ -18,7 +18,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
   }
   
-  return json({ appUrl: process.env.SHOPIFY_APP_URL || 'https://shopify-ai-lister-tau.vercel.app' });
+  return json({ appUrl: process.env.SHOPIFY_APP_URL || 'https://wismo-ai-app.vercel.app' });
 }
 
 export default function LandingPage() {

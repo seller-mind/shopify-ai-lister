@@ -131,12 +131,12 @@ export async function injectWidget(config: {
     return { success: false, error: 'Could not find active theme' };
   }
   
-  const currentContent = await getThemeLiquid(shop, accessToken, themeId);
+  let currentContent = await getThemeLiquid(shop, accessToken, themeId);
   if (!currentContent) {
     return { success: false, error: 'Could not read theme.liquid' };
   }
   
-  const apiEndpoint = `${process.env.SHOPIFY_APP_URL || 'https://shopify-ai-lister-tau.vercel.app'}/api/chat`;
+  const apiEndpoint = `${process.env.SHOPIFY_APP_URL || 'https://wismo-ai-app.vercel.app'}/api/chat`;
   const widgetCode = buildWidgetCode({
     shop,
     apiEndpoint,

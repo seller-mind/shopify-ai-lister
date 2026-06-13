@@ -1,26 +1,41 @@
 /**
- * POST /api/cleanup - Data retention cleanup
- * 
+ * /api/cleanup - Data retention cleanup
+ *
  * Purges data that exceeds our stated retention periods:
  * - Conversations & messages: 90 days from last_message_at
  * - Customer PII: anonymize after 90 days of inactivity
+ * - GDPR data-request metadata: scrub data_package after 30 days (Art.15)
  * - Analytics: 12 months retention
- * 
- * Called periodically (e.g., daily cron) or manually.
- * Protected by a shared secret key.
+ *
+ * Auth: ?key={CLEANUP_SECRET} OR Authorization: Bearer {CLEANUP_SECRET}.
+ *
+ * Methods: BOTH GET and POST are accepted, because:
+ *   - Vercel Cron triggers ONLY GET requests
+ *     (https://vercel.com/docs/cron-jobs)
+ *     — if loader returned 405, cron would silently fail forever.
+ *   - Manual triggers / external schedulers may use POST with key in query.
+ * Both methods invoke the same handler.
  */
 import { json } from '@remix-run/node';
-import type { ActionFunctionArgs } from '@remix-run/node';
+import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
 import { getSupabaseAdmin } from '~/services/supabase.server';
 
 const CLEANUP_KEY = process.env.CLEANUP_SECRET;
 if (!CLEANUP_KEY) console.warn('[Cleanup] CLEANUP_SECRET env var not set — endpoint disabled');
 
-export async function action({ request }: ActionFunctionArgs) {
-  // Verify authorization: either cleanup secret key or Vercel cron job
+/** Verify the caller is authorized via ?key= or Authorization: Bearer. */
+function isAuthorized(request: Request): boolean {
+  if (!CLEANUP_KEY) return false;
   const url = new URL(request.url);
-  const key = url.searchParams.get('key');
-  if (key !== CLEANUP_KEY) {
+  const queryKey = url.searchParams.get('key');
+  if (queryKey === CLEANUP_KEY) return true;
+  const auth = request.headers.get('authorization') || '';
+  if (auth === `Bearer ${CLEANUP_KEY}`) return true;
+  return false;
+}
+
+async function runCleanup(request: Request) {
+  if (!isAuthorized(request)) {
     return json({ error: 'Unauthorized' }, { status: 403 });
   }
 
@@ -41,13 +56,15 @@ export async function action({ request }: ActionFunctionArgs) {
 
     if (oldConvs && oldConvs.length > 0) {
       const oldConvIds = oldConvs.map((c: { id: string }) => c.id);
-      
+
       // Anonymize PII
-      const { count: piiAnonymized } = await supabase
+      await supabase
         .from('wismo_conversations')
         .update({ customer_email: '[REDACTED]', customer_name: '[REDACTED]' })
         .in('id', oldConvIds);
       results.pii_anonymized = oldConvIds.length;
+    } else {
+      results.pii_anonymized = 0;
     }
 
     // 2. Scrub PII from GDPR data request metadata in messages
@@ -103,6 +120,6 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 }
 
-export async function loader() {
-  return json({ error: 'Method not allowed' }, { status: 405 });
-}
+// Both Vercel Cron (GET) and manual triggers (POST) call the same handler.
+export const loader = ({ request }: LoaderFunctionArgs) => runCleanup(request);
+export const action = ({ request }: ActionFunctionArgs) => runCleanup(request);

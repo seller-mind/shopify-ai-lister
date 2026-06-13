@@ -1,6 +1,6 @@
 import { redirect } from '@remix-run/node';
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { shopify, API_KEY, SCOPES } from '~/shopify.server';
+import { shopify, API_KEY, buildShopCookie } from '~/shopify.server';
 import { storeSessionInDB, upsertStore } from '~/services/supabase.server';
 import { injectWidget } from '~/services/widget-inject.server';
 
@@ -117,7 +117,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const shopName = shopDomain.replace('.myshopify.com', '');
-  return redirect(`https://admin.shopify.com/store/${shopName}/apps/${API_KEY}`);
+  // Set a CHIPS-compliant sticky shop cookie so subsequent embedded iframe
+  // requests can resolve shop even if query/referer is stripped by some browsers.
+  return redirect(`https://admin.shopify.com/store/${shopName}/apps/${API_KEY}`, {
+    headers: { 'Set-Cookie': buildShopCookie(shopDomain) },
+  });
 }
 
 // Webhook registration handled by shopify.app.toml + `shopify app deploy`

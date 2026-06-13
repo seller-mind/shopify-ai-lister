@@ -126,7 +126,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     greeting: settings.greeting,
     brandName: settings.brandName,
     faqItems: settings.faqItems || [],
-    apiEndpoint: `${process.env.SHOPIFY_APP_URL || 'https://shopify-ai-lister-tau.vercel.app'}/api/chat`,
+    apiEndpoint: `${process.env.SHOPIFY_APP_URL || 'https://wismo-ai-app.vercel.app'}/api/chat`,
     shop,
     plan: store.plan || 'FREE',
     planLimited: planStatus.planLimited,

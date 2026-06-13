@@ -153,7 +153,20 @@ export default function Billing() {
             <ul className="plan-features">
               {plan.features.map((f, i) => <li key={i}>{f}</li>)}
             </ul>
-            <Form method="post" style={{ marginTop: '20px' }}>
+            {/*
+              IMPORTANT: reloadDocument + target="_top" is mandatory.
+              The action returns a 302 to admin.shopify.com/charges/...
+              If we POST inside the iframe, the redirect tries to load
+              admin.shopify.com inside the iframe → X-Frame-Options blocks
+              → blank/refused page. target="_top" makes the browser handle
+              the response navigation in the top window, escaping the iframe.
+            */}
+            <Form
+              method="post"
+              reloadDocument
+              target="_top"
+              style={{ marginTop: '20px' }}
+            >
               <input type="hidden" name="plan_id" value={plan.planId} />
               {currentPlan === plan.planId ? (
                 <button type="button" className="btn" style={{ width: '100%', background: '#e3f0ea', color: '#008060', borderColor: '#008060' }} disabled>

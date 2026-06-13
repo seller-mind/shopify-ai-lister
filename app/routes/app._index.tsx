@@ -5,7 +5,7 @@
 import { json } from '@remix-run/node';
 import { useLoaderData, Link } from '@remix-run/react';
 import type { LoaderFunctionArgs } from '@remix-run/node';
-import { authenticateAdmin, getAuthUrl, SCOPES } from '~/shopify.server';
+import { authenticateAdmin, getAuthUrl, SCOPES, APP_URL } from '~/shopify.server';
 import { getSupabaseAdmin, getStore } from '~/services/supabase.server';
 import { useEffect, useRef, useState } from 'react';
 
@@ -13,12 +13,43 @@ import { useEffect, useRef, useState } from 'react';
 // Note: write_themes implies read_themes in Shopify, so we normalize
 const REQUIRED_SCOPES = SCOPES.split(',').map(s => s.trim()).filter(s => s !== 'read_themes').sort();
 
+/**
+ * Build the absolute, top-level URL the Authorize button must navigate to.
+ *   = `${APP_URL}/auth?shop=${shop}`
+ * /auth is a server-side 302 to Shopify OAuth — bypasses iframe entirely
+ * via target="_top" (form submission). Absolute URL is REQUIRED here because
+ * inside Shopify Admin's nested iframe, target="_top" + a relative URL would
+ * be resolved against the parent window's origin (admin.shopify.com), not ours.
+ *
+ * Robustness: if SHOPIFY_APP_URL env is missing in deployment, fall back to
+ * deriving origin from the incoming request — keeps the button working even
+ * with misconfigured env.
+ */
+function buildAuthUrl(shop: string, request?: Request): string {
+  let base = (APP_URL || '').replace(/\/$/, '');
+  if (!base && request) {
+    try {
+      const u = new URL(request.url);
+      // Honor proxy headers used by Vercel
+      const xfHost = request.headers.get('x-forwarded-host');
+      const xfProto = request.headers.get('x-forwarded-proto');
+      const host = xfHost || u.host;
+      const proto = xfProto || u.protocol.replace(':', '');
+      base = `${proto}://${host}`;
+    } catch {
+      // give up — caller will get a relative URL (still works on same origin)
+    }
+  }
+  return `${base}/auth?shop=${encodeURIComponent(shop)}`;
+}
+
 // Unified loader return type
 type DashboardData = {
   shop: string | null;
   status: 'ok' | 'need_reauth' | 'need_auth' | 'unauthenticated';
   missingScopes?: string[];
-  oauthUrl?: string;
+  oauthUrl?: string;     // legacy: direct Shopify OAuth URL (fallback only)
+  authUrl?: string;      // NEW: absolute URL to our /auth route (top-level navigation target)
   shopDomain?: string;
   settings: { enabled: boolean; widget_color: string; widget_position: string; greeting: string };
   analytics: { totalConversations: number; totalWismo: number; totalAutoResolved: number; totalHandoffs: number; resolutionRate: number; timeSavedMin: number; daily: any[] };
@@ -55,11 +86,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
         console.log(`[Dashboard] Missing scopes: ${missingScopes.join(', ')} — redirecting to re-auth`);
         const state = crypto.randomUUID();
         const oauthUrl = getAuthUrl(session.shop, state);
+        const authUrl = buildAuthUrl(session.shop, request);
         return json<DashboardData>({
           shop: session.shop,
           status: 'need_reauth',
           missingScopes,
           oauthUrl,
+          authUrl,
           settings: { enabled: true, widget_color: '#008060', widget_position: 'bottom-right', greeting: 'Track your order in seconds' },
           analytics: { totalConversations: 0, totalWismo: 0, totalAutoResolved: 0, totalHandoffs: 0, resolutionRate: 0, timeSavedMin: 0, daily: [] },
           recentConversations: [],
@@ -114,7 +147,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       const shopDomain = shop.replace(/https?:\/\//, '').split('/')[0];
       const state = crypto.randomUUID();
       const oauthUrl = getAuthUrl(shopDomain, state);
-      return json<DashboardData>({ shop: null, status: 'need_auth' as const, shopDomain, oauthUrl, settings: { enabled: true, widget_color: '#008060', widget_position: 'bottom-right', greeting: '' }, analytics: { totalConversations: 0, totalWismo: 0, totalAutoResolved: 0, totalHandoffs: 0, resolutionRate: 0, timeSavedMin: 0, daily: [] }, recentConversations: [], hasData: false });
+      const authUrl = buildAuthUrl(shopDomain, request);
+      return json<DashboardData>({ shop: null, status: 'need_auth' as const, shopDomain, oauthUrl, authUrl, settings: { enabled: true, widget_color: '#008060', widget_position: 'bottom-right', greeting: '' }, analytics: { totalConversations: 0, totalWismo: 0, totalAutoResolved: 0, totalHandoffs: 0, resolutionRate: 0, timeSavedMin: 0, daily: [] }, recentConversations: [], hasData: false });
     }
     return json<DashboardData>({ shop: null, status: 'unauthenticated' as const, settings: { enabled: true, widget_color: '#008060', widget_position: 'bottom-right', greeting: '' }, analytics: { totalConversations: 0, totalWismo: 0, totalAutoResolved: 0, totalHandoffs: 0, resolutionRate: 0, timeSavedMin: 0, daily: [] }, recentConversations: [], hasData: false });
   }
@@ -185,6 +219,24 @@ export default function Dashboard() {
   const data = useLoaderData<typeof loader>();
 
   if (data.status === 'need_reauth') {
+    // CRITICAL — App Store review 2.1.1 fix:
+    // Inside Shopify Admin iframe, `<a target="_blank">` to OAuth was producing 404 (popup
+    // blockers, lost host param, OAuth grant page X-Frame-Options DENY, etc.).
+    // We now use a <form method="get" target="_top"> that POSTs/GETs at the TOP window
+    // to our absolute /auth URL, which then 302s server-side to Shopify OAuth.
+    // Triple safety: form submission + JS onClick (window.top.location.href) + onSubmit.
+    const shopForAuth = data.shop || data.shopDomain || '';
+    const authUrl = data.authUrl || '/auth';
+    const escapeIframe = (e: { preventDefault: () => void }) => {
+      try {
+        if (typeof window !== 'undefined' && window.top && window.top !== window.self) {
+          e.preventDefault();
+          window.top.location.href = authUrl;
+        }
+      } catch {
+        // Cross-origin frame — let form's target="_top" handle it
+      }
+    };
     return (
       <div className="onboarding">
         <div className="onboarding-card">
@@ -193,16 +245,44 @@ export default function Dashboard() {
           </div>
           <h1>Update Required</h1>
           <p>WISMO AI needs additional permissions to work properly. Missing scopes: <strong>{data.missingScopes?.join(', ')}</strong></p>
-          <a href={data.oauthUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-lg">
-            Re-authorize App
-          </a>
-          <p className="onboarding-hint">After authorization, refresh this page.</p>
+          <form
+            method="get"
+            action={authUrl}
+            target="_top"
+            style={{ display: 'inline-block' }}
+            onSubmit={escapeIframe}
+          >
+            {/* Hidden shop input — form's GET will produce ?shop=... if action lacks query.
+                Our action already contains ?shop=..., so this is just defensive. */}
+            <input type="hidden" name="shop" value={shopForAuth} />
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg"
+              onClick={escapeIframe}
+            >
+              Re-authorize App
+            </button>
+          </form>
+          <p className="onboarding-hint">You will be redirected to Shopify to grant additional permissions.</p>
         </div>
       </div>
     );
   }
 
   if (data.status === 'need_auth') {
+    // Same top-level escape pattern as need_reauth — see comment above.
+    const shopForAuth = data.shop || data.shopDomain || '';
+    const authUrl = data.authUrl || '/auth';
+    const escapeIframe = (e: { preventDefault: () => void }) => {
+      try {
+        if (typeof window !== 'undefined' && window.top && window.top !== window.self) {
+          e.preventDefault();
+          window.top.location.href = authUrl;
+        }
+      } catch {
+        // Cross-origin — let form target="_top" handle
+      }
+    };
     return (
       <div className="onboarding">
         <div className="onboarding-card">
@@ -216,10 +296,23 @@ export default function Dashboard() {
           </div>
           <h1>Welcome to WISMO AI</h1>
           <p>AI-powered order tracking that answers "Where is my order?" instantly — so you don't have to.</p>
-          <a href={data.oauthUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-lg">
-            Authorize App
-          </a>
-          <p className="onboarding-hint">After authorization, refresh this page.</p>
+          <form
+            method="get"
+            action={authUrl}
+            target="_top"
+            style={{ display: 'inline-block' }}
+            onSubmit={escapeIframe}
+          >
+            <input type="hidden" name="shop" value={shopForAuth} />
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg"
+              onClick={escapeIframe}
+            >
+              Authorize App
+            </button>
+          </form>
+          <p className="onboarding-hint">You will be redirected to Shopify to authorize WISMO AI.</p>
         </div>
       </div>
     );
